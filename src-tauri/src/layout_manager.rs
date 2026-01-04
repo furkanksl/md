@@ -88,41 +88,33 @@ pub fn get_open_windows(my_pid: i32) -> Vec<WindowInfo> {
 
             let bounds_key = CFString::new("kCGWindowBounds");
             let bounds_key_ptr = bounds_key.as_concrete_TypeRef() as *const c_void;
-            // Use find instead of get to safely handle missing keys
-            let bounds_dict_ref_ptr_opt = dict.find(bounds_key_ptr);
-            if bounds_dict_ref_ptr_opt.is_none() {
-                continue;
+            
+            if let Some(bounds_ptr_ref) = dict.find(bounds_key_ptr) {
+                let bounds_dict_ref = *bounds_ptr_ref as CFDictionaryRef;
+                let bounds_dict = CFDictionary::wrap_under_get_rule(bounds_dict_ref);
+                
+                let x = get_number_from_dict_float(&bounds_dict, "X").unwrap_or(0.0);
+                let y = get_number_from_dict_float(&bounds_dict, "Y").unwrap_or(0.0);
+                let width = get_number_from_dict_float(&bounds_dict, "Width").unwrap_or(0.0);
+                let height = get_number_from_dict_float(&bounds_dict, "Height").unwrap_or(0.0);
+
+                if width < 100.0 || height < 100.0 {
+                    continue;
+                }
+
+                windows.push(WindowInfo {
+                    id,
+                    pid,
+                    app_name,
+                    title,
+                    frame: WindowRect {
+                        x,
+                        y,
+                        width,
+                        height,
+                    },
+                });
             }
-            let bounds_dict_ref_ptr = *bounds_dict_ref_ptr_opt.unwrap();
-
-            if bounds_dict_ref_ptr.is_null() {
-                continue;
-            }
-
-            let bounds_dict_ref = bounds_dict_ref_ptr as CFDictionaryRef;
-            let bounds_dict = CFDictionary::wrap_under_get_rule(bounds_dict_ref);
-
-            let x = get_number_from_dict_float(&bounds_dict, "X").unwrap_or(0.0);
-            let y = get_number_from_dict_float(&bounds_dict, "Y").unwrap_or(0.0);
-            let width = get_number_from_dict_float(&bounds_dict, "Width").unwrap_or(0.0);
-            let height = get_number_from_dict_float(&bounds_dict, "Height").unwrap_or(0.0);
-
-            if width < 100.0 || height < 100.0 {
-                continue;
-            }
-
-            windows.push(WindowInfo {
-                id,
-                pid,
-                app_name,
-                title,
-                frame: WindowRect {
-                    x,
-                    y,
-                    width,
-                    height,
-                },
-            });
         }
     }
 
@@ -248,10 +240,6 @@ pub fn apply_preset_layout(layout_type: String, my_pid: i32) {
     let windows = get_open_windows(my_pid);
     if windows.is_empty() { return; }
 
-    // Get display bounds from the first window (most recent)
-    // Assuming all targeted windows are on the same display or we use the main display for simplicity in this MVP
-    // A better approach would be to group windows by display, but let's start with active display of top window.
-    
     let target = &windows[0];
     let center = CGPoint {
         x: target.frame.x + target.frame.width / 2.0,
@@ -283,6 +271,24 @@ pub fn apply_preset_layout(layout_type: String, my_pid: i32) {
     let working_x = bounds.origin.x;
 
     match layout_type.as_str() {
+        "rows_2" => {
+            if windows.len() >= 2 {
+                unsafe {
+                    move_window(windows[0].pid, WindowRect { x: working_x, y: working_y, width: working_w, height: working_h / 2.0 });
+                    move_window(windows[1].pid, WindowRect { x: working_x, y: working_y + working_h / 2.0, width: working_w, height: working_h / 2.0 });
+                }
+            }
+        },
+        "rows_3" => {
+            if windows.len() >= 3 {
+                let h_third = working_h / 3.0;
+                unsafe {
+                    move_window(windows[0].pid, WindowRect { x: working_x, y: working_y, width: working_w, height: h_third });
+                    move_window(windows[1].pid, WindowRect { x: working_x, y: working_y + h_third, width: working_w, height: h_third });
+                    move_window(windows[2].pid, WindowRect { x: working_x, y: working_y + h_third * 2.0, width: working_w, height: h_third });
+                }
+            }
+        },
         "columns_2" => {
             if windows.len() >= 2 {
                 let w1 = &windows[0];
@@ -322,9 +328,8 @@ pub fn apply_preset_layout(layout_type: String, my_pid: i32) {
                 unsafe {
                     move_window(windows[0].pid, WindowRect { x: working_x, y: working_y, width: main_w, height: working_h });
                     
-                    // Stack rest
                     let others = &windows[1..];
-                    let stack_count = others.len().min(3); // Limit to next 3 windows for stacking to avoid mess
+                    let stack_count = others.len().min(3);
                     if stack_count > 0 {
                         let stack_h = working_h / stack_count as f64;
                         for (i, w) in others.iter().take(stack_count).enumerate() {

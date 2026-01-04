@@ -8,21 +8,27 @@ const PROVIDERS = [
   { id: 'anthropic', name: 'Anthropic' },
   { id: 'google', name: 'Google' },
   { id: 'mistral', name: 'Mistral' },
+  { id: 'groq', name: 'Groq' },
+  { id: 'custom', name: 'Custom' },
 ];
 
 export const SettingsView = () => {
   const { activeProvider, setActiveProvider, setAIConfiguration, aiConfigurations } = useSettingsStore();
   const [apiKey, setApiKey] = useState('');
+  const [endpoint, setEndpoint] = useState('');
 
   useEffect(() => {
-    setApiKey(aiConfigurations[activeProvider]?.apiKey || '');
+    const config = aiConfigurations[activeProvider];
+    setApiKey(config?.apiKey || '');
+    setEndpoint(config?.customEndpoint || '');
   }, [activeProvider, aiConfigurations]);
 
   const handleSave = () => {
     setAIConfiguration(activeProvider, {
         provider: activeProvider as any,
         apiKey,
-        model: 'auto'
+        model: 'auto',
+        customEndpoint: activeProvider === 'custom' ? endpoint : undefined
     });
   };
 
@@ -55,20 +61,35 @@ export const SettingsView = () => {
         })}
       </div>
 
-      <div className="bg-white rounded-[2rem] p-8 border border-stone-50 shadow-sm">
-        <label className="block text-xs font-medium text-stone-400 uppercase tracking-widest mb-4 ml-1">
-            API Access Key
-        </label>
-        
-        <input 
-            type="password"
-            className="w-full bg-stone-50 h-14 rounded-2xl px-6 text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-100 transition-all font-mono text-sm"
-            placeholder="sk-..."
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-        />
+      <div className="bg-white rounded-[2rem] p-8 border border-stone-50 shadow-sm flex flex-col gap-6">
+        <div>
+            <label className="block text-xs font-medium text-stone-400 uppercase tracking-widest mb-4 ml-1">
+                API Access Key
+            </label>
+            <input 
+                type="password"
+                className="w-full bg-stone-50 h-14 rounded-2xl px-6 text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-100 transition-all font-mono text-sm"
+                placeholder="sk-..."
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+            />
+        </div>
 
-        <div className="flex justify-end mt-6">
+        {activeProvider === 'custom' && (
+            <div>
+                <label className="block text-xs font-medium text-stone-400 uppercase tracking-widest mb-4 ml-1">
+                    API Endpoint
+                </label>
+                <input 
+                    className="w-full bg-stone-50 h-14 rounded-2xl px-6 text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-100 transition-all font-mono text-sm"
+                    placeholder="https://api.openai.com/v1"
+                    value={endpoint}
+                    onChange={(e) => setEndpoint(e.target.value)}
+                />
+            </div>
+        )}
+
+        <div className="flex justify-end mt-2">
             <button 
                 onClick={handleSave}
                 className="px-8 py-3 bg-stone-100 text-stone-600 rounded-full text-sm font-medium hover:bg-stone-200 transition-colors"

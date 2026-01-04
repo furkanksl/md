@@ -8,14 +8,9 @@ import {
   Monitor, 
     ArrowRight,
     Laptop,
-    AlignLeft,
-    AlignRight,
-    AlignStartVertical,
-    AlignEndVertical,
-    Maximize2,
-    Move,
     Columns2,
     Columns3,
+    Rows2,
     Grid2X2,
     LayoutPanelLeft,
     Layers as LayersIcon
@@ -57,14 +52,6 @@ export const LayoutsView = () => {
         await invoke('restore_layout', { windows });
     } catch (err) {
         console.error('Failed to restore layout:', err);
-    }
-  };
-
-  const handleSnap = async (direction: string) => {
-    try {
-        await invoke('snap_active_window', { direction });
-    } catch (err) {
-        console.error('Failed to snap window:', err);
     }
   };
 
@@ -146,70 +133,63 @@ export const LayoutsView = () => {
                 </motion.div>
             ) : (
                 <div className="flex flex-col gap-8">
-                    {/* Snap Actions */}
-                    <div>
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 ml-1 mb-3">Active Window Snap</h3>
-                        <div className="grid grid-cols-3 gap-3">
-                            <button onClick={() => handleSnap('left')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex flex-col items-center justify-center gap-1 text-stone-500 hover:text-stone-800">
-                                <AlignLeft size={20} />
-                                <span className="text-[10px] font-medium uppercase tracking-wide">Left</span>
-                            </button>
-                            <button onClick={() => handleSnap('maximize')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex flex-col items-center justify-center gap-1 text-stone-500 hover:text-stone-800">
-                                <Maximize2 size={20} />
-                                <span className="text-[10px] font-medium uppercase tracking-wide">Fill</span>
-                            </button>
-                            <button onClick={() => handleSnap('right')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex flex-col items-center justify-center gap-1 text-stone-500 hover:text-stone-800">
-                                <AlignRight size={20} />
-                                <span className="text-[10px] font-medium uppercase tracking-wide">Right</span>
-                            </button>
-                            <button onClick={() => handleSnap('top')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex flex-col items-center justify-center gap-1 text-stone-500 hover:text-stone-800">
-                                <AlignStartVertical size={20} />
-                                <span className="text-[10px] font-medium uppercase tracking-wide">Top</span>
-                            </button>
-                            <button onClick={() => handleSnap('center')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex flex-col items-center justify-center gap-1 text-stone-500 hover:text-stone-800">
-                                <Move size={20} />
-                                <span className="text-[10px] font-medium uppercase tracking-wide">Center</span>
-                            </button>
-                            <button onClick={() => handleSnap('bottom')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex flex-col items-center justify-center gap-1 text-stone-500 hover:text-stone-800">
-                                <AlignEndVertical size={20} />
-                                <span className="text-[10px] font-medium uppercase tracking-wide">Bottom</span>
-                            </button>
-                        </div>
-                    </div>
-
                     {/* Multi-Window Presets */}
                     <div>
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 ml-1 mb-3">Organize Workspace</h3>
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 ml-1 mb-3">Workspace Layouts</h3>
                         <div className="grid grid-cols-2 gap-3">
-                            <button onClick={() => handlePreset('columns_2')} className="h-14 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-3 text-stone-600">
-                                <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
-                                    <Columns2 size={16} />
+                            <button onClick={() => handlePreset('columns_2')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-4 text-stone-600">
+                                <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500">
+                                    <Columns2 size={20} />
                                 </div>
-                                <span className="text-xs font-bold uppercase tracking-wide">Split 2</span>
+                                <div className="flex flex-col items-start">
+                                    <span className="text-xs font-bold uppercase tracking-wide">2 Columns</span>
+                                    <span className="text-[10px] text-stone-400">Horizontal Split</span>
+                                </div>
                             </button>
-                            <button onClick={() => handlePreset('columns_3')} className="h-14 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-3 text-stone-600">
-                                <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
-                                    <Columns3 size={16} />
+                            <button onClick={() => handlePreset('rows_2')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-4 text-stone-600">
+                                <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500">
+                                    <Rows2 size={20} />
                                 </div>
-                                <span className="text-xs font-bold uppercase tracking-wide">Split 3</span>
+                                <div className="flex flex-col items-start">
+                                    <span className="text-xs font-bold uppercase tracking-wide">2 Rows</span>
+                                    <span className="text-[10px] text-stone-400">Vertical Split</span>
+                                </div>
                             </button>
-                            <button onClick={() => handlePreset('main_left')} className="h-14 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-3 text-stone-600">
-                                <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
-                                    <LayoutPanelLeft size={16} />
+                            <button onClick={() => handlePreset('columns_3')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-4 text-stone-600">
+                                <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500">
+                                    <Columns3 size={20} />
                                 </div>
-                                <span className="text-xs font-bold uppercase tracking-wide">Focus Left</span>
+                                <div className="flex flex-col items-start">
+                                    <span className="text-xs font-bold uppercase tracking-wide">3 Columns</span>
+                                    <span className="text-[10px] text-stone-400">Triple Split</span>
+                                </div>
                             </button>
-                            <button onClick={() => handlePreset('grid_4')} className="h-14 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-3 text-stone-600">
-                                <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
-                                    <Grid2X2 size={16} />
+                            <button onClick={() => handlePreset('grid_4')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-4 text-stone-600">
+                                <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500">
+                                    <Grid2X2 size={20} />
                                 </div>
-                                <span className="text-xs font-bold uppercase tracking-wide">Grid 2x2</span>
+                                <div className="flex flex-col items-start">
+                                    <span className="text-xs font-bold uppercase tracking-wide">2x2 Grid</span>
+                                    <span className="text-[10px] text-stone-400">Four Windows</span>
+                                </div>
                             </button>
-                            <button onClick={() => handlePreset('cascade')} className="h-14 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-3 text-stone-600 col-span-2">
-                                <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
-                                    <LayersIcon size={16} />
+                            <button onClick={() => handlePreset('main_left')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-4 text-stone-600">
+                                <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500">
+                                    <LayoutPanelLeft size={20} />
                                 </div>
-                                <span className="text-xs font-bold uppercase tracking-wide">Cascade All</span>
+                                <div className="flex flex-col items-start">
+                                    <span className="text-xs font-bold uppercase tracking-wide">Focus Mode</span>
+                                    <span className="text-[10px] text-stone-400">Main + Stack</span>
+                                </div>
+                            </button>
+                            <button onClick={() => handlePreset('cascade')} className="h-16 bg-white rounded-2xl border border-stone-100 hover:shadow-md hover:bg-stone-50 transition-all flex items-center px-4 gap-4 text-stone-600">
+                                <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-500">
+                                    <LayersIcon size={20} />
+                                </div>
+                                <div className="flex flex-col items-start">
+                                    <span className="text-xs font-bold uppercase tracking-wide">Cascade</span>
+                                    <span className="text-[10px] text-stone-400">Staircase View</span>
+                                </div>
                             </button>
                         </div>
                     </div>
