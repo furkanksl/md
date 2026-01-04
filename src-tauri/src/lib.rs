@@ -34,7 +34,7 @@ fn hide_drawer(window: tauri::Window) {
         let scale_factor = monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(2.0);
         let screen_height = monitor.as_ref().map(|m| m.size().height).unwrap_or(2160); // Default to a common Retina height
 
-        let width = 430.0 * scale_factor;
+        let width = 400.0 * scale_factor;
         let height = 800.0 * scale_factor;
 
         let start_x = 0;
@@ -61,6 +61,9 @@ fn hide_drawer(window: tauri::Window) {
         window
             .set_position(PhysicalPosition::new(end_x, center_y))
             .unwrap_or(());
+
+        // Hide window to prevent ghosting on space switch
+        window.hide().unwrap_or(());
 
         // Enable click-through when hidden
         window.set_ignore_cursor_events(true).unwrap_or(());
@@ -332,6 +335,8 @@ pub fn run() {
                                     // Disable click-through before showing
                                     win_clone.set_ignore_cursor_events(false).unwrap_or(());
 
+                                    // Show window before animating
+                                    win_clone.show().unwrap_or(());
                                     win_clone.set_focus().unwrap_or(());
 
                                     let monitor = win_clone
@@ -344,7 +349,7 @@ pub fn run() {
                                     let screen_height =
                                         monitor.as_ref().map(|m| m.size().height).unwrap_or(2160);
 
-                                    let width = 430.0 * scale_factor;
+                                    let width = 400.0 * scale_factor;
                                     let height = 800.0 * scale_factor; // Window height from config
 
                                     let start_x = -width as i32;

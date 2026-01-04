@@ -13,9 +13,9 @@
     "windows": [
       {
         "title": "my-drawer",
-        "width": 430,
+        "width": 400,
         "height": 800,
-        "x": -430,
+        "x": -400,
         "y": 0,
         "center": false,
         "decorations": false,
