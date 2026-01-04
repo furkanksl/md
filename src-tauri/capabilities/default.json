@@ -10,6 +10,12 @@
     "core:window:allow-minimize",
     "core:window:allow-maximize",
     "core:window:allow-close",
+    "sql:default",
+    "sql:allow-load",
+    "sql:allow-execute",
+    "sql:allow-select",
+    "clipboard-manager:default",
+    "global-shortcut:default",
     {
       "identifier": "fs:default",
       "allow": [{ "path": "/Applications" }, { "path": "/System/Applications" }]
