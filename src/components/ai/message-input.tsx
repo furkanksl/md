@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useChatStore } from '@/stores/chat-store';
-import { Send, Paperclip, File as FileIcon, X } from 'lucide-react';
+import { Paperclip, ArrowUp, X, File as FileIcon } from 'lucide-react';
 import { clsx } from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 import { convertFileSrc } from '@tauri-apps/api/core';
 
 interface MessageInputProps {
@@ -11,10 +12,10 @@ interface MessageInputProps {
 
 export const MessageInput = ({ attachments, setAttachments }: MessageInputProps) => {
   const { input, setInput } = useChatStore();
-  const [isFocused, setIsFocused] = useState(false);
-  const [previews, setPreviews] = useState<Record<string, string>>({}); // Map filename/index to URL
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previews, setPreviews] = useState<Record<string, string>>({});
 
+  // Generate previews when attachments change
   useEffect(() => {
     const newPreviews: Record<string, string> = {};
     
@@ -22,10 +23,12 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
       const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(file.name);
       
       if (isImage) {
+        // Try to use Tauri's convertFileSrc for local paths if available (dragged files usually have path)
         const path = (file as any).path;
         if (path) {
           newPreviews[file.name] = convertFileSrc(path);
         } else {
+          // Fallback to Blob URL for web/uploaded files
           newPreviews[file.name] = URL.createObjectURL(file);
         }
       }
@@ -34,7 +37,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
     setPreviews(newPreviews);
 
     return () => {
-      // Cleanup object URLs
+      // Cleanup Blob URLs
       Object.values(newPreviews).forEach(url => {
         if (url.startsWith('blob:')) URL.revokeObjectURL(url);
       });
@@ -44,7 +47,6 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() && attachments.length === 0) return;
-    console.log("Send:", input, attachments);
     setInput("");
     setAttachments([]);
   };
@@ -52,123 +54,126 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      const combined = [...attachments, ...newFiles].slice(0, 3);
-      setAttachments(combined);
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    if (e.clipboardData.files && e.clipboardData.files.length > 0) {
-      e.preventDefault();
-      const newFiles = Array.from(e.clipboardData.files);
-      const combined = [...attachments, ...newFiles].slice(0, 3);
-      setAttachments(combined);
+      setAttachments([...attachments, ...newFiles].slice(0, 3));
     }
   };
 
   const removeAttachment = (index: number) => {
-    const newAttachments = [...attachments];
-    newAttachments.splice(index, 1);
-    setAttachments(newAttachments);
+      const n = [...attachments];
+      n.splice(index, 1);
+      setAttachments(n);
   };
 
   return (
-    <div className="w-full px-4 pb-4">
-      {/* Attachments List */}
-      {attachments.length > 0 && (
-        <div className="mb-3 flex gap-3 animate-in slide-in-from-bottom-2 fade-in duration-200">
-            {attachments.map((file, index) => {
-                const previewUrl = previews[file.name];
-                return (
-                    <div key={`${file.name}-${index}`} className="relative group">
-                        {/* Tiny Thumbnail */}
-                        <div className="h-12 w-12 rounded-lg border-2 border-zinc-200 overflow-hidden bg-zinc-50 flex items-center justify-center cursor-help">
-                            {previewUrl ? (
-                                <img src={previewUrl} alt="Thumb" className="h-full w-full object-cover" />
-                            ) : (
-                                <FileIcon size={20} className="text-zinc-400" />
-                            )}
-                        </div>
-
-                        {/* Hover Large Preview */}
-                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50">
-                            {previewUrl ? (
-                                <div className="rounded-xl overflow-hidden border-4 border-white shadow-xl max-w-[200px]">
-                                    <img src={previewUrl} alt="Preview" className="w-full h-auto" />
-                                    <div className="bg-white px-2 py-1 text-[10px] font-bold text-zinc-700 truncate">
-                                        {file.name}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg shadow-xl whitespace-nowrap">
-                                    {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Remove Button */}
-                        <button 
-                            onClick={() => removeAttachment(index)} 
-                            className="absolute -top-2 -right-2 p-0.5 bg-red-500 border-2 border-white rounded-full text-white shadow-sm hover:scale-110 transition-transform"
+    <div className="w-full">
+      <AnimatePresence>
+        {attachments.length > 0 && (
+            <motion.div 
+                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginBottom: 12 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                className="flex gap-3 overflow-visible"
+            >
+                {attachments.map((f, i) => {
+                    const previewUrl = previews[f.name];
+                    return (
+                        <motion.div 
+                            key={`${f.name}-${i}`}
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            className="group relative"
                         >
-                            <X size={10} strokeWidth={3} />
-                        </button>
-                    </div>
-                );
-            })}
-        </div>
-      )}
+                            {/* Thumbnail Container */}
+                            <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center relative shadow-sm group/thumb">
+                                {previewUrl ? (
+                                    <img src={previewUrl} alt={f.name} className="w-full h-full object-cover transition-transform group-hover/thumb:scale-105" />
+                                ) : (
+                                    <FileIcon size={24} className="text-stone-400" />
+                                )}
+                                
+                                {/* Hover Remove Overlay */}
+                                <div 
+                                    className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                                    onClick={() => removeAttachment(i)}
+                                >
+                                    <X size={20} className="text-white" strokeWidth={3} />
+                                </div>
+                            </div>
+
+                            {/* Hover Large Preview */}
+                            {previewUrl && (
+                                <div className="absolute bottom-full left-0 mb-3 hidden group-hover:block z-50 origin-bottom-left animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="bg-white p-2 rounded-2xl shadow-xl shadow-stone-300/50 border border-stone-100">
+                                        <img src={previewUrl} alt="Large Preview" className="max-w-[200px] max-h-[200px] rounded-xl object-contain" />
+                                        <div className="mt-2 text-[10px] font-medium text-stone-500 truncate max-w-[200px] px-1">
+                                            {f.name}
+                                        </div>
+                                    </div>
+                                    {/* Arrow */}
+                                    <div className="absolute -bottom-1 left-6 w-3 h-3 bg-white rotate-45 border-b border-r border-stone-100 shadow-[2px_2px_2px_-1px_rgba(0,0,0,0.05)]" />
+                                </div>
+                            )}
+
+                            {/* Tooltip for non-images */}
+                            {!previewUrl && (
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 whitespace-nowrap">
+                                    <div className="bg-stone-800 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg">
+                                        {f.name}
+                                    </div>
+                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-stone-800 rotate-45" />
+                                </div>
+                            )}
+                        </motion.div>
+                    );
+                })}
+            </motion.div>
+        )}
+      </AnimatePresence>
 
       <form 
         onSubmit={handleSubmit} 
-        onPaste={handlePaste}
-        className={clsx(
-          "flex items-center gap-2 p-1.5 bg-white border-2 border-black rounded-xl transition-all duration-200",
-          isFocused ? "shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] translate-x-[-1px] translate-y-[-1px]" : "shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]"
-        )}
+        className="bg-white rounded-[2rem] p-1.5 pl-4 shadow-lg shadow-stone-200/40 border border-stone-100 flex items-center gap-2 transition-shadow focus-within:shadow-xl focus-within:shadow-stone-200/60"
       >
-        <div className="pl-1">
-            <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                multiple
-                onChange={handleFileChange} 
-            />
-            <button 
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={attachments.length >= 3}
-                className={clsx(
-                    "p-1.5 rounded-lg transition-colors hover:bg-zinc-100",
-                    attachments.length > 0 ? "text-blue-500" : "text-zinc-400 hover:text-zinc-600",
-                    attachments.length >= 3 && "opacity-50 cursor-not-allowed"
-                )}
-            >
-                <Paperclip size={18} strokeWidth={2.5} />
-            </button>
-        </div>
+        <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className={clsx(
+                "p-2 rounded-full transition-colors",
+                attachments.length >= 3 
+                    ? "text-stone-300 cursor-not-allowed" 
+                    : "text-stone-400 hover:text-stone-600 hover:bg-stone-50"
+            )}
+            disabled={attachments.length >= 3}
+        >
+            <Paperclip size={18} strokeWidth={2} />
+        </button>
+        <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            multiple
+            onChange={handleFileChange} 
+        />
 
         <input
-          className="flex-1 bg-transparent border-none focus:ring-0 px-2 text-base font-medium text-zinc-900 placeholder:text-zinc-400 focus:outline-none h-10"
-          placeholder={attachments.length > 0 ? "Add a message..." : "Ask anything..."}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+            className="flex-1 bg-transparent border-none focus:outline-none text-stone-700 placeholder:text-stone-300 text-base"
+            placeholder={attachments.length > 0 ? "Add a caption..." : "Type a message..."}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
         />
         
         <button
             type="submit"
             disabled={!input.trim() && attachments.length === 0}
             className={clsx(
-              "p-2 bg-yellow-100 border-2 border-transparent transition-all duration-200 rounded-lg",
-              (input.trim() || attachments.length > 0)
-                ? "border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none hover:bg-yellow-200 text-black"
-                : "opacity-50 cursor-not-allowed text-zinc-400"
+                "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                (input.trim() || attachments.length > 0)
+                    ? "bg-stone-800 text-white shadow-md hover:scale-105"
+                    : "bg-stone-100 text-stone-300 cursor-not-allowed"
             )}
         >
-            <Send size={18} strokeWidth={2.5} />
+            <ArrowUp size={18} strokeWidth={2.5} />
         </button>
       </form>
     </div>

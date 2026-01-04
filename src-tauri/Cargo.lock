@@ -2377,6 +2377,7 @@ dependencies = [
 name = "my-drawer"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "cocoa",
  "objc",
  "serde",

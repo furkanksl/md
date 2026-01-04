@@ -9,6 +9,24 @@
     "core:window:allow-start-dragging",
     "core:window:allow-minimize",
     "core:window:allow-maximize",
-    "core:window:allow-close"
+    "core:window:allow-close",
+    {
+      "identifier": "fs:default",
+      "allow": [{ "path": "/Applications" }, { "path": "/System/Applications" }]
+    },
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [{ "path": "/Applications" }, { "path": "/System/Applications" }]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "run-open",
+          "cmd": "open",
+          "args": true
+        }
+      ]
+    }
   ]
 }

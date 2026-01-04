@@ -1,48 +1,43 @@
-import { Layout, Maximize, Columns, Grid, Monitor, ArrowRight } from 'lucide-react';
+import { Box, LayoutPanelLeft, Grid2X2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-const LAYOUTS = [
-  { id: '1', name: 'Focus', icon: Maximize, desc: 'Single centered window' },
-  { id: '2', name: 'Split', icon: Columns, desc: 'Two windows side-by-side' },
-  { id: '3', name: 'Grid', icon: Grid, desc: 'Four quadrant grid' },
-  { id: '4', name: 'Sidebar', icon: Layout, desc: 'Main window with sidebar' },
+const PRESETS = [
+    { id: '1', name: 'Focus', icon: Box, desc: 'Single centered window' },
+    { id: '2', name: 'Split', icon: LayoutPanelLeft, desc: 'Side by side view' },
+    { id: '3', name: 'Grid', icon: Grid2X2, desc: 'Four quadrant view' },
 ];
 
 export const LayoutsView = () => {
   return (
-    <div className="flex flex-col h-full bg-green-50/50 p-4 gap-4">
-      {/* Current State */}
-      <div className="p-4 bg-white border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-        <h3 className="text-sm font-bold uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Monitor size={16} /> Current Desktop
-        </h3>
-        <div className="aspect-video bg-zinc-100 rounded-lg border-2 border-zinc-200 relative overflow-hidden flex items-center justify-center">
-            <span className="text-xs text-zinc-400 font-mono">CAPTURING_STATE...</span>
+    <div className="h-full px-8 py-4 flex flex-col gap-8">
+      {/* Current State Visualization */}
+      <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-stone-50 flex items-center justify-center relative overflow-hidden group">
+        <div className="absolute inset-0 bg-stone-50 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+        <div className="relative z-10 text-center">
+            <h3 className="text-2xl font-light text-stone-800 mb-2">Workspace A</h3>
+            <p className="text-stone-400 text-sm">3 windows active</p>
         </div>
-        <button className="mt-3 w-full py-2 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-zinc-800 transition-colors">
-            Save Current Layout
-        </button>
       </div>
 
-      {/* Saved Layouts */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider px-1">Saved Layouts</h3>
-        <div className="grid grid-cols-1 gap-2">
-            {LAYOUTS.map((layout) => (
-                <button 
-                    key={layout.id}
-                    className="flex items-center gap-3 p-3 bg-white border-2 border-black rounded-xl hover:bg-green-50 transition-colors group text-left"
-                >
-                    <div className="p-2 bg-green-100 border-2 border-black rounded-lg">
-                        <layout.icon size={18} strokeWidth={2.5} className="text-green-800" />
-                    </div>
-                    <div className="flex-1">
-                        <div className="text-sm font-bold">{layout.name}</div>
-                        <div className="text-[10px] text-zinc-500">{layout.desc}</div>
-                    </div>
-                    <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0" />
-                </button>
-            ))}
-        </div>
+      <div className="flex flex-col gap-4">
+        <h4 className="text-sm font-medium text-stone-400 ml-2">Presets</h4>
+        {PRESETS.map((p, i) => (
+            <motion.button 
+                key={p.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-white p-4 rounded-3xl flex items-center gap-4 hover:shadow-md hover:shadow-stone-200/50 transition-all group border border-stone-50"
+            >
+                <div className="w-12 h-12 bg-stone-50 rounded-2xl flex items-center justify-center text-stone-400 group-hover:bg-stone-800 group-hover:text-white transition-colors duration-300">
+                    <p.icon size={20} strokeWidth={1.5} />
+                </div>
+                <div className="text-left">
+                    <h5 className="text-stone-700 font-medium group-hover:text-stone-900 transition-colors">{p.name}</h5>
+                    <p className="text-stone-400 text-xs">{p.desc}</p>
+                </div>
+            </motion.button>
+        ))}
       </div>
     </div>
   );

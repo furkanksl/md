@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "my-drawer",
-        "width": 450,
-        "height": 900,
+        "width": 430,
+        "height": 800,
         "decorations": false,
         "transparent": true,
         "shadow": false,
@@ -24,7 +24,8 @@
     ],
     "security": {
       "csp": null
-    }
+    },
+    "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,

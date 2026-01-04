@@ -1,68 +1,76 @@
 import { useState } from 'react';
-import { Globe, Loader2, Sparkles } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const ScrapingView = () => {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  const handleScrape = () => {
+  const handleRun = () => {
+    if (!url) return;
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 2000);
+    setProgress(0);
+    
+    // Simulate progress
+    const interval = setInterval(() => {
+        setProgress(p => {
+            if (p >= 100) {
+                clearInterval(interval);
+                setTimeout(() => setIsLoading(false), 500);
+                return 100;
+            }
+            return p + 2;
+        });
+    }, 50);
   };
 
   return (
-    <div className="flex flex-col h-full bg-blue-50/50 p-4 gap-4">
-      {/* Input Area */}
-      <div className="flex flex-col gap-3 p-4 bg-white border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-        <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500">Target URL</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50 border-2 border-zinc-200 rounded-lg focus-within:border-blue-500 transition-colors">
-                <Globe size={16} className="text-zinc-400" />
-                <input 
-                    className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-zinc-300 font-mono"
-                    placeholder="https://example.com"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                />
-            </div>
-        </div>
+    <div className="h-full px-8 flex flex-col justify-center gap-12">
+      <div className="text-center space-y-2">
+        <h2 className="text-3xl font-light text-stone-800">Web Reader</h2>
+        <p className="text-stone-400">Extract content cleanly.</p>
+      </div>
 
-        <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500">Extraction Prompt</label>
-            <textarea 
-                className="w-full h-20 p-3 bg-zinc-50 border-2 border-zinc-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors resize-none placeholder:text-zinc-300"
-                placeholder="Describe what data to extract..."
+      <div className="bg-white p-2 rounded-[2rem] shadow-lg shadow-stone-200/50 border border-stone-100 flex items-center relative overflow-hidden">
+        {isLoading && (
+            <motion.div 
+                className="absolute bottom-0 left-0 h-1 bg-stone-200"
+                style={{ width: `${progress}%` }}
+                layoutId="progress"
             />
-        </div>
-
-        <button 
-            onClick={handleScrape}
+        )}
+        
+        <input 
+            className="flex-1 h-12 bg-transparent pl-6 pr-4 text-stone-600 placeholder:text-stone-300 focus:outline-none"
+            placeholder="https://example.com"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
             disabled={isLoading}
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-500 text-white font-bold rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+        
+        <button 
+            onClick={handleRun}
+            disabled={isLoading || !url}
+            className="w-12 h-12 bg-stone-800 rounded-full flex items-center justify-center text-white disabled:bg-stone-100 disabled:text-stone-300 transition-colors shrink-0"
         >
-            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-            {isLoading ? 'PROCESSING...' : 'START SCRAPING'}
+            {isLoading ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}
         </button>
       </div>
 
-      {/* Recent Results */}
-      <div className="flex-1 flex flex-col gap-2 overflow-hidden">
-        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider px-1">Recent History</h3>
-        <div className="flex-1 overflow-y-auto space-y-2 p-1">
-            {[1, 2, 3].map((i) => (
-                <div key={i} className="p-3 bg-white border-2 border-zinc-100 rounded-xl hover:border-blue-200 transition-colors cursor-pointer">
-                    <div className="flex justify-between items-start mb-1">
-                        <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">COMPLETED</span>
-                        <span className="text-[10px] text-zinc-400">2h ago</span>
-                    </div>
-                    <div className="text-sm font-bold truncate">https://news.ycombinator.com</div>
-                    <div className="text-xs text-zinc-500 mt-1 line-clamp-2">
-                        Extracted 30 top stories with points and comments...
-                    </div>
-                </div>
-            ))}
-        </div>
-      </div>
+      <AnimatePresence>
+        {!isLoading && progress === 100 && (
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="bg-stone-50 rounded-3xl p-6 text-center"
+            >
+                <p className="text-stone-500 font-medium">Extraction Complete</p>
+                <p className="text-stone-400 text-sm mt-1">Data saved to clipboard</p>
+            </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
