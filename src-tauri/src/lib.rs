@@ -1,11 +1,74 @@
 pub mod layout_manager;
 
-use tauri_plugin_sql::{Migration, MigrationKind};
-use tauri::Manager;
-use core_foundation::base::TCFType;
-use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
 use base64::prelude::*;
+use core_foundation::base::TCFType;
+use core_graphics::event::{CGEvent, CGEventTapLocation};
+use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 use layout_manager::{get_open_windows, restore_windows, WindowInfo};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use tauri::{Emitter, Manager, PhysicalPosition};
+use tauri_plugin_sql::{Migration, MigrationKind};
+use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+
+// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+
+static IS_DRAWER_OPEN: AtomicBool = AtomicBool::new(false);
+static IS_ANIMATING: AtomicBool = AtomicBool::new(false);
+
+#[tauri::command]
+fn hide_drawer(window: tauri::Window) {
+    if !IS_DRAWER_OPEN.load(Ordering::Relaxed) || IS_ANIMATING.load(Ordering::Relaxed) {
+        return;
+    }
+
+    std::thread::spawn(move || {
+        IS_ANIMATING.store(true, Ordering::Relaxed);
+
+        let monitor = window
+            .current_monitor()
+            .ok()
+            .flatten()
+            .or_else(|| window.primary_monitor().ok().flatten());
+        let scale_factor = monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(2.0);
+        let screen_height = monitor.as_ref().map(|m| m.size().height).unwrap_or(2160); // Default to a common Retina height
+
+        let width = 430.0 * scale_factor;
+        let height = 800.0 * scale_factor;
+
+        let start_x = 0;
+        let end_x = -width as i32;
+        let center_y = ((screen_height as f64 - height) / 2.0) as i32;
+
+        let duration_ms = 200;
+        let steps = 20;
+        let step_delay = duration_ms / steps;
+
+        for i in 0..=steps {
+            let t = i as f64 / steps as f64;
+            // Ease out cubic
+            let eased_t = 1.0 - (1.0 - t).powi(3);
+            let current_x = (start_x as f64 + (end_x as f64 - start_x as f64) * eased_t) as i32;
+
+            window
+                .set_position(PhysicalPosition::new(current_x, center_y))
+                .unwrap_or(());
+            std::thread::sleep(Duration::from_millis(step_delay));
+        }
+
+        // Ensure final position
+        window
+            .set_position(PhysicalPosition::new(end_x, center_y))
+            .unwrap_or(());
+
+        // Enable click-through when hidden
+        window.set_ignore_cursor_events(true).unwrap_or(());
+
+        IS_DRAWER_OPEN.store(false, Ordering::Relaxed);
+        IS_ANIMATING.store(false, Ordering::Relaxed);
+    });
+}
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -32,14 +95,14 @@ fn get_app_icon(path: String) -> Result<String, String> {
 
         // Convert to TIFF
         let tiff_data: id = msg_send![icon, TIFFRepresentation];
-        
+
         // Convert to BitmapRep
         let bitmap_rep: id = msg_send![class!(NSBitmapImageRep), imageRepWithData: tiff_data];
-        
+
         // Convert to PNG
         // NSPNGFileType = 4
         let png_data: id = msg_send![bitmap_rep, representationUsingType: 4 properties: nil];
-        
+
         if png_data == nil {
             return Err("Failed to convert to PNG".to_string());
         }
@@ -47,7 +110,7 @@ fn get_app_icon(path: String) -> Result<String, String> {
         let length: usize = msg_send![png_data, length];
         let bytes: *const u8 = msg_send![png_data, bytes];
         let slice = std::slice::from_raw_parts(bytes, length);
-        
+
         let base64 = BASE64_STANDARD.encode(slice);
         Ok(format!("data:image/png;base64,{}", base64))
     }
@@ -114,12 +177,10 @@ fn check_accessibility_permission() -> bool {
 fn request_accessibility_permission() {
     #[cfg(target_os = "macos")]
     unsafe {
-        let options = core_foundation::dictionary::CFDictionary::from_CFType_pairs(
-            &[(
-                core_foundation::string::CFString::new("AXTrustedCheckOptionPrompt"),
-                core_foundation::boolean::CFBoolean::true_value(),
-            )],
-        );
+        let options = core_foundation::dictionary::CFDictionary::from_CFType_pairs(&[(
+            core_foundation::string::CFString::new("AXTrustedCheckOptionPrompt"),
+            core_foundation::boolean::CFBoolean::true_value(),
+        )]);
         accessibility_sys::AXIsProcessTrustedWithOptions(options.as_concrete_TypeRef());
     }
 }
@@ -131,17 +192,19 @@ async fn fetch_webpage(url: String) -> Result<String, String> {
         .build()
         .map_err(|e| e.to_string())?;
 
-    let resp = client.get(&url)
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
+    let resp = client.get(&url).send().await.map_err(|e| e.to_string())?;
 
     let html = resp.text().await.map_err(|e| e.to_string())?;
-    
+
     // Sanitize and convert to text
     let text = html2text::from_read(html.as_bytes(), 80).map_err(|e| e.to_string())?;
-    
+
     Ok(text)
+}
+
+#[tauri::command]
+fn set_ignore_mouse_events(ignore: bool, window: tauri::Window) {
+    window.set_ignore_cursor_events(ignore).unwrap_or(());
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -218,7 +281,7 @@ pub fn run() {
                 );
             ",
             kind: MigrationKind::Up,
-        }
+        },
     ];
 
     tauri::Builder::default()
@@ -228,7 +291,99 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             {
                 apply_macos_window_customizations(&window);
+
+                // Check and request accessibility permissions on startup
+                unsafe {
+                    if !accessibility_sys::AXIsProcessTrusted() {
+                        let options =
+                            core_foundation::dictionary::CFDictionary::from_CFType_pairs(&[(
+                                core_foundation::string::CFString::new(
+                                    "AXTrustedCheckOptionPrompt",
+                                ),
+                                core_foundation::boolean::CFBoolean::true_value(),
+                            )]);
+                        accessibility_sys::AXIsProcessTrustedWithOptions(
+                            options.as_concrete_TypeRef(),
+                        );
+                    }
+                }
             }
+
+            // Start Mouse Polling Thread
+            let handle = app.handle().clone();
+            std::thread::spawn(move || {
+                loop {
+                    // Check mouse position using CoreGraphics
+                    if let Ok(event) = CGEvent::new(
+                        CGEventSource::new(CGEventSourceStateID::HIDSystemState).unwrap(),
+                    ) {
+                        let point = event.location();
+
+                        // Trigger if mouse is at the left edge AND drawer is closed AND not animating
+                        if point.x < 5.0
+                            && !IS_DRAWER_OPEN.load(Ordering::Relaxed)
+                            && !IS_ANIMATING.load(Ordering::Relaxed)
+                        {
+                            if let Some(window) = handle.get_webview_window("main") {
+                                IS_ANIMATING.store(true, Ordering::Relaxed);
+                                let win_clone = window.clone();
+
+                                std::thread::spawn(move || {
+                                    // Disable click-through before showing
+                                    win_clone.set_ignore_cursor_events(false).unwrap_or(());
+
+                                    win_clone.set_focus().unwrap_or(());
+
+                                    let monitor = win_clone
+                                        .current_monitor()
+                                        .ok()
+                                        .flatten()
+                                        .or_else(|| win_clone.primary_monitor().ok().flatten());
+                                    let scale_factor =
+                                        monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(2.0);
+                                    let screen_height =
+                                        monitor.as_ref().map(|m| m.size().height).unwrap_or(2160);
+
+                                    let width = 430.0 * scale_factor;
+                                    let height = 800.0 * scale_factor; // Window height from config
+
+                                    let start_x = -width as i32;
+                                    let end_x = 0;
+                                    let center_y = ((screen_height as f64 - height) / 2.0) as i32;
+
+                                    let duration_ms = 200;
+                                    let steps = 20;
+                                    let step_delay = duration_ms / steps;
+
+                                    for i in 0..=steps {
+                                        let t = i as f64 / steps as f64;
+                                        // Ease out cubic
+                                        let eased_t = 1.0 - (1.0 - t).powi(3);
+                                        let current_x = (start_x as f64
+                                            + (end_x as f64 - start_x as f64) * eased_t)
+                                            as i32;
+
+                                        win_clone
+                                            .set_position(PhysicalPosition::new(
+                                                current_x, center_y,
+                                            ))
+                                            .unwrap_or(());
+                                        std::thread::sleep(Duration::from_millis(step_delay));
+                                    }
+
+                                    win_clone
+                                        .set_position(PhysicalPosition::new(end_x, center_y))
+                                        .unwrap_or(());
+
+                                    IS_DRAWER_OPEN.store(true, Ordering::Relaxed);
+                                    IS_ANIMATING.store(false, Ordering::Relaxed);
+                                });
+                            }
+                        }
+                    }
+                    std::thread::sleep(Duration::from_millis(50));
+                }
+            });
 
             Ok(())
         })
@@ -243,16 +398,18 @@ pub fn run() {
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![
-            greet, 
-            get_app_icon, 
-            launch_app, 
-            get_windows, 
+            greet,
+            get_app_icon,
+            launch_app,
+            get_windows,
             restore_layout,
             snap_active_window,
             apply_preset_layout,
             check_accessibility_permission,
             request_accessibility_permission,
-            fetch_webpage
+            fetch_webpage,
+            set_ignore_mouse_events,
+            hide_drawer
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -275,5 +432,11 @@ fn apply_macos_window_customizations(window: &tauri::WebviewWindow) {
         let clear_color: id = msg_send![class!(NSColor), clearColor];
         let _: () = msg_send![ns_window, setBackgroundColor: clear_color];
         let _: () = msg_send![ns_window, setHasShadow: false];
+        // Initially ignore mouse events so user can click through
+        let _: () = msg_send![ns_window, setIgnoresMouseEvents: true];
+        // Ensure it floats above
+        let _: () = msg_send![ns_window, setLevel: 5]; // kCGFloatingWindowLevel
+                                                       // Allow joining all spaces (desktops)
+        let _: () = msg_send![ns_window, setCollectionBehavior: 1]; // NSWindowCollectionBehaviorCanJoinAllSpaces
     }
 }

@@ -15,11 +15,17 @@
         "title": "my-drawer",
         "width": 430,
         "height": 800,
+        "x": -430,
+        "y": 0,
+        "center": false,
         "decorations": false,
         "transparent": true,
         "shadow": false,
-        "resizable": true,
-        "dragDropEnabled": false
+        "resizable": false,
+        "dragDropEnabled": false,
+        "visible": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
       }
     ],
     "security": {

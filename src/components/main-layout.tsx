@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useUIStore } from "@/stores/ui-store";
 import { clsx } from "clsx";
 import { ChatView } from "./ai/chat-view";
@@ -20,6 +23,25 @@ import {
 export const MainLayout = () => {
   const { activeView, setActiveView } = useUIStore();
 
+  useEffect(() => {
+    // Ensure window is set up
+    invoke('set_ignore_mouse_events', { ignore: false, window: getCurrentWindow() });
+  }, []);
+
+  const handleBlur = () => {
+      // Trigger native slide out on blur
+      invoke('hide_drawer');
+  };
+
+  // Listen for window blur event from Tauri
+  useEffect(() => {
+      const appWindow = getCurrentWindow();
+      const unlistenBlur = appWindow.listen('tauri://blur', handleBlur);
+      return () => {
+          unlistenBlur.then(f => f());
+      };
+  }, []);
+
   const navItems = [
     { id: "chat", label: "Journal", icon: MessageCircle },
     { id: "clipboard", label: "Collect", icon: Archive },
@@ -38,7 +60,9 @@ export const MainLayout = () => {
       />
 
       {/* Main Card */}
-      <div className="flex-1 flex flex-col bg-[#FAF9F6] rounded-[2rem] overflow-hidden relative border-none">
+      <div 
+        className="flex-1 flex flex-col bg-[#FAF9F6] rounded-[2rem] overflow-hidden relative border-none h-full"
+      >
         {/* Minimal Header */}
         <header
           className="h-16 shrink-0 flex items-center justify-between px-4 z-50"
