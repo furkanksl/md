@@ -19,17 +19,14 @@ body {
   @apply w-full h-full flex flex-col;
 }
 
-/* Minimalist Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+/* Hide scrollbar for all elements while maintaining scroll functionality */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-stone-200 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-stone-300;
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 @layer base {
