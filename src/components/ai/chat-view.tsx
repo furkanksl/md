@@ -87,6 +87,7 @@ export const ChatView = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 className="absolute inset-0 bg-stone-50/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center border-2 border-dashed border-stone-300 rounded-[2rem] m-4"
             >
                 <div className="p-6 bg-white rounded-full shadow-lg shadow-stone-200/50 mb-4">

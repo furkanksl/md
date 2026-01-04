@@ -117,6 +117,7 @@ export const ScrapingView = () => {
                         key={item.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
                         className={clsx(
                             "p-4 rounded-2xl border cursor-pointer transition-all hover:shadow-md group relative",
                             selectedResult === item.result 
@@ -155,6 +156,7 @@ export const ScrapingView = () => {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.2 }}
                         className="flex-[2] bg-white rounded-3xl border border-stone-100 shadow-sm overflow-hidden flex flex-col absolute inset-0 md:static z-20"
                     >
                         <div className="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50/50">

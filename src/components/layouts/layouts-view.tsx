@@ -197,14 +197,14 @@ export const LayoutsView = () => {
                     <div className="grid grid-cols-1 gap-4">
                         <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 ml-1">Snapshots</h3>
                         {layouts.map((layout) => (
-                            <motion.div
-                                key={layout.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="bg-white p-5 rounded-2xl border border-stone-100 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all group relative overflow-hidden"
-                            >
-                                <div className="flex justify-between items-start mb-4">
+                                                    <motion.div
+                                                        key={layout.id}
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        exit={{ opacity: 0 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        className="bg-white p-5 rounded-2xl border border-stone-100 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all group relative overflow-hidden"
+                                                    >                                <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 bg-stone-50 rounded-xl flex items-center justify-center text-stone-400">
                                             <Layout size={20} strokeWidth={1.5} />

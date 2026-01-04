@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Inter', sans-serif; /* Clean, humanistic sans-serif */
+  font-family: "Inter", sans-serif; /* Clean, humanistic sans-serif */
   -webkit-font-smoothing: antialiased;
 }
 
@@ -21,8 +21,8 @@ body {
 
 /* Hide scrollbar for all elements while maintaining scroll functionality */
 * {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 *::-webkit-scrollbar {
@@ -34,26 +34,26 @@ body {
     /* Zen / Organic Minimalist */
     --background: 40 20% 98%; /* #FAF9F6 - Off White / Paper */
     --foreground: 24 5% 26%; /* #44403C - Warm Charcoal */
-    
+
     --card: 0 0% 100%;
     --card-foreground: 24 5% 26%;
-    
+
     --primary: 150 10% 50%; /* #738F82 - Muted Sage */
     --primary-foreground: 0 0% 100%;
-    
+
     --secondary: 30 20% 94%; /* #F2EFE9 - Warm Light Gray */
     --secondary-foreground: 24 5% 26%;
-    
+
     --muted: 30 20% 90%;
     --muted-foreground: 24 5% 60%;
-    
+
     --accent: 20 20% 80%; /* #D4C5BE - Taupe */
     --accent-foreground: 24 5% 26%;
-    
+
     --border: 30 10% 90%;
     --input: 30 10% 90%;
     --ring: 150 10% 50%;
-    
+
     --radius: 1.5rem; /* Very round corners */
   }
 }
@@ -69,10 +69,16 @@ body {
 
 /* Soft Fade Animations */
 @keyframes soft-fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-soft-in {
-  animation: soft-fade-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: soft-fade-in 0.1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }

@@ -63,9 +63,10 @@ export const MainLayout = () => {
               initial={{ opacity: 0, filter: "blur(10px)" }}
               animate={{ opacity: 1, filter: "blur(0px)" }}
               exit={{ opacity: 0, filter: "blur(10px)" }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
               className="h-full w-full"
             >
+              {" "}
               {activeView === "chat" && <ChatView />}
               {activeView === "clipboard" && <ClipboardView />}
               {activeView === "shortcuts" && <ShortcutsView />}
@@ -101,7 +102,7 @@ export const MainLayout = () => {
                       transition={{
                         type: "spring",
                         bounce: 0.2,
-                        duration: 0.6,
+                        duration: 0.2,
                       }}
                     />
                   )}

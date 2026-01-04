@@ -192,6 +192,7 @@ export const ShortcutsView = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="absolute inset-0 bg-stone-50/95 backdrop-blur-sm z-50 flex flex-col p-6 overflow-hidden"
           >
             <div className="flex items-center gap-3 mb-6 shrink-0">
