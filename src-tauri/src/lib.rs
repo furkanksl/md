@@ -87,6 +87,18 @@ fn restore_layout(windows: Vec<WindowInfo>) {
 }
 
 #[tauri::command]
+fn snap_active_window(direction: String) {
+    let pid = std::process::id() as i32;
+    layout_manager::snap_active_window(direction, pid);
+}
+
+#[tauri::command]
+fn apply_preset_layout(layout: String) {
+    let pid = std::process::id() as i32;
+    layout_manager::apply_preset_layout(layout, pid);
+}
+
+#[tauri::command]
 fn check_accessibility_permission() -> bool {
     #[cfg(target_os = "macos")]
     unsafe {
@@ -113,15 +125,23 @@ fn request_accessibility_permission() {
 }
 
 #[tauri::command]
-fn snap_active_window(direction: String) {
-    let pid = std::process::id() as i32;
-    layout_manager::snap_active_window(direction, pid);
-}
+async fn fetch_webpage(url: String) -> Result<String, String> {
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        .build()
+        .map_err(|e| e.to_string())?;
 
-#[tauri::command]
-fn apply_preset_layout(layout: String) {
-    let pid = std::process::id() as i32;
-    layout_manager::apply_preset_layout(layout, pid);
+    let resp = client.get(&url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let html = resp.text().await.map_err(|e| e.to_string())?;
+    
+    // Sanitize and convert to text
+    let text = html2text::from_read(html.as_bytes(), 80).map_err(|e| e.to_string())?;
+    
+    Ok(text)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -231,7 +251,8 @@ pub fn run() {
             snap_active_window,
             apply_preset_layout,
             check_accessibility_permission,
-            request_accessibility_permission
+            request_accessibility_permission,
+            fetch_webpage
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
