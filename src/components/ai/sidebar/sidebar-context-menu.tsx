@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import {
   Folder,
   Trash2,
@@ -27,7 +28,7 @@ export const SidebarContextMenu = ({
   folders,
   onClose,
 }: SidebarContextMenuProps) => {
-  return (
+  return createPortal(
     <div
       className="fixed z-[60] bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 min-w-[160px] py-1 text-sm font-medium overflow-hidden"
       style={{ top: y, left: x }}
@@ -86,6 +87,7 @@ export const SidebarContextMenu = ({
       >
         <Trash2 size={14} /> Delete
       </button>
-    </div>
+    </div>,
+    document.body
   );
 };

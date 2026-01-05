@@ -60,6 +60,7 @@ export const FolderItem = ({
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onKeyDown={(e) => {
+                  e.stopPropagation();
                   if (e.key === "Enter") saveEditing(folder.id, true);
                 }}
                 autoFocus

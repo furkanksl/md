@@ -53,6 +53,7 @@ export const ChatItem = ({
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={(e) => {
+                e.stopPropagation();
                 if (e.key === "Enter") saveEditing(chat.id, false);
               }}
               autoFocus
