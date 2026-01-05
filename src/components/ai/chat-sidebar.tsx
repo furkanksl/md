@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { useChatStore } from "@/stores/chat-store";
 import {
   Folder,
-  MessageCircle,
   Plus,
-  ChevronRight,
-  ChevronDown,
-  Trash2,
-  Edit2,
 } from "lucide-react";
-import { clsx } from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   DndContext,
@@ -19,317 +12,26 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragOverlay,
-  defaultDropAnimationSideEffects,
-  DragStartEvent,
-  DragEndEvent,
-  DragOverEvent,
 } from "@dnd-kit/core";
 import {
   sortableKeyboardCoordinates,
-  useSortable,
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+
+import { SidebarContextMenu } from "./sidebar/sidebar-context-menu";
+import { SortableItem } from "./sidebar/sortable-item";
+import { ChatItem } from "./sidebar/chat-item";
+import { SortableFolder } from "./sidebar/sortable-folder";
+import { DroppableRootShim } from "./sidebar/droppable-root-shim";
+import { useSidebarDnd } from "./sidebar/use-sidebar-dnd";
+import { SidebarDragOverlay } from "./sidebar/sidebar-drag-overlay";
 
 interface ChatSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-// ------------------------------------------------------------------
-// SIMPLE CONTEXT MENU
-// ------------------------------------------------------------------
-const SidebarContextMenu = ({
-  x,
-  y,
-  type,
-  onRename,
-  onDelete,
-  onMoveToRoot,
-  onMoveToFolder,
-  folders,
-  onClose,
-}: any) => {
-  return (
-    <div
-      className="fixed z-[60] bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 min-w-[160px] py-1 text-sm font-medium overflow-hidden"
-      style={{ top: y, left: x }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        onClick={() => {
-          onRename();
-          onClose();
-        }}
-        className="w-full text-left px-4 py-2 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 flex items-center gap-2"
-      >
-        <Edit2 size={14} /> Rename
-      </button>
-
-      {type === "chat" && onMoveToRoot && (
-        <button
-          onClick={() => {
-            onMoveToRoot();
-            onClose();
-          }}
-          className="w-full text-left px-4 py-2 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 flex items-center gap-2"
-        >
-          <Folder size={14} /> Remove from Folder
-        </button>
-      )}
-
-      {type === "chat" && folders.length > 0 && (
-        <div className="border-t border-stone-100 dark:border-stone-800 my-1 pt-1">
-          <div className="px-4 py-1 text-[10px] text-stone-400 uppercase tracking-wider">
-            Move to
-          </div>
-          {folders.map((f: any) => (
-            <button
-              key={f.id}
-              onClick={() => {
-                onMoveToFolder(f.id);
-                onClose();
-              }}
-              className="w-full text-left px-4 py-1.5 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-400 truncate"
-            >
-              {f.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="border-t border-stone-100 dark:border-stone-800 my-1" />
-
-      <button
-        onClick={() => {
-          onDelete();
-          onClose();
-        }}
-        className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 flex items-center gap-2"
-      >
-        <Trash2 size={14} /> Delete
-      </button>
-    </div>
-  );
-};
-
-// ------------------------------------------------------------------
-// SORTABLE ITEM WRAPPER
-// ------------------------------------------------------------------
-const SortableItem = ({
-  id,
-  data,
-  children,
-}: {
-  id: string;
-  data: any;
-  children: React.ReactNode;
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, data });
-
-  const style = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="touch-none"
-    >
-      {children}
-    </div>
-  );
-};
-
-// ------------------------------------------------------------------
-// CHAT ITEM COMPONENT
-// ------------------------------------------------------------------
-const ChatItem = ({
-  chat,
-  activeConversationId,
-  setActiveConversationId,
-  editingId,
-  editValue,
-  setEditValue,
-  saveEditing,
-  onContextMenu,
-  onClose,
-}: any) => {
-  return (
-    <div
-      className={clsx(
-        "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer text-sm group transition-colors",
-        activeConversationId === chat.id
-          ? "bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-100 shadow-sm shadow-stone-200/50 dark:shadow-none"
-          : "text-stone-500 dark:text-stone-400 hover:bg-stone-100/50 dark:hover:bg-stone-800/50 hover:text-stone-700 dark:hover:text-stone-200"
-      )}
-      onClick={() => {
-        if (editingId !== chat.id) {
-          setActiveConversationId(chat.id);
-          onClose();
-        }
-      }}
-      onContextMenu={(e) => onContextMenu(e, "chat", chat.id)}
-    >
-      <div className="flex items-center gap-3 truncate flex-1">
-        <MessageCircle size={14} className="flex-shrink-0 opacity-70" />
-        {editingId === chat.id ? (
-          <div
-            className="flex items-center flex-1"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <input
-              className="w-full bg-transparent border-none p-0 text-sm text-stone-800 dark:text-stone-100 focus:outline-none"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") saveEditing(chat.id, false);
-              }}
-              autoFocus
-              onBlur={() => saveEditing(chat.id, false)}
-            />
-          </div>
-        ) : (
-          <span className="truncate font-medium">{chat.title}</span>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ------------------------------------------------------------------
-// FOLDER ITEM COMPONENT
-// ------------------------------------------------------------------
-const FolderItem = ({
-  folder,
-  expanded,
-  toggleFolder,
-  editingId,
-  editValue,
-  setEditValue,
-  saveEditing,
-  onContextMenu,
-  children,
-  isOver,
-}: any) => {
-  return (
-    <div
-      className={clsx(
-        "flex flex-col rounded-xl transition-all duration-200",
-        isOver &&
-          "bg-stone-100 dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-stone-700"
-      )}
-    >
-      <div
-        className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100/50 dark:hover:bg-stone-800/50 cursor-pointer group transition-colors"
-        onClick={() => toggleFolder(folder.id)}
-        onContextMenu={(e) => onContextMenu(e, "folder", folder.id)}
-      >
-        <div className="flex items-center gap-3 overflow-hidden flex-1">
-          {expanded ? (
-            <ChevronDown size={14} className="text-stone-400" />
-          ) : (
-            <ChevronRight size={14} className="text-stone-400" />
-          )}
-          <Folder size={14} className="text-stone-400 flex-shrink-0" />
-
-          {editingId === folder.id ? (
-            <div
-              className="flex items-center flex-1"
-              onClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <input
-                className="w-full bg-transparent border-none p-0 text-sm font-medium text-stone-800 dark:text-stone-100 focus:outline-none"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveEditing(folder.id, true);
-                }}
-                autoFocus
-                onBlur={() => saveEditing(folder.id, true)}
-              />
-            </div>
-          ) : (
-            <span className="text-sm font-medium text-stone-600 dark:text-stone-400 truncate">
-              {folder.name}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="ml-4 pl-2 border-l border-stone-200 dark:border-stone-800 overflow-hidden"
-          >
-            {children}
-            {React.Children.count(children) === 0 && (
-              <div className="text-[10px] text-stone-300 dark:text-stone-600 p-2 italic">
-                Empty
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-// ------------------------------------------------------------------
-// SORTABLE FOLDER WRAPPER
-// ------------------------------------------------------------------
-const SortableFolder = ({ id, data, children, folderProps }: any) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-    isOver,
-  } = useSortable({ id, data });
-
-  const style = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="touch-none"
-    >
-      <FolderItem {...folderProps} isOver={isOver}>
-        {children}
-      </FolderItem>
-    </div>
-  );
-};
 
 // ------------------------------------------------------------------
 // MAIN SIDEBAR
@@ -361,7 +63,23 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
   >({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [activeDragItem, setActiveDragItem] = useState<any>(null);
+  const {
+    activeDragItem,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+  } = useSidebarDnd(
+    folderOrder,
+    rootChatOrder,
+    folders,
+    reorderFolders,
+    reorderRootChats,
+    reorderFolderChats,
+    moveChatToFolder,
+    moveChatToRoot,
+    setExpandedFolders
+  );
+
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -410,92 +128,6 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({ x: e.clientX, y: e.clientY, type, id });
-  };
-
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const type = active.data.current?.type;
-    if (type === "chat") {
-      setActiveDragItem({ ...active.data.current?.chat, type: "chat" });
-    } else if (type === "folder") {
-      setActiveDragItem({ ...active.data.current?.folder, type: "folder" });
-    }
-  };
-
-  const handleDragOver = (event: DragOverEvent) => {
-    const { over } = event;
-    if (!over) return;
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveDragItem(null);
-
-    if (!over) return;
-
-    const activeId = active.id as string;
-    const overId = over.id as string;
-    const activeType = active.data.current?.type;
-    const overType = over.data.current?.type;
-
-    if (activeType === "folder" && overType === "folder") {
-      const oldIndex = folderOrder.indexOf(activeId);
-      const newIndex = folderOrder.indexOf(overId);
-      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-        reorderFolders(arrayMove(folderOrder, oldIndex, newIndex));
-      }
-      return;
-    }
-
-    if (activeType === "chat" && overType === "chat") {
-      const activeInRoot = rootChatOrder.includes(activeId);
-      const overInRoot = rootChatOrder.includes(overId);
-
-      if (activeInRoot && overInRoot) {
-        const oldIndex = rootChatOrder.indexOf(activeId);
-        const newIndex = rootChatOrder.indexOf(overId);
-        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-          reorderRootChats(arrayMove(rootChatOrder, oldIndex, newIndex));
-        }
-        return;
-      }
-    }
-
-    if (activeType === "chat" && overType === "chat") {
-      const sourceFolder = Object.values(folders).find((f) =>
-        f.conversationIds.includes(activeId)
-      );
-      const targetFolder = Object.values(folders).find((f) =>
-        f.conversationIds.includes(overId)
-      );
-
-      if (sourceFolder && targetFolder && sourceFolder.id === targetFolder.id) {
-        const oldIndex = sourceFolder.conversationIds.indexOf(activeId);
-        const newIndex = sourceFolder.conversationIds.indexOf(overId);
-        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-          reorderFolderChats(
-            sourceFolder.id,
-            arrayMove(sourceFolder.conversationIds, oldIndex, newIndex)
-          );
-        }
-        return;
-      }
-    }
-
-    if (activeType === "chat" && overType === "folder") {
-      moveChatToFolder(activeId, overId);
-      setExpandedFolders((prev) => ({ ...prev, [overId]: true }));
-      return;
-    }
-
-    if (
-      activeType === "chat" &&
-      (overId === "root-droppable" ||
-        (rootChatOrder.includes(overId) && !rootChatOrder.includes(activeId)))
-    ) {
-      moveChatToRoot(activeId);
-      return;
-    }
   };
 
   return (
@@ -577,8 +209,6 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
                         editValue,
                         setEditValue,
                         saveEditing,
-                        startEditing,
-                        deleteFolder,
                         onContextMenu: handleContextMenu,
                       }}
                     >
@@ -605,8 +235,6 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
                                 editValue={editValue}
                                 setEditValue={setEditValue}
                                 saveEditing={saveEditing}
-                                startEditing={startEditing}
-                                deleteConversation={deleteConversation}
                                 onClose={onClose}
                                 onContextMenu={handleContextMenu}
                               />
@@ -645,8 +273,6 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
                       editValue={editValue}
                       setEditValue={setEditValue}
                       saveEditing={saveEditing}
-                      startEditing={startEditing}
-                      deleteConversation={deleteConversation}
                       onClose={onClose}
                       onContextMenu={handleContextMenu}
                     />
@@ -658,31 +284,7 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
             <DroppableRootShim />
           </div>
 
-          {createPortal(
-            <DragOverlay
-              dropAnimation={{
-                sideEffects: defaultDropAnimationSideEffects({
-                  styles: { active: { opacity: "0.5" } },
-                }),
-              }}
-            >
-              {activeDragItem ? (
-                <div className="bg-white dark:bg-stone-900 px-3 py-2 rounded-xl shadow-xl border border-stone-100 dark:border-stone-800 flex items-center gap-3 w-64 opacity-90 cursor-grabbing">
-                  {activeDragItem.type === "folder" ? (
-                    <Folder size={14} className="text-stone-400" />
-                  ) : (
-                    <MessageCircle size={14} className="text-stone-400" />
-                  )}
-                  <span className="text-sm font-medium text-stone-700 dark:text-stone-300 truncate">
-                    {activeDragItem.type === "folder"
-                      ? activeDragItem.name
-                      : activeDragItem.title}
-                  </span>
-                </div>
-              ) : null}
-            </DragOverlay>,
-            document.body
-          )}
+          <SidebarDragOverlay activeDragItem={activeDragItem} />
         </DndContext>
 
         {contextMenu && (
@@ -709,22 +311,5 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
         )}
       </motion.div>
     </>
-  );
-};
-
-const DroppableRootShim = () => {
-  const { setNodeRef, isOver } = useSortable({
-    id: "root-droppable",
-    data: { type: "root" },
-  });
-  return (
-    <div
-      ref={setNodeRef}
-      className={clsx(
-        "flex-1 min-h-[50px] transition-colors rounded-xl mt-2",
-        isOver &&
-          "bg-stone-50 dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-stone-700 border-dashed border border-stone-300 dark:border-stone-600"
-      )}
-    />
   );
 };
