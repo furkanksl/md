@@ -36,7 +36,7 @@ export const MessageList = () => {
     <div 
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex flex-col gap-6 h-full overflow-y-auto px-3 py-2 scrollbar-none w-full max-w-3xl mx-auto"
+        className="flex flex-col gap-6 h-full overflow-y-auto px-3 py-2 scrollbar-none w-full"
     >
       {messages.map((msg, i) => {
         const isUser = msg.role === 'user';
@@ -47,16 +47,16 @@ export const MessageList = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
             className={clsx(
-              "flex flex-col max-w-[85%]",
+              "flex flex-col max-w-[92%] min-w-0",
               isUser ? "self-end items-end" : "self-start items-start"
             )}
           >
             <div
               className={clsx(
-                "px-4 py-2.5 text-sm leading-relaxed shadow-sm",
+                "px-3.5 py-2 text-xs leading-relaxed shadow-sm",
                 isUser 
-                    ? "bg-stone-800 text-stone-50 dark:bg-stone-100 dark:text-stone-900 rounded-[1.5rem] rounded-tr-none" 
-                    : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 rounded-[1.5rem] rounded-tl-none border border-stone-100 dark:border-stone-800"
+                    ? "bg-stone-800 text-stone-50 dark:bg-stone-100 dark:text-stone-900 rounded-[1.25rem] rounded-tr-none overflow-hidden" 
+                    : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 rounded-[1.25rem] rounded-tl-none border border-stone-100 dark:border-stone-800 overflow-x-auto scrollbar-none"
               )}
             >
               <MarkdownRenderer content={msg.content} />
