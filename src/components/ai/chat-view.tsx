@@ -5,57 +5,64 @@ import { ChatSidebar } from "./chat-sidebar";
 import { useChatStore } from "@/stores/chat-store";
 import { MODELS, getModelById } from "@/core/domain/models";
 import { useSettingsStore } from "@/stores/settings-store";
-import { ChevronDown, Sparkles, History, Upload } from "lucide-react";
+import {
+  ChevronDown,
+  Sparkles,
+  History,
+  Upload,
+  SquarePen,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const ChatView = () => {
-  const { selectedModelId, setSelectedModelId, activeConversationId, conversations, rootChatOrder, setActiveConversationId } = useChatStore();
+  const {
+    selectedModelId,
+    setSelectedModelId,
+    activeConversationId,
+    rootChatOrder,
+    setActiveConversationId,
+    createConversation,
+  } = useChatStore();
   const { aiConfigurations } = useSettingsStore();
-  
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const dragCounter = useRef(0);
-  
+
   const currentModel = getModelById(selectedModelId);
-  const activeChat = activeConversationId ? conversations[activeConversationId] : null;
 
   // Filter available models based on API keys
-  const availableModels = MODELS.filter(m => {
-      const config = aiConfigurations[m.provider];
-      return config && config.apiKey && config.apiKey.length > 0;
+  const availableModels = MODELS.filter((m) => {
+    const config = aiConfigurations[m.provider];
+    return config && config.apiKey && config.apiKey.length > 0;
   });
 
   // Auto-select valid model if current one is invalid
   useEffect(() => {
-      if (availableModels.length > 0) {
-          const isCurrentValid = availableModels.some(m => m.id === selectedModelId);
-          if (!isCurrentValid && availableModels[0]) {
-              setSelectedModelId(availableModels[0].id);
-          }
+    if (availableModels.length > 0) {
+      const isCurrentValid = availableModels.some(
+        (m) => m.id === selectedModelId
+      );
+      if (!isCurrentValid && availableModels[0]) {
+        setSelectedModelId(availableModels[0].id);
       }
+    }
   }, [aiConfigurations, selectedModelId]);
-
-  // Click outside to close dropdown
-  useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-          if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-              setIsDropdownOpen(false);
-          }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   // Auto-select latest chat on mount if none active
   useEffect(() => {
-      if (!activeConversationId && rootChatOrder.length > 0) {
-          // Find most recent by looking at first in root order (assuming sorted) or fallback to any
-          setActiveConversationId(rootChatOrder[0] ?? null);
-      }
+    if (!activeConversationId && rootChatOrder.length > 0) {
+      // Find most recent by looking at first in root order (assuming sorted) or fallback to any
+      setActiveConversationId(rootChatOrder[0] ?? null);
+    }
   }, []);
 
   if (!currentModel) return null;
@@ -122,104 +129,123 @@ export const ChatView = () => {
       {/* Drag Overlay */}
       <AnimatePresence>
         {isDragging && (
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="absolute inset-0 bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-[2rem] m-4"
-            >
-                <div className="p-6 bg-white dark:bg-stone-800 rounded-full shadow-lg shadow-stone-200/50 dark:shadow-black/50 mb-4">
-                    <Upload size={32} className="text-stone-400 dark:text-stone-500" />
-                </div>
-                <h3 className="text-xl font-medium text-stone-600 dark:text-stone-300">Drop files here</h3>
-                <p className="text-stone-400 dark:text-stone-500 mt-1">Add up to 3 attachments</p>
-            </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-[2rem] m-4"
+          >
+            <div className="p-6 bg-white dark:bg-stone-800 rounded-full shadow-lg shadow-stone-200/50 dark:shadow-black/50 mb-4">
+              <Upload
+                size={32}
+                className="text-stone-400 dark:text-stone-500"
+              />
+            </div>
+            <h3 className="text-xl font-medium text-stone-600 dark:text-stone-300">
+              Drop files here
+            </h3>
+            <p className="text-stone-400 dark:text-stone-500 mt-1">
+              Add up to 3 attachments
+            </p>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      <ChatSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <ChatSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* Gentle Header */}
-      <div className="h-12 flex items-center justify-between px-4 shrink-0 relative z-10">
-        <div className="flex items-center gap-3">
-            <button 
-                onClick={() => setIsSidebarOpen(true)}
-                className="p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-all"
-            >
-                <History size={16} strokeWidth={2} />
-            </button>
-            {activeChat && (
-                <span className="text-xs font-medium text-stone-600 dark:text-stone-300 truncate max-w-[150px]">
-                    {activeChat.title}
+      <div className="h-12 grid grid-cols-3 items-center px-4 shrink-0 relative z-10">
+        <div className="flex items-center gap-3 justify-start overflow-hidden">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-all flex-shrink-0"
+          >
+            <History size={16} strokeWidth={2} />
+          </button>
+        </div>
+
+        <div className="flex justify-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors text-xs font-medium px-3 py-1.5 rounded-full hover:bg-stone-50 dark:hover:bg-stone-800 outline-none max-w-xl">
+                <Sparkles
+                  size={12}
+                  className="text-stone-400 dark:text-stone-500 flex-shrink-0"
+                />
+                <span className="truncate">
+                  {currentModel?.name || "Select Model"}
                 </span>
-            )}
-        </div>
-
-        <div className="relative" ref={dropdownRef}>
-            <button 
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors text-xs font-medium px-3 py-1.5 rounded-full hover:bg-stone-50 dark:hover:bg-stone-800"
+                <ChevronDown size={10} className="opacity-50 flex-shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="center"
+              className="w-48 max-h-64 overflow-y-auto scrollbar-none bg-white dark:bg-stone-900 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 py-1 border border-stone-100 dark:border-stone-800 z-50"
             >
-                <Sparkles size={12} className="text-stone-400 dark:text-stone-500" />
-                <span>{currentModel?.name || "Select Model"}</span>
-                <ChevronDown size={10} className={clsx("transition-transform", isDropdownOpen && "rotate-180")} />
-            </button>
-            
-            <AnimatePresence>
-                {isDropdownOpen && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 5 }}
-                        className="absolute top-full right-0 mt-2 w-48 max-h-64 overflow-y-auto scrollbar-none bg-white dark:bg-stone-900 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 py-2 border border-stone-100 dark:border-stone-800 z-20 origin-top-right"
-                    >
-                        {availableModels.length === 0 ? (
-                            <div className="px-4 py-2 text-xs text-stone-400 italic text-center">
-                                No providers configured
-                            </div>
-                        ) : (
-                            availableModels.map(m => (
-                                <button 
-                                    key={m.id}
-                                    onClick={() => { setSelectedModelId(m.id); setIsDropdownOpen(false); }}
-                                    className={clsx(
-                                        "w-full text-left px-4 py-2 text-xs transition-colors flex items-center justify-between",
-                                        selectedModelId === m.id 
-                                            ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
-                                            : "text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/50"
-                                    )}
-                                >
-                                    <span>{m.name}</span>
-                                    {m.capabilities.image && <span className="text-[10px] opacity-40 uppercase">Vision</span>}
-                                </button>
-                            ))
-                        )}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+              {availableModels.length === 0 ? (
+                <div className="px-4 py-2 text-xs text-stone-500 dark:text-stone-400 italic text-center">
+                  No providers configured
+                </div>
+              ) : (
+                availableModels.map((m) => (
+                  <DropdownMenuItem
+                    key={m.id}
+                    onClick={() => setSelectedModelId(m.id)}
+                    className={clsx(
+                      "w-full px-4 py-2 text-xs transition-colors flex items-center justify-between cursor-pointer focus:bg-stone-50 dark:focus:bg-stone-800 focus:text-stone-900 dark:focus:text-stone-100",
+                      selectedModelId === m.id
+                        ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
+                        : "text-stone-600 dark:text-stone-400"
+                    )}
+                  >
+                    <span>{m.name}</span>
+                    {m.capabilities.image && (
+                      <span className="text-[10px] opacity-40 uppercase">
+                        Vision
+                      </span>
+                    )}
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        <div className="w-6" /> {/* Spacer for balance */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => createConversation()}
+            className="p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-all"
+            title="New Chat"
+          >
+            <SquarePen size={16} strokeWidth={2} />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 min-h-0 w-full relative">
         {activeConversationId ? (
-            <MessageList />
+          <MessageList />
         ) : (
-            <div className="h-full flex flex-col items-center justify-center text-stone-300 dark:text-stone-700 gap-4">
-                <div className="w-12 h-12 rounded-full bg-stone-50 dark:bg-stone-900 flex items-center justify-center">
-                    <Sparkles size={20} className="opacity-50" />
-                </div>
-                <p className="text-xs font-medium">How can I help you today?</p>
+          <div className="h-full flex flex-col items-center justify-center text-stone-300 dark:text-stone-700 gap-4">
+            <div className="w-12 h-12 rounded-full bg-stone-50 dark:bg-stone-900 flex items-center justify-center">
+              <Sparkles size={20} className="opacity-50" />
             </div>
+            <p className="text-xs font-medium">How can I help you today?</p>
+          </div>
         )}
       </div>
 
       {/* Input */}
       <div className="py-4 px-3 w-full max-w-3xl mx-auto">
-        <MessageInput attachments={attachments} setAttachments={setAttachments} />
+        <MessageInput
+          attachments={attachments}
+          setAttachments={setAttachments}
+        />
       </div>
     </div>
   );

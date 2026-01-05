@@ -32,6 +32,7 @@ export const MODELS: ModelMetadata[] = [
   { id: "meta-llama/llama-4-maverick-17b-128e-instruct", name: "Llama 4 Maverick (Preview)", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
   { id: "groq/compound", name: "Groq Compound", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
   { id: "moonshotai/kimi-k2-instruct-0905", name: "Kimi K2 Instruct", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
+  { id: "openai/gpt-oss-20b", name: "GPT OSS 20B", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
 
   // Mistral (Latest)
   { id: "mistral-large-latest", name: "Mistral Large 3", provider: "mistral", capabilities: { image: true, audio: false, tools: true } },
