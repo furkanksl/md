@@ -3,26 +3,65 @@ import { MessageList } from "./message-list";
 import { MessageInput } from "./message-input";
 import { ChatSidebar } from "./chat-sidebar";
 import { useChatStore } from "@/stores/chat-store";
+import { MODELS, getModelById } from "@/core/domain/models";
+import { useSettingsStore } from "@/stores/settings-store";
 import { ChevronDown, Sparkles, History, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 
-const MODELS = [
-  { id: "gpt-4", name: "GPT 4" },
-  { id: "claude-3", name: "Claude 3" },
-];
-
 export const ChatView = () => {
-  const { selectedModel, setSelectedModel, activeConversationId } = useChatStore();
+  const { selectedModelId, setSelectedModelId, activeConversationId, conversations, rootChatOrder, setActiveConversationId } = useChatStore();
+  const { aiConfigurations } = useSettingsStore();
+  
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const dragCounter = useRef(0);
   
-  const currentModelName = MODELS.find((m) => m.id === selectedModel)?.name || selectedModel;
+  const currentModel = getModelById(selectedModelId);
+  const activeChat = activeConversationId ? conversations[activeConversationId] : null;
+
+  // Filter available models based on API keys
+  const availableModels = MODELS.filter(m => {
+      const config = aiConfigurations[m.provider];
+      return config && config.apiKey && config.apiKey.length > 0;
+  });
+
+  // Auto-select valid model if current one is invalid
+  useEffect(() => {
+      if (availableModels.length > 0) {
+          const isCurrentValid = availableModels.some(m => m.id === selectedModelId);
+          if (!isCurrentValid && availableModels[0]) {
+              setSelectedModelId(availableModels[0].id);
+          }
+      }
+  }, [aiConfigurations, selectedModelId]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+          if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+              setIsDropdownOpen(false);
+          }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Auto-select latest chat on mount if none active
+  useEffect(() => {
+      if (!activeConversationId && rootChatOrder.length > 0) {
+          // Find most recent by looking at first in root order (assuming sorted) or fallback to any
+          setActiveConversationId(rootChatOrder[0] ?? null);
+      }
+  }, []);
+
+  if (!currentModel) return null;
 
   // Window-level drag and drop handlers
+
   useEffect(() => {
     const handleDragEnter = (e: DragEvent) => {
       e.preventDefault();
@@ -103,20 +142,27 @@ export const ChatView = () => {
 
       {/* Gentle Header */}
       <div className="h-12 flex items-center justify-between px-4 shrink-0 relative z-10">
-        <button 
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-all"
-        >
-            <History size={16} strokeWidth={2} />
-        </button>
+        <div className="flex items-center gap-3">
+            <button 
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-all"
+            >
+                <History size={16} strokeWidth={2} />
+            </button>
+            {activeChat && (
+                <span className="text-xs font-medium text-stone-600 dark:text-stone-300 truncate max-w-[150px]">
+                    {activeChat.title}
+                </span>
+            )}
+        </div>
 
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
             <button 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center gap-2 text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors text-xs font-medium px-3 py-1.5 rounded-full hover:bg-stone-50 dark:hover:bg-stone-800"
             >
                 <Sparkles size={12} className="text-stone-400 dark:text-stone-500" />
-                <span>{currentModelName}</span>
+                <span>{currentModel?.name || "Select Model"}</span>
                 <ChevronDown size={10} className={clsx("transition-transform", isDropdownOpen && "rotate-180")} />
             </button>
             
@@ -126,17 +172,29 @@ export const ChatView = () => {
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 5 }}
-                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-32 bg-white dark:bg-stone-900 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 py-2 border border-stone-100 dark:border-stone-800 z-20"
+                        className="absolute top-full right-0 mt-2 w-48 max-h-64 overflow-y-auto scrollbar-none bg-white dark:bg-stone-900 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 py-2 border border-stone-100 dark:border-stone-800 z-20 origin-top-right"
                     >
-                        {MODELS.map(m => (
-                            <button 
-                                key={m.id}
-                                onClick={() => { setSelectedModel(m.id); setIsDropdownOpen(false); }}
-                                className="w-full text-center py-2 text-xs text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-200 transition-colors"
-                            >
-                                {m.name}
-                            </button>
-                        ))}
+                        {availableModels.length === 0 ? (
+                            <div className="px-4 py-2 text-xs text-stone-400 italic text-center">
+                                No providers configured
+                            </div>
+                        ) : (
+                            availableModels.map(m => (
+                                <button 
+                                    key={m.id}
+                                    onClick={() => { setSelectedModelId(m.id); setIsDropdownOpen(false); }}
+                                    className={clsx(
+                                        "w-full text-left px-4 py-2 text-xs transition-colors flex items-center justify-between",
+                                        selectedModelId === m.id 
+                                            ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
+                                            : "text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/50"
+                                    )}
+                                >
+                                    <span>{m.name}</span>
+                                    {m.capabilities.image && <span className="text-[10px] opacity-40 uppercase">Vision</span>}
+                                </button>
+                            ))
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -146,7 +204,7 @@ export const ChatView = () => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-none w-full max-w-3xl mx-auto">
+      <div className="flex-1 min-h-0 w-full relative">
         {activeConversationId ? (
             <MessageList />
         ) : (

@@ -3,7 +3,6 @@ import { useChatStore } from '@/stores/chat-store';
 import { Paperclip, ArrowUp, X, File as FileIcon } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { convertFileSrc } from '@tauri-apps/api/core';
 
 interface MessageInputProps {
   attachments: File[];
@@ -11,7 +10,7 @@ interface MessageInputProps {
 }
 
 export const MessageInput = ({ attachments, setAttachments }: MessageInputProps) => {
-  const { input, setInput } = useChatStore();
+  const { input, setInput, sendMessage, isStreaming } = useChatStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
@@ -23,32 +22,46 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
       const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(file.name);
       
       if (isImage) {
-        // Try to use Tauri's convertFileSrc for local paths if available (dragged files usually have path)
-        const path = (file as any).path;
-        if (path) {
-          newPreviews[file.name] = convertFileSrc(path);
-        } else {
-          // Fallback to Blob URL for web/uploaded files
-          newPreviews[file.name] = URL.createObjectURL(file);
-        }
+        newPreviews[file.name] = URL.createObjectURL(file);
       }
     });
 
     setPreviews(newPreviews);
 
     return () => {
-      // Cleanup Blob URLs
-      Object.values(newPreviews).forEach(url => {
-        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
-      });
+      Object.values(newPreviews).forEach(url => URL.revokeObjectURL(url));
     };
   }, [attachments]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() && attachments.length === 0) return;
+    if (isStreaming) return;
+
+    const attachmentData = await Promise.all(attachments.map(async (f) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                resolve({
+                    name: f.name,
+                    type: f.type,
+                    size: f.size,
+                    base64: reader.result as string,
+                    path: (f as any).path
+                });
+            };
+            reader.readAsDataURL(f);
+        });
+    }));
+
     setInput("");
     setAttachments([]);
+    
+    try {
+        await sendMessage(input, attachmentData);
+    } catch (err) {
+        console.error(err);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,14 +174,15 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
             placeholder={attachments.length > 0 ? "Add a caption..." : "Type a message..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            disabled={isStreaming}
         />
         
         <button
             type="submit"
-            disabled={!input.trim() && attachments.length === 0}
+            disabled={(!input.trim() && attachments.length === 0) || isStreaming}
             className={clsx(
                 "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
-                (input.trim() || attachments.length > 0)
+                (input.trim() || attachments.length > 0) && !isStreaming
                     ? "bg-stone-800 text-white shadow-md hover:scale-105 dark:bg-stone-100 dark:text-stone-900"
                     : "bg-stone-100 text-stone-300 cursor-not-allowed dark:bg-stone-800 dark:text-stone-600"
             )}

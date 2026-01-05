@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface UIState {
   sidebarVisible: boolean;
@@ -12,14 +13,21 @@ interface UIState {
   toggleSidebar: () => void;
 }
 
-export const useUIStore = create<UIState>((set) => ({
-  sidebarVisible: false,
-  activeView: "chat",
-  theme: "system",
-  isHoveringEdge: false,
-  setSidebarVisible: (visible) => set({ sidebarVisible: visible }),
-  setActiveView: (view) => set({ activeView: view }),
-  setTheme: (theme) => set({ theme }),
-  setHoveringEdge: (hovering) => set({ isHoveringEdge: hovering }),
-  toggleSidebar: () => set((state) => ({ sidebarVisible: !state.sidebarVisible })),
-}));
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      sidebarVisible: false,
+      activeView: "chat",
+      theme: "system",
+      isHoveringEdge: false,
+      setSidebarVisible: (visible) => set({ sidebarVisible: visible }),
+      setActiveView: (view) => set({ activeView: view }),
+      setTheme: (theme) => set({ theme }),
+      setHoveringEdge: (hovering) => set({ isHoveringEdge: hovering }),
+      toggleSidebar: () => set((state) => ({ sidebarVisible: !state.sidebarVisible })),
+    }),
+    {
+      name: "ui-storage",
+    }
+  )
+);

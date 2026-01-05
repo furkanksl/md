@@ -216,7 +216,7 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
                         items={folder.conversationIds}
                         strategy={verticalListSortingStrategy}
                       >
-                        {folder.conversationIds.map((cid) => {
+                        {folder.conversationIds.map((cid: string) => {
                           const chat = conversations[cid];
                           if (!chat) return null;
                           return (

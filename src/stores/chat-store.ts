@@ -1,280 +1,260 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { Conversation, Message } from "@/types/ai";
+import { chatService } from "@/core/application/chat-service";
+import { Conversation, Message } from "@/core/domain/entities";
+import { getModelById } from "@/core/domain/models";
+import { useSettingsStore } from "./settings-store";
 import { v4 as uuidv4 } from "uuid";
 
-interface Folder {
-  id: string;
-  name: string;
-  conversationIds: string[];
-}
-
 interface ChatState {
-  conversations: Record<string, Conversation>; // id -> conversation
-  folders: Record<string, Folder>; // id -> folder
+  // Data
+  conversations: Record<string, Conversation>;
+  folders: Record<string, any>;
+  messages: Message[];
+  folderOrder: string[];
+  rootChatOrder: string[];
   
-  // Ordered Lists
-  folderOrder: string[]; // Order of folders at the top
-  rootChatOrder: string[]; // Order of chats at the root level (below folders)
-
+  // UI State
   activeConversationId: string | null;
-  activeFolderId: string | null;
   input: string;
+  selectedModelId: string;
   isStreaming: boolean;
-  selectedModel: string;
-
+  
   // Actions
-  setActiveConversationId: (id: string | null) => void;
-  setInput: (input: string) => void;
-  setIsStreaming: (isStreaming: boolean) => void;
-  setSelectedModel: (model: string) => void;
+  setInput: (v: string) => void;
+  setSelectedModelId: (v: string) => void;
+  setActiveConversationId: (id: string | null) => Promise<void>;
   
-  createConversation: (title?: string) => string;
-  renameConversation: (id: string, newTitle: string) => void;
-  addMessage: (conversationId: string, message: Message) => void;
-  deleteConversation: (id: string) => void;
+  // Async Actions
+  syncStructure: () => Promise<void>;
+  createConversation: () => Promise<void>;
+  sendMessage: (content: string, attachments: any[]) => Promise<void>;
   
-  createFolder: (name: string) => void;
-  renameFolder: (id: string, newName: string) => void;
-  deleteFolder: (id: string) => void;
-  
-  // DnD Actions
-  reorderFolders: (newOrder: string[]) => void;
-  reorderRootChats: (newOrder: string[]) => void;
-  reorderFolderChats: (folderId: string, newOrder: string[]) => void;
-  
-  moveChatToFolder: (chatId: string, targetFolderId: string) => void;
-  moveChatToRoot: (chatId: string) => void;
-  
-  // Migration/Sync
-  syncStructure: () => void;
+  // Organization
+  createFolder: (name: string) => Promise<void>;
+  deleteFolder: (id: string) => Promise<void>;
+  renameFolder: (id: string, name: string) => Promise<void>;
+  deleteConversation: (id: string) => Promise<void>;
+  renameConversation: (id: string, title: string) => Promise<void>;
+  moveChatToFolder: (chatId: string, folderId: string | null) => Promise<void>;
+  moveChatToRoot: (chatId: string) => Promise<void>;
+  reorderFolders: (order: string[]) => void;
+  reorderRootChats: (order: string[]) => void;
+  reorderFolderChats: (folderId: string, order: string[]) => void;
 }
 
-export const useChatStore = create<ChatState>()(
-  persist(
-    (set) => ({
-      conversations: {},
-      folders: {},
-      folderOrder: [],
-      rootChatOrder: [],
-      activeConversationId: null,
-      activeFolderId: null,
-      input: "",
-      isStreaming: false,
-      selectedModel: "gpt-4-turbo",
+export const useChatStore = create<ChatState>((set, get) => ({
+  conversations: {},
+  folders: {},
+  messages: [],
+  folderOrder: [],
+  rootChatOrder: [],
+  activeConversationId: null,
+  input: "",
+  selectedModelId: "gpt-4o",
+  isStreaming: false,
 
-      setActiveConversationId: (id) => set({ activeConversationId: id }),
-      setInput: (input) => set({ input }),
-      setIsStreaming: (isStreaming) => set({ isStreaming }),
-      setSelectedModel: (model) => set({ selectedModel: model }),
-
-      createConversation: (title) => {
-        const id = uuidv4();
-        const newConversation: Conversation = {
-          id,
-          title: title || "New Chat",
-          messages: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          tags: [],
-          pinned: false,
-        };
-        set((state) => ({
-          conversations: { ...state.conversations, [id]: newConversation },
-          rootChatOrder: [id, ...state.rootChatOrder], // Add to top of root chats
-          activeConversationId: id,
-        }));
-        return id;
-      },
-
-      renameConversation: (id, newTitle) =>
-        set((state) => {
-          const conversation = state.conversations[id];
-          if (!conversation) return state;
-          return {
-            conversations: {
-              ...state.conversations,
-              [id]: { ...conversation, title: newTitle },
-            },
-          };
-        }),
-
-      addMessage: (conversationId, message) =>
-        set((state) => {
-          const conversation = state.conversations[conversationId];
-          if (!conversation) return state;
-          return {
-            conversations: {
-              ...state.conversations,
-              [conversationId]: {
-                ...conversation,
-                messages: [...conversation.messages, message],
-                updatedAt: new Date().toISOString(),
-              },
-            },
-          };
-        }),
-
-      deleteConversation: (id) =>
-        set((state) => {
-          const { [id]: _, ...rest } = state.conversations;
-          
-          // Remove from root order
-          const newRootChatOrder = state.rootChatOrder.filter(itemId => itemId !== id);
-
-          // Remove from any folders
-          const updatedFolders = { ...state.folders };
-          Object.keys(updatedFolders).forEach(folderId => {
-             updatedFolders[folderId] = {
-                 ...updatedFolders[folderId]!,
-                 conversationIds: updatedFolders[folderId]!.conversationIds.filter(cid => cid !== id)
-             }
-          });
-          
-          return {
-            conversations: rest,
-            rootChatOrder: newRootChatOrder,
-            folders: updatedFolders,
-            activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
-          };
-        }),
-
-      createFolder: (name) => {
-        const id = uuidv4();
-        set((state) => ({
-          folders: { ...state.folders, [id]: { id, name, conversationIds: [] } },
-          folderOrder: [id, ...state.folderOrder],
-        }));
-      },
-
-      renameFolder: (id, newName) =>
-        set((state) => {
-          const folder = state.folders[id];
-          if (!folder) return state;
-          return {
-            folders: {
-              ...state.folders,
-              [id]: { ...folder, name: newName },
-            },
-          };
-        }),
-
-      deleteFolder: (id) =>
-        set((state) => {
-          const { [id]: folderToDelete, ...rest } = state.folders;
-          const newFolderOrder = state.folderOrder.filter(fid => fid !== id);
-          
-          // Move contents back to root top
-          const recoveredChats = folderToDelete ? folderToDelete.conversationIds : [];
-          const newRootChatOrder = [...recoveredChats, ...state.rootChatOrder];
-
-          return { 
-              folders: rest,
-              folderOrder: newFolderOrder,
-              rootChatOrder: newRootChatOrder
-          };
-        }),
-
-      reorderFolders: (newOrder) => set({ folderOrder: newOrder }),
-      reorderRootChats: (newOrder) => set({ rootChatOrder: newOrder }),
-      
-      reorderFolderChats: (folderId, newOrder) => 
-        set((state) => ({
-            folders: {
-                ...state.folders,
-                [folderId]: {
-                    ...state.folders[folderId]!,
-                    conversationIds: newOrder
-                }
-            }
-        })),
-
-      moveChatToFolder: (chatId, targetFolderId) => 
-        set((state) => {
-            const updatedFolders = { ...state.folders };
-            let updatedRootChatOrder = [...state.rootChatOrder];
-
-            // 1. Remove from source (could be root or another folder)
-            if (updatedRootChatOrder.includes(chatId)) {
-                updatedRootChatOrder = updatedRootChatOrder.filter(id => id !== chatId);
-            } else {
-                // Check all folders
-                Object.keys(updatedFolders).forEach(fid => {
-                    if (updatedFolders[fid]!.conversationIds.includes(chatId)) {
-                        updatedFolders[fid] = {
-                            ...updatedFolders[fid]!,
-                            conversationIds: updatedFolders[fid]!.conversationIds.filter(id => id !== chatId)
-                        };
-                    }
-                });
-            }
-
-            // 2. Add to target folder
-            if (updatedFolders[targetFolderId]) {
-                // Add to top of folder
-                updatedFolders[targetFolderId] = {
-                    ...updatedFolders[targetFolderId]!,
-                    conversationIds: [chatId, ...updatedFolders[targetFolderId]!.conversationIds]
-                };
-            }
-
-            return {
-                folders: updatedFolders,
-                rootChatOrder: updatedRootChatOrder
-            };
-        }),
-
-      moveChatToRoot: (chatId) => 
-        set((state) => {
-            const updatedFolders = { ...state.folders };
-            let updatedRootChatOrder = [...state.rootChatOrder];
-
-            // 1. Remove from source (folder)
-            Object.keys(updatedFolders).forEach(fid => {
-                if (updatedFolders[fid]!.conversationIds.includes(chatId)) {
-                    updatedFolders[fid] = {
-                        ...updatedFolders[fid]!,
-                        conversationIds: updatedFolders[fid]!.conversationIds.filter(id => id !== chatId)
-                    };
-                }
-            });
-
-            // 2. Add to root (top)
-            if (!updatedRootChatOrder.includes(chatId)) {
-                updatedRootChatOrder = [chatId, ...updatedRootChatOrder];
-            }
-
-            return {
-                folders: updatedFolders,
-                rootChatOrder: updatedRootChatOrder
-            };
-        }),
-
-      syncStructure: () => set((state) => {
-          // One-time migration or fix for structure
-          const folderIds = Object.keys(state.folders);
-          const chatsInFolders = new Set(Object.values(state.folders).flatMap(f => f.conversationIds));
-          const allChatIds = Object.keys(state.conversations);
-          
-          // Identify root chats (not in any folder)
-          const actualRootChats = allChatIds.filter(id => !chatsInFolders.has(id));
-
-          // Ensure folderOrder contains all folders
-          const missingFolders = folderIds.filter(id => !state.folderOrder.includes(id));
-          const cleanFolderOrder = state.folderOrder.filter(id => folderIds.includes(id)); // Remove stale
-          
-          // Ensure rootChatOrder contains all root chats
-          const missingRootChats = actualRootChats.filter(id => !state.rootChatOrder.includes(id));
-          const cleanRootChatOrder = state.rootChatOrder.filter(id => actualRootChats.includes(id)); // Remove stale/moved
-
-          return {
-              folderOrder: [...cleanFolderOrder, ...missingFolders],
-              rootChatOrder: [...cleanRootChatOrder, ...missingRootChats]
-          };
-      }),
-    }),
-    {
-      name: "chat-storage",
+  setInput: (v) => set({ input: v }),
+  setSelectedModelId: (v) => set({ selectedModelId: v }),
+  
+  setActiveConversationId: async (id) => {
+    set({ activeConversationId: id, messages: [] });
+    if (id) {
+        const msgs = await chatService.getMessages(id);
+        const conv = get().conversations[id];
+        set({ messages: msgs, selectedModelId: conv?.modelId || "gpt-4o" });
     }
-  )
-);
+  },
+
+  syncStructure: async () => {
+    const { folders, conversations } = await chatService.getSidebarData();
+    
+    const folderMap: Record<string, any> = {};
+    const folderOrder: string[] = [];
+    
+    folders.forEach((f: any) => {
+      folderMap[f.id] = { ...f, conversationIds: [] };
+      folderOrder.push(f.id);
+    });
+
+    const convMap: Record<string, any> = {};
+    const rootChats: string[] = [];
+
+    conversations.forEach((c: Conversation) => {
+      convMap[c.id] = c;
+      if (c.folderId && folderMap[c.folderId]) {
+        folderMap[c.folderId].conversationIds.push(c.id);
+      } else {
+        rootChats.push(c.id);
+      }
+    });
+
+    set({
+      folders: folderMap,
+      conversations: convMap,
+      folderOrder,
+      rootChatOrder: rootChats
+    });
+  },
+
+  createConversation: async () => {
+    const model = getModelById(get().selectedModelId || "gpt-4o");
+    if (!model) return;
+    const c = await chatService.createConversation("New Chat", model.id, model.provider);
+    set(state => ({
+      conversations: { ...state.conversations, [c.id]: c },
+      rootChatOrder: [c.id, ...state.rootChatOrder],
+      activeConversationId: c.id,
+      messages: []
+    }));
+  },
+
+  createFolder: async (name) => {
+    const id = await chatService.createFolder(name);
+    set(state => ({
+      folders: { ...state.folders, [id]: { id, name, conversationIds: [] } },
+      folderOrder: [...state.folderOrder, id]
+    }));
+  },
+
+  deleteFolder: async (id) => {
+    await chatService.deleteFolder(id);
+    get().syncStructure();
+  },
+
+  renameFolder: async (id, name) => {
+    await chatService.renameFolder(id, name);
+    set(state => ({
+      folders: { ...state.folders, [id]: { ...state.folders[id], name } }
+    }));
+  },
+
+  deleteConversation: async (id) => {
+    await chatService.deleteConversation(id);
+    if (get().activeConversationId === id) {
+        set({ activeConversationId: null, messages: [] });
+    }
+    get().syncStructure();
+  },
+
+  renameConversation: async (id, title) => {
+    await chatService.renameConversation(id, title);
+    set(state => {
+      const conv = state.conversations[id];
+      if (!conv) return state;
+      return {
+        conversations: { ...state.conversations, [id]: { ...conv, title } }
+      } as any;
+    });
+  },
+
+  moveChatToFolder: async (chatId, folderId) => {
+    await chatService.moveChatToFolder(chatId, folderId);
+    get().syncStructure();
+  },
+
+  moveChatToRoot: async (chatId) => {
+    await chatService.moveChatToFolder(chatId, null);
+    get().syncStructure();
+  },
+
+  reorderFolders: (order) => set({ folderOrder: order }),
+  reorderRootChats: (order) => set({ rootChatOrder: order }),
+  reorderFolderChats: (fid, order) => set(state => ({
+    folders: { ...state.folders, [fid]: { ...state.folders[fid], conversationIds: order } }
+  })),
+
+  sendMessage: async (content, attachments) => {
+    let { activeConversationId, selectedModelId, messages } = get();
+    
+    // Auto-create chat if none active
+    if (!activeConversationId) {
+        await get().createConversation();
+        // Refresh state after creation
+        const newState = get();
+        activeConversationId = newState.activeConversationId;
+        messages = newState.messages;
+        
+        if (!activeConversationId) return; // Should not happen
+    }
+
+    const model = getModelById(selectedModelId);
+    if (!model) return;
+
+    const settings = useSettingsStore.getState();
+    const config = settings.aiConfigurations[model.provider];
+    
+    if (!config?.apiKey) {
+        throw new Error(`API Key for ${model.provider} is missing. Please add it in Settings.`);
+    }
+
+    // 1. Optimistic Update (User Message)
+    const userMsg: Message = {
+        id: uuidv4(),
+        conversationId: activeConversationId,
+        role: "user",
+        content,
+        attachments,
+        timestamp: new Date()
+    };
+
+    // 2. Prepare Assistant Placeholder
+    const assistantId = uuidv4();
+    const assistantMsg: Message = {
+        id: assistantId,
+        conversationId: activeConversationId,
+        role: "assistant",
+        content: "",
+        attachments: [],
+        timestamp: new Date()
+    };
+
+    set({ 
+        messages: [...messages, userMsg, assistantMsg],
+        isStreaming: true 
+    });
+
+    try {
+        // Update conversation model if changed
+        const currentConv = get().conversations[activeConversationId];
+        if (currentConv && (currentConv.modelId !== selectedModelId || currentConv.providerId !== model.provider)) {
+            await chatService.updateConversationModel(activeConversationId, selectedModelId, model.provider);
+            // Update local state to reflect change
+            set(state => ({
+                conversations: {
+                    ...state.conversations,
+                    [activeConversationId]: { ...state.conversations[activeConversationId], modelId: selectedModelId, providerId: model.provider }
+                }
+            } as any));
+        }
+
+        const streamResult = await chatService.sendMessage(
+            activeConversationId,
+            content,
+            attachments,
+            selectedModelId,
+            model.provider,
+            config.apiKey,
+            messages.map(m => ({ role: m.role, content: m.content }))
+        );
+
+        let fullText = "";
+        for await (const chunk of streamResult.textStream) {
+            fullText += chunk;
+            set(state => ({
+                messages: state.messages.map(m => 
+                    m.id === assistantId ? { ...m, content: fullText } : m
+                )
+            }));
+        }
+    } catch (err) {
+        console.error("Chat Error:", err);
+        set(state => ({
+            messages: state.messages.map(m => 
+                m.id === assistantId ? { ...m, content: `Error: ${err instanceof Error ? err.message : String(err)}` } : m
+            )
+        }));
+    } finally {
+        set({ isStreaming: false });
+    }
+  }
+}));

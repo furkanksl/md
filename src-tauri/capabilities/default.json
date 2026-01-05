@@ -17,6 +17,17 @@
     "clipboard-manager:default",
     "global-shortcut:default",
     {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://api.openai.com/*" },
+        { "url": "https://api.anthropic.com/*" },
+        { "url": "https://generativelanguage.googleapis.com/*" },
+        { "url": "https://api.groq.com/*" },
+        { "url": "https://api.mistral.ai/*" }
+      ],
+      "deny": []
+    },
+    {
       "identifier": "fs:default",
       "allow": [{ "path": "/Applications" }, { "path": "/System/Applications" }]
     },

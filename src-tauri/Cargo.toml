@@ -36,4 +36,5 @@ core-foundation = "0.10.1"
 accessibility-sys = "0.2.0"
 reqwest = "0.13.1"
 html2text = "0.16.5"
+tauri-plugin-http = "2.5.4"
 
