@@ -24,6 +24,10 @@ export class ChatService {
     return await convRepo.create(title, modelId, providerId);
   }
 
+  async saveMessageToDb(message: Message) {
+    await msgRepo.create(message);
+  }
+
   async sendMessage(
     conversationId: string, 
     content: string, 
@@ -31,7 +35,8 @@ export class ChatService {
     modelId: string, 
     providerId: string, 
     apiKey: string,
-    previousMessages: any[]
+    previousMessages: any[],
+    abortSignal?: AbortSignal
   ) {
     // 1. Validation
     const model = getModelById(modelId);
@@ -111,6 +116,100 @@ export class ChatService {
     const result = await streamText({
       model: provider(modelId) as any,
       messages: messagesPayload,
+      abortSignal,
+      onFinish: async ({ text }: any) => {
+        const assistantMsg: Message = {
+          id: uuidv4(),
+          conversationId,
+          role: "assistant",
+          content: text,
+          attachments: [],
+          timestamp: new Date()
+        };
+        await msgRepo.create(assistantMsg);
+      }
+    });
+
+    return result;
+  }
+
+  async editMessage(
+    messageId: string,
+    newContent: string,
+    conversationId: string,
+    modelId: string,
+    providerId: string,
+    apiKey: string,
+    abortSignal?: AbortSignal
+  ) {
+    // 1. Get Message
+    const msg = await msgRepo.getById(messageId);
+    if (!msg) throw new Error("Message not found");
+
+    // 2. Update Content
+    await msgRepo.updateContent(messageId, newContent);
+
+    // 3. Delete subsequent history
+    await msgRepo.deleteAfterTimestamp(conversationId, msg.timestamp as Date);
+
+    // 4. Get updated history
+    const allMessages = await msgRepo.getByConversation(conversationId);
+    
+    // The last message is the one we just edited.
+    // We need to stream the assistant response based on this history.
+    const currentMsg = allMessages[allMessages.length - 1];
+    if (!currentMsg) throw new Error("Conversation is empty or message not found");
+
+    const previousMessages = allMessages.slice(0, -1);
+
+    // 5. Validation (Same as sendMessage)
+    const model = getModelById(modelId);
+    if (!model) throw new Error(`Model ${modelId} not found`);
+    if (currentMsg.attachments.length > 0 && !model.capabilities.image) {
+      throw new Error(`The selected model (${model.name}) does not support images.`);
+    }
+
+    // 6. Setup AI
+    const provider = getProvider(providerId, apiKey);
+
+    // 7. Sanitize History (Same logic as sendMessage)
+    const sanitizedHistory = previousMessages.map(msg => {
+        if (typeof msg.content === 'string') return { role: msg.role, content: msg.content };
+        if (Array.isArray(msg.content)) {
+             let validParts = (msg.content as any[]).filter((part: any) => {
+                 if (part.type === 'text') return true;
+                 if (part.type === 'image') return model.capabilities.image;
+                 return false;
+             });
+             if (validParts.length === 0) validParts = [{ type: 'text', text: '[Image not supported]' }];
+             if (validParts.length === 1 && validParts[0].type === 'text') {
+                 return { role: msg.role, content: validParts[0].text };
+             }
+             return { role: msg.role, content: validParts };
+        }
+        return { role: msg.role, content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content) };
+    });
+
+    // 8. Prepare Current Message Payload
+    let currentContent: any = newContent;
+    // If it has attachments, rebuild the content array
+    if (currentMsg.attachments && currentMsg.attachments.length > 0) {
+        const contentParts: any[] = [{ type: 'text', text: newContent }];
+        currentMsg.attachments.forEach(a => {
+            contentParts.push({
+                type: 'image',
+                image: a.base64 || a.path,
+            });
+        });
+        currentContent = contentParts;
+    }
+
+    const messagesPayload = [...sanitizedHistory, { role: "user", content: currentContent }];
+
+    const result = await streamText({
+      model: provider(modelId) as any,
+      messages: messagesPayload as any, // Cast to any to avoid complex union type issues with AI SDK
+      abortSignal,
       onFinish: async ({ text }: any) => {
         const assistantMsg: Message = {
           id: uuidv4(),

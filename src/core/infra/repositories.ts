@@ -80,6 +80,21 @@ export class MessageRepository {
     }));
   }
 
+  async getById(id: string): Promise<Message | null> {
+    const db = await dbClient.getDb();
+    const rows = await db.select<any[]>("SELECT * FROM messages WHERE id = $1", [id]);
+    if (rows.length === 0) return null;
+    const r = rows[0];
+    return {
+      id: r.id,
+      conversationId: r.conversation_id,
+      role: r.role,
+      content: r.content,
+      attachments: JSON.parse(r.attachments || "[]"),
+      timestamp: new Date(r.timestamp)
+    };
+  }
+
   async create(message: Message): Promise<void> {
     const db = await dbClient.getDb();
     await db.execute(
@@ -92,6 +107,19 @@ export class MessageRepository {
         JSON.stringify(message.attachments),
         message.timestamp instanceof Date ? message.timestamp.toISOString() : message.timestamp
       ]
+    );
+  }
+
+  async updateContent(id: string, content: string): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("UPDATE messages SET content = $1 WHERE id = $2", [content, id]);
+  }
+
+  async deleteAfterTimestamp(conversationId: string, timestamp: Date): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute(
+        "DELETE FROM messages WHERE conversation_id = $1 AND timestamp > $2", 
+        [conversationId, timestamp.toISOString()]
     );
   }
 }

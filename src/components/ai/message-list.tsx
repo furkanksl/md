@@ -3,12 +3,34 @@ import { useChatStore } from '@/stores/chat-store';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { MarkdownRenderer } from '../shared/markdown-renderer';
+import { Edit2, X, Check } from 'lucide-react';
+
+const LoadingDots = () => (
+    <div className="flex gap-1 py-1 px-2">
+        <motion.div
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0 }}
+            className="w-1.5 h-1.5 bg-current rounded-full"
+        />
+        <motion.div
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+            className="w-1.5 h-1.5 bg-current rounded-full"
+        />
+        <motion.div
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
+            className="w-1.5 h-1.5 bg-current rounded-full"
+        />
+    </div>
+);
 
 export const MessageList = () => {
-  const messages = useChatStore((state) => state.messages);
-  const isStreaming = useChatStore((state) => state.isStreaming);
+  const { messages, isStreaming, editMessage } = useChatStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
 
   // Check if user is at bottom on scroll
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -32,6 +54,22 @@ export const MessageList = () => {
       }
   }, []);
 
+  const startEditing = (id: string, content: string) => {
+      setEditingId(id);
+      setEditContent(content);
+  };
+
+  const cancelEditing = () => {
+      setEditingId(null);
+      setEditContent("");
+  };
+
+  const saveEdit = async (id: string) => {
+      if (!editContent.trim()) return;
+      setEditingId(null);
+      await editMessage(id, editContent);
+  };
+
   return (
     <div 
         ref={scrollRef}
@@ -40,6 +78,8 @@ export const MessageList = () => {
     >
       {messages.map((msg, i) => {
         const isUser = msg.role === 'user';
+        const isEditing = editingId === msg.id;
+
         return (
           <motion.div
             key={msg.id || i}
@@ -47,20 +87,59 @@ export const MessageList = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
             className={clsx(
-              "flex flex-col max-w-[92%] min-w-0",
+              "flex flex-col max-w-[92%] min-w-0 group",
               isUser ? "self-end items-end" : "self-start items-start"
             )}
           >
             <div
               className={clsx(
-                "px-3.5 py-2 text-xs leading-relaxed shadow-sm",
+                "px-3.5 py-2 text-xs leading-relaxed shadow-sm overflow-hidden relative",
                 isUser 
-                    ? "bg-stone-800 text-stone-50 dark:bg-stone-100 dark:text-stone-900 rounded-[1.25rem] rounded-tr-none overflow-hidden" 
+                    ? "bg-stone-800 text-stone-50 dark:bg-stone-100 dark:text-stone-900 rounded-[1.25rem] rounded-tr-none" 
                     : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 rounded-[1.25rem] rounded-tl-none border border-stone-100 dark:border-stone-800 overflow-x-auto scrollbar-none"
               )}
             >
-              <MarkdownRenderer content={msg.content} />
+              {isEditing ? (
+                  <div className="flex flex-col gap-2 min-w-[200px]">
+                      <textarea 
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="bg-transparent border-none focus:outline-none w-full resize-none text-inherit"
+                          rows={Math.max(2, editContent.split('\n').length)}
+                          autoFocus
+                      />
+                      <div className="flex justify-end gap-2 mt-1">
+                          <button onClick={cancelEditing} className="p-1 hover:bg-white/20 rounded">
+                              <X size={14} />
+                          </button>
+                          <button onClick={() => saveEdit(msg.id)} className="p-1 hover:bg-white/20 rounded">
+                              <Check size={14} />
+                          </button>
+                      </div>
+                  </div>
+              ) : (
+                  <>
+                      {msg.content === "" && !isUser ? (
+                          <LoadingDots />
+                      ) : (
+                          <MarkdownRenderer content={msg.content} />
+                      )}
+                  </>
+              )}
             </div>
+            
+            {/* Edit Button for User Messages */}
+            {!isEditing && isUser && !isStreaming && (
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-full mr-2 top-1/2 -translate-y-1/2">
+                    <button 
+                        onClick={() => startEditing(msg.id, msg.content)}
+                        className="p-1.5 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                        title="Edit"
+                    >
+                        <Edit2 size={12} />
+                    </button>
+                </div>
+            )}
           </motion.div>
         );
       })}

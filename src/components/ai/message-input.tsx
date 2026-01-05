@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useChatStore } from '@/stores/chat-store';
-import { Paperclip, ArrowUp, X, File as FileIcon } from 'lucide-react';
+import { Paperclip, ArrowUp, X, File as FileIcon, Square } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,7 +10,7 @@ interface MessageInputProps {
 }
 
 export const MessageInput = ({ attachments, setAttachments }: MessageInputProps) => {
-  const { input, setInput, sendMessage, isStreaming } = useChatStore();
+  const { input, setInput, sendMessage, isStreaming, stopGeneration } = useChatStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
@@ -35,8 +35,13 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isStreaming) {
+        stopGeneration();
+        return;
+    }
+
     if (!input.trim() && attachments.length === 0) return;
-    if (isStreaming) return;
 
     const attachmentData = await Promise.all(attachments.map(async (f) => {
         return new Promise((resolve) => {
@@ -157,7 +162,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                     ? "text-stone-300 dark:text-stone-600 cursor-not-allowed" 
                     : "text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
             )}
-            disabled={attachments.length >= 3}
+            disabled={attachments.length >= 3 || isStreaming}
         >
             <Paperclip size={16} strokeWidth={2} />
         </button>
@@ -179,15 +184,19 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
         
         <button
             type="submit"
-            disabled={(!input.trim() && attachments.length === 0) || isStreaming}
+            disabled={(!input.trim() && attachments.length === 0) && !isStreaming}
             className={clsx(
                 "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
-                (input.trim() || attachments.length > 0) && !isStreaming
+                ((input.trim() || attachments.length > 0) || isStreaming)
                     ? "bg-stone-800 text-white shadow-md hover:scale-105 dark:bg-stone-100 dark:text-stone-900"
                     : "bg-stone-100 text-stone-300 cursor-not-allowed dark:bg-stone-800 dark:text-stone-600"
             )}
         >
-            <ArrowUp size={16} strokeWidth={2.5} />
+            {isStreaming ? (
+                <Square size={14} fill="currentColor" />
+            ) : (
+                <ArrowUp size={16} strokeWidth={2.5} />
+            )}
         </button>
       </form>
     </div>
