@@ -1,24 +1,24 @@
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import { X, Minus } from 'lucide-react';
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { X, Minus } from "lucide-react";
 
 export const WindowControls = () => {
   const appWindow = getCurrentWindow();
 
   return (
-    <div className="flex items-center gap-2 z-50">
+    <div className="flex items-center gap-1.5 z-50 bg-white dark:bg-stone-900 px-1 py-0.5 rounded-full shadow-lg shadow-stone-200/50 dark:shadow-none border border-stone-100 dark:border-stone-800">
       <button
         onClick={() => appWindow.minimize()}
-        className="w-7 h-7 flex items-center justify-center bg-white border-2 border-black rounded-md shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-0.5px] hover:translate-y-[-0.5px] transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+        className="w-7 h-7 flex items-center justify-center rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-600 dark:text-stone-500 dark:hover:bg-stone-800 dark:hover:text-stone-300 transition-colors"
         title="Minimize"
       >
-        <Minus size={14} strokeWidth={3} className="text-black" />
+        <Minus size={16} strokeWidth={2} />
       </button>
       <button
         onClick={() => appWindow.close()}
-        className="w-7 h-7 flex items-center justify-center bg-white hover:bg-red-50 border-2 border-black rounded-md shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-0.5px] hover:translate-y-[-0.5px] transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none group"
+        className="w-7 h-7 flex items-center justify-center rounded-full text-stone-400 hover:bg-red-50 hover:text-red-500 dark:text-stone-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
         title="Close"
       >
-        <X size={14} strokeWidth={3} className="text-black group-hover:text-red-500" />
+        <X size={16} strokeWidth={2} />
       </button>
     </div>
   );

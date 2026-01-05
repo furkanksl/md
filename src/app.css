@@ -56,6 +56,31 @@ body {
 
     --radius: 1.5rem; /* Very round corners */
   }
+
+  .dark {
+    /* Zen Dark */
+    --background: 24 5% 10%; /* #1C1917 - Warm Deep Charcoal */
+    --foreground: 30 10% 90%; /* #E7E5E4 - Soft Warm White */
+    
+    --card: 24 5% 13%; /* Slightly lighter than bg */
+    --card-foreground: 30 10% 90%;
+    
+    --primary: 150 8% 45%; /* #6B8E7E - Muted Sage (Darker/Desaturated) */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 24 5% 18%; /* Dark Stone */
+    --secondary-foreground: 30 10% 90%;
+    
+    --muted: 24 5% 20%;
+    --muted-foreground: 30 5% 60%;
+    
+    --accent: 24 5% 25%;
+    --accent-foreground: 30 10% 90%;
+    
+    --border: 24 5% 20%;
+    --input: 24 5% 20%;
+    --ring: 150 8% 45%;
+  }
 }
 
 @layer base {

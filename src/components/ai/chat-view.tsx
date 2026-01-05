@@ -88,13 +88,13 @@ export const ChatView = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="absolute inset-0 bg-stone-50/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center border-2 border-dashed border-stone-300 rounded-[2rem] m-4"
+                className="absolute inset-0 bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-[2rem] m-4"
             >
-                <div className="p-6 bg-white rounded-full shadow-lg shadow-stone-200/50 mb-4">
-                    <Upload size={32} className="text-stone-400" />
+                <div className="p-6 bg-white dark:bg-stone-800 rounded-full shadow-lg shadow-stone-200/50 dark:shadow-black/50 mb-4">
+                    <Upload size={32} className="text-stone-400 dark:text-stone-500" />
                 </div>
-                <h3 className="text-xl font-medium text-stone-600">Drop files here</h3>
-                <p className="text-stone-400 mt-1">Add up to 3 attachments</p>
+                <h3 className="text-xl font-medium text-stone-600 dark:text-stone-300">Drop files here</h3>
+                <p className="text-stone-400 dark:text-stone-500 mt-1">Add up to 3 attachments</p>
             </motion.div>
         )}
       </AnimatePresence>
@@ -102,22 +102,22 @@ export const ChatView = () => {
       <ChatSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Gentle Header */}
-      <div className="h-16 flex items-center justify-between px-6 shrink-0 relative z-10">
+      <div className="h-12 flex items-center justify-between px-4 shrink-0 relative z-10">
         <button 
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2 text-stone-400 hover:text-stone-800 hover:bg-stone-100 rounded-full transition-all"
+            className="p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-all"
         >
-            <History size={18} strokeWidth={2} />
+            <History size={16} strokeWidth={2} />
         </button>
 
         <div className="relative">
             <button 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors text-sm font-medium px-3 py-1.5 rounded-full hover:bg-stone-50"
+                className="flex items-center gap-2 text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors text-xs font-medium px-3 py-1.5 rounded-full hover:bg-stone-50 dark:hover:bg-stone-800"
             >
-                <Sparkles size={14} className="text-stone-400" />
+                <Sparkles size={12} className="text-stone-400 dark:text-stone-500" />
                 <span>{currentModelName}</span>
-                <ChevronDown size={12} className={clsx("transition-transform", isDropdownOpen && "rotate-180")} />
+                <ChevronDown size={10} className={clsx("transition-transform", isDropdownOpen && "rotate-180")} />
             </button>
             
             <AnimatePresence>
@@ -126,13 +126,13 @@ export const ChatView = () => {
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 5 }}
-                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-32 bg-white rounded-2xl shadow-xl shadow-stone-200/50 py-2 border border-stone-100 z-20"
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-32 bg-white dark:bg-stone-900 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 py-2 border border-stone-100 dark:border-stone-800 z-20"
                     >
                         {MODELS.map(m => (
                             <button 
                                 key={m.id}
                                 onClick={() => { setSelectedModel(m.id); setIsDropdownOpen(false); }}
-                                className="w-full text-center py-2 text-sm text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-colors"
+                                className="w-full text-center py-2 text-xs text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-200 transition-colors"
                             >
                                 {m.name}
                             </button>
@@ -142,25 +142,25 @@ export const ChatView = () => {
             </AnimatePresence>
         </div>
 
-        <div className="w-8" /> {/* Spacer for balance */}
+        <div className="w-6" /> {/* Spacer for balance */}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-2 scrollbar-none w-full max-w-3xl mx-auto">
+      <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-none w-full max-w-3xl mx-auto">
         {activeConversationId ? (
             <MessageList />
         ) : (
-            <div className="h-full flex flex-col items-center justify-center text-stone-300 gap-4">
-                <div className="w-16 h-16 rounded-full bg-stone-50 flex items-center justify-center">
-                    <Sparkles size={24} className="opacity-50" />
+            <div className="h-full flex flex-col items-center justify-center text-stone-300 dark:text-stone-700 gap-4">
+                <div className="w-12 h-12 rounded-full bg-stone-50 dark:bg-stone-900 flex items-center justify-center">
+                    <Sparkles size={20} className="opacity-50" />
                 </div>
-                <p className="text-sm font-medium">How can I help you today?</p>
+                <p className="text-xs font-medium">How can I help you today?</p>
             </div>
         )}
       </div>
 
       {/* Input */}
-      <div className="py-6 px-4 w-full max-w-3xl mx-auto">
+      <div className="py-4 px-3 w-full max-w-3xl mx-auto">
         <MessageInput attachments={attachments} setAttachments={setAttachments} />
       </div>
     </div>

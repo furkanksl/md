@@ -85,16 +85,16 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                             className="group relative"
                         >
                             {/* Thumbnail Container */}
-                            <div className="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center relative shadow-sm group/thumb">
+                            <div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 overflow-hidden flex items-center justify-center relative shadow-sm group/thumb">
                                 {previewUrl ? (
                                     <img src={previewUrl} alt={f.name} className="w-full h-full object-cover transition-transform group-hover/thumb:scale-105" />
                                 ) : (
-                                    <FileIcon size={24} className="text-stone-400" />
+                                    <FileIcon size={24} className="text-stone-400 dark:text-stone-500" />
                                 )}
                                 
                                 {/* Hover Remove Overlay */}
                                 <div 
-                                    className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                                    className="absolute inset-0 bg-stone-900/40 dark:bg-black/60 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                                     onClick={() => removeAttachment(i)}
                                 >
                                     <X size={20} className="text-white" strokeWidth={3} />
@@ -104,24 +104,24 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                             {/* Hover Large Preview */}
                             {previewUrl && (
                                 <div className="absolute bottom-full left-0 mb-3 hidden group-hover:block z-50 origin-bottom-left animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="bg-white p-2 rounded-2xl shadow-xl shadow-stone-300/50 border border-stone-100">
+                                    <div className="bg-white dark:bg-stone-900 p-2 rounded-2xl shadow-xl shadow-stone-300/50 dark:shadow-black/50 border border-stone-100 dark:border-stone-800">
                                         <img src={previewUrl} alt="Large Preview" className="max-w-[200px] max-h-[200px] rounded-xl object-contain" />
-                                        <div className="mt-2 text-[10px] font-medium text-stone-500 truncate max-w-[200px] px-1">
+                                        <div className="mt-2 text-[10px] font-medium text-stone-500 dark:text-stone-400 truncate max-w-[200px] px-1">
                                             {f.name}
                                         </div>
                                     </div>
                                     {/* Arrow */}
-                                    <div className="absolute -bottom-1 left-6 w-3 h-3 bg-white rotate-45 border-b border-r border-stone-100 shadow-[2px_2px_2px_-1px_rgba(0,0,0,0.05)]" />
+                                    <div className="absolute -bottom-1 left-6 w-3 h-3 bg-white dark:bg-stone-900 rotate-45 border-b border-r border-stone-100 dark:border-stone-800 shadow-[2px_2px_2px_-1px_rgba(0,0,0,0.05)]" />
                                 </div>
                             )}
 
                             {/* Tooltip for non-images */}
                             {!previewUrl && (
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 whitespace-nowrap">
-                                    <div className="bg-stone-800 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg">
+                                    <div className="bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 text-xs px-3 py-1.5 rounded-lg shadow-lg">
                                         {f.name}
                                     </div>
-                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-stone-800 rotate-45" />
+                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-stone-800 dark:bg-stone-100 rotate-45" />
                                 </div>
                             )}
                         </motion.div>
@@ -133,20 +133,20 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
 
       <form 
         onSubmit={handleSubmit} 
-        className="bg-white rounded-[2rem] p-1.5 pl-4 shadow-lg shadow-stone-200/40 border border-stone-100 flex items-center gap-2 transition-shadow focus-within:shadow-xl focus-within:shadow-stone-200/60"
+        className="bg-white dark:bg-stone-900 rounded-[2rem] p-1 pl-3 shadow-lg shadow-stone-200/40 dark:shadow-none border border-stone-100 dark:border-stone-800 flex items-center gap-2 transition-shadow focus-within:shadow-xl focus-within:shadow-stone-200/60 dark:focus-within:shadow-none"
       >
         <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className={clsx(
-                "p-2 rounded-full transition-colors",
+                "p-1.5 rounded-full transition-colors",
                 attachments.length >= 3 
-                    ? "text-stone-300 cursor-not-allowed" 
-                    : "text-stone-400 hover:text-stone-600 hover:bg-stone-50"
+                    ? "text-stone-300 dark:text-stone-600 cursor-not-allowed" 
+                    : "text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
             )}
             disabled={attachments.length >= 3}
         >
-            <Paperclip size={18} strokeWidth={2} />
+            <Paperclip size={16} strokeWidth={2} />
         </button>
         <input 
             type="file" 
@@ -157,7 +157,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
         />
 
         <input
-            className="flex-1 bg-transparent border-none focus:outline-none text-stone-700 placeholder:text-stone-300 text-base"
+            className="flex-1 bg-transparent border-none focus:outline-none text-stone-700 dark:text-stone-200 placeholder:text-stone-300 dark:placeholder:text-stone-600 text-sm"
             placeholder={attachments.length > 0 ? "Add a caption..." : "Type a message..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -167,13 +167,13 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
             type="submit"
             disabled={!input.trim() && attachments.length === 0}
             className={clsx(
-                "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
                 (input.trim() || attachments.length > 0)
-                    ? "bg-stone-800 text-white shadow-md hover:scale-105"
-                    : "bg-stone-100 text-stone-300 cursor-not-allowed"
+                    ? "bg-stone-800 text-white shadow-md hover:scale-105 dark:bg-stone-100 dark:text-stone-900"
+                    : "bg-stone-100 text-stone-300 cursor-not-allowed dark:bg-stone-800 dark:text-stone-600"
             )}
         >
-            <ArrowUp size={18} strokeWidth={2.5} />
+            <ArrowUp size={16} strokeWidth={2.5} />
         </button>
       </form>
     </div>

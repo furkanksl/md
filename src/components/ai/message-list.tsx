@@ -25,10 +25,10 @@ export const MessageList = () => {
           >
             <div
               className={clsx(
-                "px-6 py-3.5 text-[15px] leading-relaxed",
+                "px-4 py-2.5 text-sm leading-relaxed",
                 isUser 
-                    ? "bg-stone-800 text-stone-50 rounded-[2rem] rounded-tr-sm shadow-md shadow-stone-200" 
-                    : "bg-white text-stone-700 rounded-[2rem] rounded-tl-sm shadow-sm border border-stone-100"
+                    ? "bg-stone-800 text-stone-50 dark:bg-stone-100 dark:text-stone-900 rounded-[2rem] rounded-tr-sm shadow-md shadow-stone-200 dark:shadow-none" 
+                    : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 rounded-[2rem] rounded-tl-sm shadow-sm border border-stone-100 dark:border-stone-800"
               )}
             >
               {msg.content}

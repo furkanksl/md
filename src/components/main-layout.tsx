@@ -21,25 +21,44 @@ import {
 } from "lucide-react";
 
 export const MainLayout = () => {
-  const { activeView, setActiveView } = useUIStore();
+  const { activeView, setActiveView, theme } = useUIStore();
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+      return;
+    }
+
+    root.classList.add(theme);
+  }, [theme]);
 
   useEffect(() => {
     // Ensure window is set up
-    invoke('set_ignore_mouse_events', { ignore: false, window: getCurrentWindow() });
+    invoke("set_ignore_mouse_events", {
+      ignore: false,
+      window: getCurrentWindow(),
+    });
   }, []);
 
   const handleBlur = () => {
-      // Trigger native slide out on blur
-      invoke('hide_drawer');
+    // Trigger native slide out on blur
+    invoke("hide_drawer");
   };
 
   // Listen for window blur event from Tauri
   useEffect(() => {
-      const appWindow = getCurrentWindow();
-      const unlistenBlur = appWindow.listen('tauri://blur', handleBlur);
-      return () => {
-          unlistenBlur.then(f => f());
-      };
+    const appWindow = getCurrentWindow();
+    const unlistenBlur = appWindow.listen("tauri://blur", handleBlur);
+    return () => {
+      unlistenBlur.then((f) => f());
+    };
   }, []);
 
   const navItems = [
@@ -52,7 +71,7 @@ export const MainLayout = () => {
   ] as const;
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-transparent overflow-hidden font-sans selection:bg-stone-200">
+    <div className="flex flex-col h-screen w-screen bg-[#FAF9F6] dark:bg-[#1C1917] overflow-hidden font-sans selection:bg-stone-200 dark:selection:bg-stone-700 backdrop-blur-sm">
       {/* Drag Region */}
       <div
         className="fixed top-0 left-0 w-full h-8 z-40"
@@ -60,21 +79,16 @@ export const MainLayout = () => {
       />
 
       {/* Main Card */}
-      <div 
-        className="flex-1 flex flex-col bg-[#FAF9F6] rounded-[2rem] overflow-hidden relative border-none h-full"
-      >
+      <div className="flex-1 flex flex-col rounded-[2rem] overflow-hidden relative border-none h-full ">
         {/* Minimal Header */}
         <header
-          className="h-16 shrink-0 flex items-center justify-between px-4 z-50"
+          className="h-12 shrink-0 flex items-center justify-between px-3 z-50"
           data-tauri-drag-region
         >
-          <h1 className="text-xl font-medium tracking-tight text-stone-800 pointer-events-none">
-            my drawer
+          <h1 className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 pointer-events-none">
+            md
           </h1>
           <div className="flex gap-4 items-center">
-            <span className="text-xs text-stone-400 font-medium tracking-wider uppercase pointer-events-none">
-              {new Date().toLocaleDateString("en-US", { weekday: "long" })}
-            </span>
             <CustomTitlebar />
           </div>
         </header>
@@ -90,7 +104,6 @@ export const MainLayout = () => {
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="h-full w-full"
             >
-              {" "}
               {activeView === "chat" && <ChatView />}
               {activeView === "clipboard" && <ClipboardView />}
               {activeView === "shortcuts" && <ShortcutsView />}
@@ -102,8 +115,8 @@ export const MainLayout = () => {
         </main>
 
         {/* Floating Nav Pill */}
-        <div className="h-24 flex items-center justify-center shrink-0">
-          <nav className="flex items-center gap-2 bg-white p-2 rounded-full shadow-lg shadow-stone-200/50 border border-stone-100">
+        <div className="h-20 flex items-center justify-center shrink-0">
+          <nav className="flex items-center gap-1.5 bg-white dark:bg-stone-900 p-1.5 rounded-full shadow-lg shadow-stone-200/50 dark:shadow-none border border-stone-100 dark:border-stone-800">
             {navItems.map((item) => {
               const isActive = activeView === item.id;
               const Icon = item.icon;
@@ -112,17 +125,17 @@ export const MainLayout = () => {
                   key={item.id}
                   onClick={() => setActiveView(item.id)}
                   className={clsx(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 relative overflow-hidden group",
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 relative overflow-hidden group",
                     isActive
-                      ? "text-stone-800"
-                      : "text-stone-400 hover:text-stone-600 hover:bg-stone-50"
+                      ? "text-stone-800 dark:text-stone-100"
+                      : "text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
                   )}
                   title={item.label}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="nav-bg"
-                      className="absolute inset-0 bg-stone-100 rounded-full"
+                      className="absolute inset-0 bg-stone-100 dark:bg-stone-800 rounded-full"
                       transition={{
                         type: "spring",
                         bounce: 0.2,
@@ -131,7 +144,7 @@ export const MainLayout = () => {
                     />
                   )}
                   <Icon
-                    size={20}
+                    size={18}
                     strokeWidth={isActive ? 2 : 1.5}
                     className="relative z-10"
                   />
