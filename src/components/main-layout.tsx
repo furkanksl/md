@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useUIStore } from "@/stores/ui-store";
+import { useClipboardStore } from "@/stores/clipboard-store";
 import { clsx } from "clsx";
 import { ChatView } from "./ai/chat-view";
 import { ClipboardView } from "./clipboard/clipboard-view";
@@ -22,6 +23,11 @@ import {
 
 export const MainLayout = () => {
   const { activeView, setActiveView, theme } = useUIStore();
+  const { startMonitoring } = useClipboardStore();
+
+  useEffect(() => {
+      startMonitoring();
+  }, []);
 
   useEffect(() => {
     const root = window.document.documentElement;

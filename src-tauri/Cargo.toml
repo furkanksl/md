@@ -37,4 +37,9 @@ accessibility-sys = "0.2.0"
 reqwest = "0.13.1"
 html2text = "0.16.5"
 tauri-plugin-http = "2.5.4"
+arboard = "3.6.1"
+tokio = { version = "1.49.0", features = ["full"] }
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-native-tls"] }
+uuid = { version = "1.19.0", features = ["v4"] }
+chrono = { version = "0.4.42", features = ["serde"] }
 

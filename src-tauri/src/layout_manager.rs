@@ -1,26 +1,24 @@
 use accessibility_sys::{
-    kAXErrorSuccess, AXError, AXUIElementCopyAttributeValue, AXUIElementCreateApplication,
-    AXUIElementRef, AXUIElementSetAttributeValue, AXValueCreate,
+    kAXErrorSuccess, AXUIElementCopyAttributeValue, AXUIElementCreateApplication,
+    AXUIElementSetAttributeValue,
+    AXUIElementRef, AXValueRef, AXValueType, AXValueCreate,
 };
-use core_foundation::array::{CFArray, CFArrayRef};
-use core_foundation::base::{TCFType, ToVoid};
+use core_foundation::base::{TCFType, FromVoid};
+use core_foundation::string::{CFString, CFStringRef};
+use core_foundation::array::{CFArray, CFArrayRef, CFArrayGetValueAtIndex};
 use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
 use core_foundation::number::{CFNumber, CFNumberRef};
-use core_foundation::string::{CFString, CFStringRef};
-use core_graphics::display::{CFArrayGetValueAtIndex, CGDisplay, CGWindowListCopyWindowInfo};
-use core_graphics::geometry::{CGPoint, CGRect, CGSize};
+use core_graphics::display::{CGDisplay};
+use core_graphics::geometry::{CGPoint, CGSize};
+use core_graphics::window::{
+    CGWindowListCopyWindowInfo, kCGWindowListOptionOnScreenOnly,
+    kCGWindowListExcludeDesktopElements, kCGNullWindowID,
+};
 use serde::{Deserialize, Serialize};
 use std::ffi::c_void;
 use std::ptr;
 
-const K_CG_NULL_WINDOW_ID: u32 = 0;
-const K_CG_WINDOW_LIST_OPTION_ON_SCREEN_ONLY: u32 = 1 << 0;
-const K_CG_WINDOW_LIST_EXCLUDE_DESKTOP_ELEMENTS: u32 = 1 << 4;
-
-const K_AX_VALUE_CG_POINT_TYPE: u32 = 1;
-const K_AX_VALUE_CG_SIZE_TYPE: u32 = 2;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WindowRect {
     pub x: f64,
     pub y: f64,
@@ -28,12 +26,12 @@ pub struct WindowRect {
     pub height: f64,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WindowInfo {
     pub id: u32,
     pub pid: i32,
-    pub app_name: String,
     pub title: String,
+    pub app_name: String,
     pub frame: WindowRect,
 }
 
@@ -42,8 +40,8 @@ pub fn get_open_windows(my_pid: i32) -> Vec<WindowInfo> {
 
     unsafe {
         let options =
-            K_CG_WINDOW_LIST_OPTION_ON_SCREEN_ONLY | K_CG_WINDOW_LIST_EXCLUDE_DESKTOP_ELEMENTS;
-        let window_list_ref = CGWindowListCopyWindowInfo(options, K_CG_NULL_WINDOW_ID);
+            kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements;
+        let window_list_ref = CGWindowListCopyWindowInfo(options, kCGNullWindowID);
 
         if window_list_ref.is_null() {
             return windows;
@@ -79,10 +77,6 @@ pub fn get_open_windows(my_pid: i32) -> Vec<WindowInfo> {
             {
                 continue;
             }
-
-            // if app_name == "Finder" && title.is_empty() {
-            //     continue;
-            // }
 
             let id = get_number_from_dict(&dict, "kCGWindowNumber").unwrap_or(0) as u32;
 
@@ -166,7 +160,6 @@ pub fn snap_active_window(direction: String, my_pid: i32) {
         y: target.frame.y + target.frame.height / 2.0,
     };
 
-    // Use unsafe block only where needed for FFI-like calls if any
     let display_id = unsafe {
         let displays = CGDisplay::active_displays().unwrap_or(vec![CGDisplay::main().id]);
         let mut best_display = displays[0];
@@ -400,9 +393,9 @@ unsafe fn move_window(pid: i32, frame: WindowRect) {
             };
 
             let pos_val =
-                AXValueCreate(K_AX_VALUE_CG_POINT_TYPE, &pos as *const _ as *const c_void);
+                AXValueCreate(1, &pos as *const _ as *const c_void);
             let size_val =
-                AXValueCreate(K_AX_VALUE_CG_SIZE_TYPE, &size as *const _ as *const c_void);
+                AXValueCreate(2, &size as *const _ as *const c_void);
 
             let pos_attr = CFString::new("AXPosition");
             let size_attr = CFString::new("AXSize");

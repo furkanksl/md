@@ -2,20 +2,79 @@ pub mod layout_manager;
 
 use base64::prelude::*;
 use core_foundation::base::TCFType;
-use core_graphics::event::{CGEvent, CGEventTapLocation};
+use core_graphics::event::CGEvent;
 use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 use layout_manager::{get_open_windows, restore_windows, WindowInfo};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{Emitter, Manager, PhysicalPosition};
 use tauri_plugin_sql::{Migration, MigrationKind};
-use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+use arboard::Clipboard;
+use sqlx::sqlite::SqlitePoolOptions;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 static IS_DRAWER_OPEN: AtomicBool = AtomicBool::new(false);
 static IS_ANIMATING: AtomicBool = AtomicBool::new(false);
+
+fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        let mut clipboard = match Clipboard::new() {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("Failed to init clipboard: {}", e);
+                return;
+            }
+        };
+
+        let db_path = app_handle.path().app_data_dir().unwrap().join("mydrawer.db");
+        let conn_str = format!("sqlite://{}", db_path.to_string_lossy());
+        
+        // Wait for DB to be created by plugin
+        std::thread::sleep(Duration::from_secs(2));
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        
+        rt.block_on(async {
+            let pool = loop {
+                match SqlitePoolOptions::new().connect(&conn_str).await {
+                    Ok(p) => break p,
+                    Err(_) => {
+                        std::thread::sleep(Duration::from_secs(1));
+                        continue;
+                    }
+                }
+            };
+
+            let mut last_content = String::new();
+
+            loop {
+                let current_text = clipboard.get_text().unwrap_or_default();
+                
+                if !current_text.trim().is_empty() && current_text != last_content {
+                    last_content = current_text.clone();
+                    
+                    let id = uuid::Uuid::new_v4().to_string();
+                    let now = chrono::Utc::now().to_rfc3339();
+                    
+                    let _ = sqlx::query("INSERT INTO clipboard (id, content, source_app, timestamp, character_count, pinned) VALUES (?, ?, ?, ?, ?, ?)")
+                        .bind(id)
+                        .bind(&current_text)
+                        .bind("System")
+                        .bind(now)
+                        .bind(current_text.len() as i32)
+                        .bind(false)
+                        .execute(&pool)
+                        .await;
+                        
+                    let _ = app_handle.emit("clipboard-changed", ());
+                }
+                
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
+        });
+    });
+}
 
 #[tauri::command]
 fn hide_drawer(window: tauri::Window) {
@@ -290,6 +349,9 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
+
+            // Start Clipboard Monitor (Rust Background Thread)
+            start_clipboard_monitor(app.handle().clone());
 
             #[cfg(target_os = "macos")]
             {

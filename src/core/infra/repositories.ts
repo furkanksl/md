@@ -147,3 +147,36 @@ export class FolderRepository {
     await db.execute("UPDATE folders SET name = $1 WHERE id = $2", [name, id]);
   }
 }
+
+export class ClipboardRepository {
+  async getAll(limit: number = 50): Promise<any[]> {
+    const db = await dbClient.getDb();
+    return await db.select("SELECT * FROM clipboard ORDER BY timestamp DESC LIMIT $1", [limit]);
+  }
+
+  async create(content: string, sourceApp?: string): Promise<void> {
+    const db = await dbClient.getDb();
+    const id = uuidv4();
+    await db.execute(
+      "INSERT INTO clipboard (id, content, source_app, timestamp, character_count, pinned) VALUES ($1, $2, $3, $4, $5, $6)",
+      [
+        id, 
+        content, 
+        sourceApp || null, 
+        new Date().toISOString(), 
+        content.length, 
+        false
+      ]
+    );
+  }
+
+  async delete(id: string): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("DELETE FROM clipboard WHERE id = $1", [id]);
+  }
+
+  async clear(): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("DELETE FROM clipboard WHERE pinned = 0");
+  }
+}
