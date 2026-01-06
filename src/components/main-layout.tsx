@@ -26,7 +26,7 @@ export const MainLayout = () => {
   const { startMonitoring } = useClipboardStore();
 
   useEffect(() => {
-      startMonitoring();
+    startMonitoring();
   }, []);
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export const MainLayout = () => {
       <div className="flex-1 flex flex-col rounded-[2rem] overflow-hidden relative border-none h-full ">
         {/* Minimal Header */}
         <header
-          className="h-12 shrink-0 flex items-center justify-between px-3 z-50"
+          className="h-12 shrink-0 flex items-center justify-between px-3 pl-7 z-50"
           data-tauri-drag-region
         >
           <h1 className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 pointer-events-none">
