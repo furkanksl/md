@@ -53,7 +53,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   rootChatOrder: [],
   activeConversationId: null,
   input: "",
-  selectedModelId: "gpt-4o",
+  selectedModelId: "gpt-5.2",
   isStreaming: false,
   abortController: null,
 
@@ -73,7 +73,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (id) {
         const msgs = await chatService.getMessages(id);
         const conv = get().conversations[id];
-        set({ messages: msgs, selectedModelId: conv?.modelId || "gpt-4o" });
+        set({ messages: msgs, selectedModelId: conv?.modelId || "gpt-5.2" });
     }
   },
 
@@ -109,7 +109,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   createConversation: async () => {
-    const model = getModelById(get().selectedModelId || "gpt-4o");
+    const model = getModelById(get().selectedModelId || "gpt-5.2");
     if (!model) return;
     const c = await chatService.createConversation("New Chat", model.id, model.provider);
     set(state => ({
