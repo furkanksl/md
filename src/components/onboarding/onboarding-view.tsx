@@ -15,7 +15,17 @@ export const OnboardingView = () => {
     checkPermission();
     // Check permission every second in case user grants it outside app
     const interval = setInterval(checkPermission, 1000);
-    return () => clearInterval(interval);
+    
+    // Add focus listener to check immediately when app comes to foreground
+    const handleFocus = () => {
+        checkPermission();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+        clearInterval(interval);
+        window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const checkPermission = async () => {

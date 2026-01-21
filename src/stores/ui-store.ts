@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 interface UIState {
   sidebarVisible: boolean;
   activeView: "chat" | "clipboard" | "shortcuts" | "layouts" | "scraping" | "settings";
-  theme: "light" | "dark" | "system";
+  theme: "light" | "dark";
   isHoveringEdge: boolean;
   setSidebarVisible: (visible: boolean) => void;
   setActiveView: (view: UIState["activeView"]) => void;
@@ -18,7 +18,7 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       sidebarVisible: false,
       activeView: "chat",
-      theme: "system",
+      theme: "light",
       isHoveringEdge: false,
       setSidebarVisible: (visible) => set({ sidebarVisible: visible }),
       setActiveView: (view) => set({ activeView: view }),

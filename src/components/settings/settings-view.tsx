@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
 import { clsx } from 'clsx';
-import { Check, Sun, Moon, Monitor, Shield } from 'lucide-react';
+import { Check, Sun, Moon, Shield } from 'lucide-react';
 
 const PROVIDERS = [
   { id: 'openai', name: 'OpenAI' },
@@ -25,7 +25,17 @@ export const SettingsView = () => {
   useEffect(() => {
     checkPermission();
     const interval = setInterval(checkPermission, 1000);
-    return () => clearInterval(interval);
+    
+    // Add focus listener
+    const handleFocus = () => {
+        checkPermission();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+        clearInterval(interval);
+        window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const checkPermission = async () => {
@@ -74,7 +84,6 @@ export const SettingsView = () => {
             {[
                 { id: 'light', label: 'Light', icon: Sun },
                 { id: 'dark', label: 'Dark', icon: Moon },
-                { id: 'system', label: 'System', icon: Monitor },
             ].map((t) => {
                 const isActive = theme === t.id;
                 const Icon = t.icon;
