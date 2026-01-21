@@ -80,7 +80,7 @@ export const MainLayout = () => {
   ] as const;
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#FAF9F6] dark:bg-[#1C1917] overflow-hidden font-sans selection:bg-stone-200 dark:selection:bg-stone-700 backdrop-blur-sm">
+    <div className="flex flex-col h-screen w-screen bg-[#FAF9F6] dark:bg-[#1C1917] overflow-hidden font-sans selection:bg-stone-200 dark:selection:bg-stone-700 backdrop-blur-sm rounded-lg border border-stone-200 dark:border-stone-800">
       {/* Drag Region */}
       <div
         className="fixed top-0 left-0 w-full h-8 z-40"
