@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "release": "./scripts/release.sh",
+    "bump": "node scripts/bump-version.js"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "latest",
