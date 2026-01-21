@@ -108,6 +108,48 @@ The `release` script handles building, code signing, and notarization (required 
     APPLE_CERTIFICATE_PASSWORD="cert_password"
     ```
 
+    <details>
+    <summary><strong>🔑 How to get these credentials</strong></summary>
+
+    ### 1. `APPLE_ID`
+    *   **What it is:** Your standard Apple ID email address associated with your Apple Developer account.
+    *   **Example:** `developer@example.com`
+
+    ### 2. `APPLE_PASSWORD` (App-Specific Password)
+    *   **What it is:** A generated password that allows the script to log in without 2FA. **Do NOT use your real Apple ID password.**
+    *   **How to get it:**
+        1.  Go to [appleid.apple.com](https://appleid.apple.com).
+        2.  Sign in with your Apple ID.
+        3.  Go to the **Sign-In and Security** section.
+        4.  Select **App-Specific Passwords**.
+        5.  Click the **+ (Plus)** icon or "Generate an app-specific password".
+        6.  Give it a name (e.g., "My Drawer Notarization").
+        7.  Copy the generated password (format: `xxxx-xxxx-xxxx-xxxx`).
+
+    ### 3. `APPLE_TEAM_ID`
+    *   **What it is:** A unique 10-character code that identifies your development team.
+    *   **How to get it:**
+        1.  Go to [developer.apple.com/account](https://developer.apple.com/account).
+        2.  Scroll down to the **Membership details** section.
+        3.  Look for **Team ID**.
+    *   **Example:** `ABC123DEF4`
+
+    ### 4. `APPLE_CERTIFICATE` (Base64)
+    *   **What it is:** Your "Developer ID Application" certificate exported as a P12 file and encoded in Base64.
+    *   **How to get it:**
+        1.  Open **Keychain Access** on your Mac.
+        2.  Right-click your **Developer ID Application** certificate.
+        3.  Select **Export "Developer ID Application..."**.
+        4.  Save it as a `.p12` file (e.g., `cert.p12`).
+        5.  Set a strong password for the file when prompted (this is `APPLE_CERTIFICATE_PASSWORD`).
+        6.  Convert the `.p12` file to Base64 in your terminal:
+            ```bash
+            base64 -i cert.p12 | pbcopy
+            ```
+        7.  Paste the clipboard content into your `.env` file.
+
+    </details>
+
 2.  **Run Release**:
     ```bash
     npm run release
