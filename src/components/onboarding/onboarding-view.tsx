@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore } from "@/stores/settings-store";
-import { ArrowRight, Check, Shield, Zap } from "lucide-react";
+import { ArrowRight, Check, Shield } from "lucide-react";
 import { clsx } from "clsx";
 
 export const OnboardingView = () => {
@@ -55,7 +55,7 @@ export const OnboardingView = () => {
                 <Zap size={32} />
             </div>
             <p className="text-center text-stone-500 dark:text-stone-400 text-sm max-w-[280px]">
-                my-drawer runs locally and integrates deeply with your system to boost your productivity.
+                My Drawer runs locally and integrates deeply with your system to boost your productivity.
             </p> */}
         </div>
       )
@@ -63,7 +63,7 @@ export const OnboardingView = () => {
     {
       id: "permissions",
       title: "System Permissions",
-      description: "To help you better, my-drawer needs accessibility permissions to interact with other apps.",
+      description: "To help you better, My Drawer needs accessibility permissions to interact with other apps.",
       content: (
         <div className="flex flex-col gap-6 items-center justify-center py-6 w-full">
             <div className={clsx(
@@ -111,7 +111,7 @@ export const OnboardingView = () => {
     {
       id: "finish",
       title: "You're all set",
-      description: "Ready to start using my-drawer? Press the finish button below.",
+      description: "Ready to start using My Drawer? Press the finish button below.",
       content: (
         <div className="flex flex-col gap-4 items-center justify-center py-8">
             <div className="w-20 h-20 bg-stone-800 dark:bg-stone-100 rounded-[2rem] flex items-center justify-center text-white dark:text-stone-900 mb-4 shadow-xl shadow-stone-200 dark:shadow-none">

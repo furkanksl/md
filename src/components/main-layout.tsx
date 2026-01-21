@@ -95,7 +95,7 @@ export const MainLayout = () => {
           data-tauri-drag-region
         >
           <h1 className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 pointer-events-none">
-            md
+            MD
           </h1>
           <div className="flex gap-4 items-center">
             <CustomTitlebar />
