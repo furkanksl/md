@@ -356,22 +356,6 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             {
                 apply_macos_window_customizations(&window);
-
-                // Check and request accessibility permissions on startup
-                unsafe {
-                    if !accessibility_sys::AXIsProcessTrusted() {
-                        let options =
-                            core_foundation::dictionary::CFDictionary::from_CFType_pairs(&[(
-                                core_foundation::string::CFString::new(
-                                    "AXTrustedCheckOptionPrompt",
-                                ),
-                                core_foundation::boolean::CFBoolean::true_value(),
-                            )]);
-                        accessibility_sys::AXIsProcessTrustedWithOptions(
-                            options.as_concrete_TypeRef(),
-                        );
-                    }
-                }
             }
 
             // Start Mouse Polling Thread

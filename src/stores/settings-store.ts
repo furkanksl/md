@@ -7,9 +7,11 @@ interface SettingsState {
   activeProvider: string;
   clipboardHistoryLimit: number;
   clipboardRetentionDays: number;
+  hasCompletedOnboarding: boolean;
   setAIConfiguration: (provider: string, config: AIConfiguration) => void;
   setActiveProvider: (provider: string) => void;
   setClipboardHistoryLimit: (limit: number) => void;
+  setHasCompletedOnboarding: (completed: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -19,12 +21,14 @@ export const useSettingsStore = create<SettingsState>()(
       activeProvider: "openai",
       clipboardHistoryLimit: 1000,
       clipboardRetentionDays: 30,
+      hasCompletedOnboarding: false,
       setAIConfiguration: (provider, config) =>
         set((state) => ({
           aiConfigurations: { ...state.aiConfigurations, [provider]: config },
         })),
       setActiveProvider: (provider) => set({ activeProvider: provider }),
       setClipboardHistoryLimit: (limit) => set({ clipboardHistoryLimit: limit }),
+      setHasCompletedOnboarding: (completed) => set({ hasCompletedOnboarding: completed }),
     }),
     {
       name: "settings-storage",
