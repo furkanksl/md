@@ -94,8 +94,8 @@ export const MainLayout = () => {
           className="h-12 shrink-0 flex items-center justify-between px-3 pl-7 z-50"
           data-tauri-drag-region
         >
-          <h1 className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 pointer-events-none">
-            MD
+            <h1 className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 pointer-events-none font-sans">
+            md
           </h1>
           <div className="flex gap-4 items-center">
             <CustomTitlebar />
