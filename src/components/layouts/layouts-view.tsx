@@ -78,7 +78,7 @@ export const LayoutsView = () => {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-4 scrollbar-none min-h-0">
+      <div className="flex-1 overflow-y-auto pb-4 px-1 -mx-1 scrollbar-none min-h-0">
         <AnimatePresence mode="wait">
             {previewMode ? (
                 <motion.div 
@@ -197,12 +197,8 @@ export const LayoutsView = () => {
                     <div className="grid grid-cols-1 gap-3">
                         <h3 className="text-[10px] font-bold uppercase tracking-widest text-stone-400 ml-1">Snapshots</h3>
                         {layouts.map((layout) => (
-                                                    <motion.div
+                                                    <div
                                                         key={layout.id}
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                        exit={{ opacity: 0 }}
-                                                        transition={{ duration: 0.2 }}
                                                         className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all group relative overflow-hidden"
                                                     >                                <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-3">
@@ -230,7 +226,7 @@ export const LayoutsView = () => {
                                     <span>Restore Layout</span>
                                     <ArrowRight size={12} className="opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
                                 </button>
-                            </motion.div>
+                            </div>
                         ))}
 
                         {layouts.length === 0 && (

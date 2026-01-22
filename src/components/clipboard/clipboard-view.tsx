@@ -1,14 +1,10 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useClipboardStore } from '@/stores/clipboard-store';
 import { Search, Copy, Trash2, Check } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 const ClipboardItem = memo(({ item, onCopy, onDelete, copiedId }: { item: any, onCopy: (id: string, content: string) => void, onDelete: (id: string) => void, copiedId: string | null }) => {
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
+        <div
             className="bg-white dark:bg-stone-900 p-4 rounded-[1.25rem] shadow-sm border border-stone-50 dark:border-stone-800 hover:shadow-md hover:-translate-y-1 transition-all group h-32 flex flex-col justify-between relative overflow-hidden"
         >
             <div className="flex justify-between items-start">
@@ -44,7 +40,7 @@ const ClipboardItem = memo(({ item, onCopy, onDelete, copiedId }: { item: any, o
                     </button>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 }, (prev, next) => {
     return prev.item.id === next.item.id && 
@@ -94,7 +90,7 @@ export const ClipboardView = () => {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-4 scrollbar-none">
+      <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-4 px-1 -mx-1 scrollbar-none">
         {filtered.map((item) => (
             <ClipboardItem 
                 key={item.id} 

@@ -41,20 +41,16 @@ const AppIcon = ({ path, className }: { path: string, className?: string }) => {
 };
 
 export const ShortcutsView = () => {
-  const [apps, setApps] = useState<AppShortcut[]>([]);
+  const [apps, setApps] = useState<AppShortcut[]>(() => {
+    const saved = localStorage.getItem('my-drawer-apps');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detectedApps, setDetectedApps] = useState<AppShortcut[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
   const [isLoadingApps, setIsLoadingApps] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('my-drawer-apps');
-    if (saved) {
-      setApps(JSON.parse(saved));
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('my-drawer-apps', JSON.stringify(apps));
@@ -149,7 +145,7 @@ export const ShortcutsView = () => {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-4 scrollbar-none min-h-0">
+      <div className="flex-1 overflow-y-auto pb-4 px-1 -mx-1 scrollbar-none min-h-0">
         {apps.length === 0 ? (
           <div className="text-center py-12 text-stone-400 flex flex-col items-center gap-4 opacity-50">
             <Layers size={40} strokeWidth={1} />

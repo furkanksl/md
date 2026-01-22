@@ -222,7 +222,7 @@ export const ScrapingView = () => {
         {/* Content Area */}
         <div className="flex-1 overflow-hidden flex gap-3 min-h-0">
             {/* History List */}
-            <div className={clsx("flex-1 overflow-y-auto scrollbar-none space-y-2 transition-all flex flex-col", selectedResult ? "hidden md:block md:w-1/3" : "w-full")}>
+            <div className={clsx("flex-1 overflow-y-auto scrollbar-none space-y-2 transition-all flex flex-col px-1 -mx-1", selectedResult ? "hidden md:block md:w-1/3" : "w-full")}>
                 {history.length === 0 && (
                     <div className="text-center py-12 text-stone-400 flex flex-col items-center gap-3 opacity-50">
                         <FileText size={40} strokeWidth={1} />
@@ -231,28 +231,30 @@ export const ScrapingView = () => {
                 )}
                 
                 {history.map((item) => (
-                    <motion.div
+                    <div
                         key={item.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2 }}
                         className={clsx(
-                            "p-3 rounded-2xl border cursor-pointer transition-all hover:shadow-md group relative",
+                            "p-3 rounded-2xl border cursor-pointer transition-all hover:shadow-md group relative flex flex-col justify-between h-24",
                             selectedResult === item.result 
                                 ? "bg-stone-800 dark:bg-stone-100 text-stone-50 dark:text-stone-900 border-stone-800 dark:border-stone-100 shadow-lg" 
                                 : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 border-stone-100 dark:border-stone-800 hover:border-stone-200 dark:hover:border-stone-700"
                         )}
                         onClick={() => setSelectedResult(item.result)}
                     >
-                        <div className="flex justify-between items-start mb-1.5">
-                            <span className={clsx("text-[10px] font-bold uppercase tracking-widest truncate max-w-[150px]", selectedResult === item.result ? "text-stone-400 dark:text-stone-500" : "text-stone-300 dark:text-stone-600")}>
-                                {new URL(item.url).hostname}
-                            </span>
+                        <div>
+                            <div className="flex justify-between items-start mb-1.5">
+                                <span className={clsx("text-[10px] font-bold uppercase tracking-widest truncate max-w-[150px]", selectedResult === item.result ? "text-stone-400 dark:text-stone-500" : "text-stone-300 dark:text-stone-600")}>
+                                    {new URL(item.url).hostname}
+                                </span>
+                            </div>
+                            <p className="font-medium text-xs line-clamp-2 mb-1">{item.prompt || "No prompt provided"}</p>
+                        </div>
+                        
+                        <div className="flex justify-end mt-auto">
                             <span className={clsx("text-[9px]", selectedResult === item.result ? "text-stone-500 dark:text-stone-400" : "text-stone-300 dark:text-stone-600")}>
                                 {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
-                        <p className="font-medium text-xs line-clamp-2 mb-1">{item.prompt || "No prompt provided"}</p>
                         
                         <button 
                             onClick={(e) => { e.stopPropagation(); deleteTask(item.id); if(selectedResult === item.result) setSelectedResult(null); }}
@@ -263,7 +265,7 @@ export const ScrapingView = () => {
                         >
                             <Trash2 size={12} />
                         </button>
-                    </motion.div>
+                    </div>
                 ))}
 
                 {history.length > 0 && (
