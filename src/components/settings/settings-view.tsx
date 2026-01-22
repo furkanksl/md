@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '@/stores/settings-store';
 import { clsx } from 'clsx';
-import { Check, Shield, CircleCheck, CircleX, Loader2 } from 'lucide-react';
+import { Check, Shield, CircleCheck, CircleX, Loader2, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { getProvider } from '@/core/infra/ai/provider-factory';
 import { streamText } from 'ai';
@@ -17,7 +17,7 @@ const PROVIDERS = [
 ];
 
 export const SettingsView = () => {
-  const { activeProvider, setActiveProvider, setAIConfiguration, aiConfigurations } = useSettingsStore();
+  const { activeProvider, setActiveProvider, setAIConfiguration, aiConfigurations, autoHide, setAutoHide } = useSettingsStore();
   const [apiKey, setApiKey] = useState('');
   const [endpoint, setEndpoint] = useState('');
   const [hasPermission, setHasPermission] = useState(false);
@@ -123,6 +123,42 @@ export const SettingsView = () => {
   return (
     <div className="h-full px-4 py-3 overflow-y-auto scrollbar-none space-y-6">
       
+      {/* Behavior Section */}
+      <div>
+        <h2 className="text-xl font-light text-stone-800 dark:text-stone-200 mb-4">Behavior</h2>
+        <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-4 border border-stone-100 dark:border-stone-800 shadow-sm">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className={clsx(
+                        "w-10 h-10 rounded-xl flex items-center justify-center",
+                        autoHide ? "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300" : "bg-stone-50 text-stone-400 dark:bg-stone-800/50 dark:text-stone-500"
+                    )}>
+                        <EyeOff size={20} />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-medium text-stone-800 dark:text-stone-200">Auto-Hide</span>
+                        <span className="text-xs text-stone-500 dark:text-stone-400">
+                            Hide drawer when clicking outside
+                        </span>
+                    </div>
+                </div>
+
+                <button
+                    onClick={() => setAutoHide(!autoHide)}
+                    className={clsx(
+                        "w-12 h-7 rounded-full p-1 transition-colors duration-300 ease-in-out relative",
+                        autoHide ? "bg-stone-800 dark:bg-stone-100" : "bg-stone-200 dark:bg-stone-800"
+                    )}
+                >
+                    <div className={clsx(
+                        "w-5 h-5 rounded-full bg-white dark:bg-stone-900 shadow-sm transition-transform duration-300 ease-in-out",
+                        autoHide ? "translate-x-5" : "translate-x-0"
+                    )} />
+                </button>
+            </div>
+        </div>
+      </div>
+
       {/* Permissions Section */}
       <div>
         <h2 className="text-xl font-light text-stone-800 dark:text-stone-200 mb-4">Permissions</h2>

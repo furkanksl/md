@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useUIStore } from "@/stores/ui-store";
@@ -27,12 +27,21 @@ import {
 
 export const MainLayout = () => {
   const { activeView, setActiveView, theme, setTheme } = useUIStore();
-  const { hasCompletedOnboarding } = useSettingsStore();
+  const { hasCompletedOnboarding, autoHide } = useSettingsStore();
   const { startMonitoring } = useClipboardStore();
 
   useEffect(() => {
     startMonitoring();
   }, []);
+
+  useEffect(() => {
+    // Sync auto-hide preference with Rust backend
+    // You might need to invoke a Rust command here if you want backend to respect it, 
+    // or if the blur logic is purely frontend (it is currently frontend 'handleBlur' -> 'invoke("hide_drawer")')
+    // We just need to check 'autoHide' inside handleBlur? 
+    // Wait, handleBlur is called by tauri://blur. 
+    // We can conditionally invoke hide_drawer.
+  }, [autoHide]);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -48,15 +57,22 @@ export const MainLayout = () => {
     });
   }, []);
 
-  const handleBlur = () => {
-    // Trigger native slide out on blur
-    invoke("hide_drawer");
-  };
+  // Ref to track latest autoHide preference without re-binding listeners constantly
+  const autoHideRef = useRef(useSettingsStore.getState().autoHide);
+  useEffect(() => {
+      useSettingsStore.subscribe((state) => {
+          autoHideRef.current = state.autoHide;
+      });
+  }, []);
 
   // Listen for window blur event from Tauri
   useEffect(() => {
     const appWindow = getCurrentWindow();
-    const unlistenBlur = appWindow.listen("tauri://blur", handleBlur);
+    const unlistenBlur = appWindow.listen("tauri://blur", () => {
+        if (autoHideRef.current) {
+            invoke("hide_drawer");
+        }
+    });
     return () => {
       unlistenBlur.then((f) => f());
     };
