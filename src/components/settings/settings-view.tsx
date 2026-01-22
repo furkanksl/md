@@ -1,27 +1,28 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '@/stores/settings-store';
-import { useUIStore } from '@/stores/ui-store';
 import { clsx } from 'clsx';
-import { Check, Sun, Moon, Shield } from 'lucide-react';
+import { Check, Shield, CircleCheck, CircleX, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getProvider } from '@/core/infra/ai/provider-factory';
+import { streamText } from 'ai';
 
 const PROVIDERS = [
-  { id: 'openai', name: 'OpenAI' },
-  { id: 'anthropic', name: 'Anthropic' },
-  { id: 'google', name: 'Google' },
-  { id: 'mistral', name: 'Mistral' },
-  { id: 'groq', name: 'Groq' },
-  { id: 'custom', name: 'Custom' },
+  { id: 'openai', name: 'OpenAI', testModel: 'gpt-5-mini' },
+  { id: 'anthropic', name: 'Anthropic', testModel: 'claude-haiku-4-5-20251001' },
+  { id: 'google', name: 'Google', testModel: 'gemini-3-flash' },
+  { id: 'mistral', name: 'Mistral', testModel: 'mistral-small-latest' },
+  { id: 'groq', name: 'Groq', testModel: 'llama-3.3-70b-versatile' },
+  { id: 'custom', name: 'Custom', testModel: 'auto' },
 ];
 
 export const SettingsView = () => {
   const { activeProvider, setActiveProvider, setAIConfiguration, aiConfigurations } = useSettingsStore();
-  const { theme, setTheme } = useUIStore();
   const [apiKey, setApiKey] = useState('');
   const [endpoint, setEndpoint] = useState('');
   const [hasPermission, setHasPermission] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     checkPermission();
@@ -64,6 +65,7 @@ export const SettingsView = () => {
     const config = aiConfigurations[activeProvider];
     setApiKey(config?.apiKey || '');
     setEndpoint(config?.customEndpoint || '');
+    setTestStatus('idle');
   }, [activeProvider, aiConfigurations]);
 
   const handleSave = () => {
@@ -79,40 +81,48 @@ export const SettingsView = () => {
       className: "group toast group-[.toaster]:bg-white dark:group-[.toaster]:bg-stone-900 group-[.toaster]:text-stone-950 dark:group-[.toaster]:text-stone-50 group-[.toaster]:border-stone-200 dark:group-[.toaster]:border-stone-800 group-[.toaster]:shadow-lg",
       descriptionClassName: "group-[.toast]:text-stone-500 dark:group-[.toast]:text-stone-400",
     });
+    setTestStatus('idle');
+  };
+
+  const handleTestConnection = async () => {
+    if (!apiKey) {
+        toast.error("API Key missing", { description: "Please enter an API key to test." });
+        return;
+    }
+
+    setTestStatus('testing');
+    try {
+        const providerConfig = PROVIDERS.find(p => p.id === activeProvider);
+        const providerFactory = getProvider(activeProvider, apiKey);
+        
+        // Simple hello world test
+        const result = await streamText({
+            model: providerFactory(providerConfig?.testModel || 'gpt-4o-mini') as any,
+            messages: [{ role: 'user', content: 'Say "1"' }],
+        });
+
+        // Consume stream to ensure connection works
+        let response = "";
+        for await (const chunk of result.textStream) {
+            response += chunk;
+        }
+
+        if (response) {
+            setTestStatus('success');
+            toast.success("Connection Successful", { description: "API key is valid and working." });
+        } else {
+            throw new Error("No response received");
+        }
+    } catch (error) {
+        console.error("Test failed:", error);
+        setTestStatus('error');
+        toast.error("Connection Failed", { description: "Could not connect to the provider. Check your API key." });
+    }
   };
 
   return (
     <div className="h-full px-4 py-3 overflow-y-auto scrollbar-none space-y-6">
       
-      {/* Theme Section */}
-      <div>
-        <h2 className="text-xl font-light text-stone-800 dark:text-stone-200 mb-4">Appearance</h2>
-        <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-1.5 border border-stone-100 dark:border-stone-800 shadow-sm flex">
-            {[
-                { id: 'light', label: 'Light', icon: Sun },
-                { id: 'dark', label: 'Dark', icon: Moon },
-            ].map((t) => {
-                const isActive = theme === t.id;
-                const Icon = t.icon;
-                return (
-                    <button
-                        key={t.id}
-                        onClick={() => setTheme(t.id as any)}
-                        className={clsx(
-                            "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium transition-all duration-300",
-                            isActive 
-                                ? "bg-stone-800 text-white shadow-md dark:bg-stone-100 dark:text-stone-900" 
-                                : "text-stone-500 hover:text-stone-700 hover:bg-stone-50 dark:text-stone-400 dark:hover:bg-stone-800"
-                        )}
-                    >
-                        <Icon size={14} />
-                        {t.label}
-                    </button>
-                );
-            })}
-        </div>
-      </div>
-
       {/* Permissions Section */}
       <div>
         <h2 className="text-xl font-light text-stone-800 dark:text-stone-200 mb-4">Permissions</h2>
@@ -184,13 +194,23 @@ export const SettingsView = () => {
             <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 ml-1">
                 API Access Key
             </label>
-            <input 
-                type="password"
-                className="w-full bg-stone-50 dark:bg-stone-800 h-10 rounded-xl px-4 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-100 dark:focus:ring-stone-700 transition-all font-mono text-xs"
-                placeholder="sk-..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-            />
+            <div className="relative">
+                <input 
+                    type="password"
+                    className={clsx(
+                        "w-full bg-stone-50 dark:bg-stone-800 h-10 rounded-xl px-4 pr-10 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 transition-all font-mono text-xs",
+                        testStatus === 'error' ? "focus:ring-red-200 dark:focus:ring-red-900/50" : "focus:ring-stone-100 dark:focus:ring-stone-700"
+                    )}
+                    placeholder="sk-..."
+                    value={apiKey}
+                    onChange={(e) => { setApiKey(e.target.value); setTestStatus('idle'); }}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {testStatus === 'testing' && <Loader2 size={14} className="animate-spin text-stone-400" />}
+                    {testStatus === 'success' && <CircleCheck size={14} className="text-green-500" />}
+                    {testStatus === 'error' && <CircleX size={14} className="text-red-500" />}
+                </div>
+            </div>
         </div>
 
         {activeProvider === 'custom' && (
@@ -207,10 +227,17 @@ export const SettingsView = () => {
             </div>
         )}
 
-        <div className="flex justify-end mt-1">
+        <div className="flex justify-end gap-2 mt-1">
+            <button 
+                onClick={handleTestConnection}
+                disabled={testStatus === 'testing' || !apiKey}
+                className="px-4 py-2 bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400 rounded-xl text-xs font-medium hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors disabled:opacity-50"
+            >
+                {testStatus === 'testing' ? 'Testing...' : 'Test Key'}
+            </button>
             <button 
                 onClick={handleSave}
-                className="px-6 py-2 bg-stone-100 text-stone-600 rounded-xl text-xs font-medium hover:bg-stone-200 transition-colors dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+                className="px-6 py-2 bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 rounded-xl text-xs font-medium hover:opacity-90 transition-opacity shadow-lg shadow-stone-200/50 dark:shadow-none"
             >
                 Save Changes
             </button>
