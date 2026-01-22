@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useChatStore } from "@/stores/chat-store";
 import { clsx } from "clsx";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { MarkdownRenderer } from "../shared/markdown-renderer";
-import { Edit2, X, Check } from "lucide-react";
+import { Edit2, X, Check, File as FileIcon } from "lucide-react";
 
 const LoadingDots = () => (
   <div className="flex gap-1 py-1 px-2">
@@ -38,6 +38,10 @@ export const MessageList = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
 
+  // Lightbox preview state
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string | null>(null);
+
   const activeChat = activeConversationId
     ? conversations[activeConversationId]
     : null;
@@ -66,6 +70,19 @@ export const MessageList = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, []);
+
+  // Lightbox keyboard handling (Escape to close)
+  useEffect(() => {
+    if (!previewSrc) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPreviewSrc(null);
+        setPreviewName(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [previewSrc]);
 
   const startEditing = (id: string, content: string) => {
     setEditingId(id);
@@ -185,6 +202,32 @@ export const MessageList = () => {
                 )}
               </div>
 
+              {/* Attachments (images) rendered outside the bubble */}
+              {msg.attachments && msg.attachments.length > 0 && (
+                <div className={clsx("mt-2 flex gap-3", isUser ? "justify-end" : "justify-start")}>
+                  {msg.attachments.map((att: any, idx: number) => {
+                    const isImage = att.type?.startsWith?.('image/') || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(att.name || '');
+                    const src = att.base64 || (att.path ? `file://${att.path}` : undefined);
+                    if (isImage && src) {
+                      return (
+                        <button key={idx} onClick={() => { setPreviewSrc(src); setPreviewName(att.name); }} className="block p-0 bg-transparent border-0">
+                          <img src={src} alt={att.name || 'image'} className="w-24 h-24 object-cover rounded-lg border border-stone-100 dark:border-stone-800 shadow-sm cursor-zoom-in" />
+                        </button>
+                      );
+                    }
+                    // Fallback for non-image attachments
+                    return (
+                      <div key={idx} className="px-3 py-2 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-100 dark:border-stone-700 text-xs">
+                        <a href={att.base64 || att.path} target="_blank" rel="noreferrer noopener" className="flex items-center gap-2">
+                          <FileIcon size={14} />
+                          <span className="truncate max-w-[160px]">{att.name}</span>
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* Timestamp (always visible, outside bubble) */}
               <div className={clsx("mt-1 text-[11px] text-stone-400 dark:text-stone-500 select-none", isUser ? "text-right" : "text-left")} aria-hidden>
                 {timeLabel}
@@ -206,6 +249,33 @@ export const MessageList = () => {
           </div>
         );
       })}
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {previewSrc && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 rounded-lg border border-stone-100 dark:border-stone-800"
+            onClick={() => { setPreviewSrc(null); setPreviewName(null); }}
+          >
+            <motion.div initial={{ scale: 0.98 }} animate={{ scale: 1 }} exit={{ scale: 0.98 }} className="flex max-w-[90%] max-h-[80vh] p-4" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-xl overflow-hidden">
+                <div className="p-3 flex items-center justify-between border-b border-stone-100 dark:border-stone-800">
+                  <div className="text-sm font-medium text-stone-700 dark:text-stone-200 truncate">{previewName}</div>
+                  <button onClick={() => { setPreviewSrc(null); setPreviewName(null); }} className="p-2 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="p-4 flex items-center justify-center">
+                  <img src={previewSrc} alt={previewName || 'preview'} className="max-w-full max-h-[60vh] object-contain" />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
