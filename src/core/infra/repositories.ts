@@ -151,6 +151,9 @@ export class FolderRepository {
 export class ClipboardRepository {
   async getAll(limit: number = 50): Promise<any[]> {
     const db = await dbClient.getDb();
+    if (limit <= 0) {
+        return await db.select("SELECT * FROM clipboard ORDER BY timestamp DESC");
+    }
     return await db.select("SELECT * FROM clipboard ORDER BY timestamp DESC LIMIT $1", [limit]);
   }
 
@@ -178,5 +181,15 @@ export class ClipboardRepository {
   async clear(): Promise<void> {
     const db = await dbClient.getDb();
     await db.execute("DELETE FROM clipboard WHERE pinned = 0");
+  }
+
+  async prune(limit: number): Promise<void> {
+    const db = await dbClient.getDb();
+    // Keep the 'limit' most recent items (by timestamp), delete the rest (except pinned maybe? standard is strict limit usually, but safer to keep pinned)
+    // Actually, simple query: DELETE FROM clipboard WHERE id NOT IN (SELECT id FROM clipboard ORDER BY timestamp DESC LIMIT $1) AND pinned = 0
+    await db.execute(
+        "DELETE FROM clipboard WHERE id NOT IN (SELECT id FROM clipboard ORDER BY timestamp DESC LIMIT $1) AND pinned = 0",
+        [limit]
+    );
   }
 }

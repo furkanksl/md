@@ -19,7 +19,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       aiConfigurations: {},
       activeProvider: "openai",
-      clipboardHistoryLimit: 1000,
+      clipboardHistoryLimit: 50, // Default to 50
       clipboardRetentionDays: 30,
       hasCompletedOnboarding: false,
       setAIConfiguration: (provider, config) =>

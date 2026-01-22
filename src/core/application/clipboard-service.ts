@@ -1,5 +1,6 @@
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { ClipboardRepository } from "../infra/repositories";
+import { useSettingsStore } from "@/stores/settings-store";
 
 const repo = new ClipboardRepository();
 
@@ -8,7 +9,8 @@ export class ClipboardService {
   private intervalId: NodeJS.Timeout | null = null;
 
   async getHistory() {
-    return await repo.getAll();
+    const limit = useSettingsStore.getState().clipboardHistoryLimit;
+    return await repo.getAll(limit);
   }
 
   async startMonitoring(callback: () => void) {
@@ -23,7 +25,18 @@ export class ClipboardService {
           console.log("New clipboard content detected:", content.substring(0, 50));
           this.lastContent = content;
           
-          await repo.create(content, "System"); 
+          await repo.create(content, "System");
+          
+          // Cleanup old items based on limit
+          const limit = useSettingsStore.getState().clipboardHistoryLimit;
+          if (limit > 0) {
+             // We can optimize this by doing it in the DB or periodically
+             // For now, let's just rely on getHistory limiting the view, 
+             // but ideally we should delete old records.
+             // Let's add a prune method to repo?
+             await repo.prune(limit);
+          }
+
           callback(); 
         }
       } catch (e) {

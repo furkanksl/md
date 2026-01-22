@@ -1,6 +1,9 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useClipboardStore } from '@/stores/clipboard-store';
-import { Search, Copy, Trash2, Check } from 'lucide-react';
+import { useSettingsStore } from '@/stores/settings-store';
+import { Search, Copy, Trash2, Check, History, ChevronDown } from 'lucide-react';
+import * as Popover from '@radix-ui/react-popover';
+import { clsx } from 'clsx';
 
 const ClipboardItem = memo(({ item, onCopy, onDelete, copiedId }: { item: any, onCopy: (id: string, content: string) => void, onDelete: (id: string) => void, copiedId: string | null }) => {
     return (
@@ -50,6 +53,7 @@ const ClipboardItem = memo(({ item, onCopy, onDelete, copiedId }: { item: any, o
 
 export const ClipboardView = () => {
   const { items, loadHistory, startMonitoring, deleteItem, isMonitoring } = useClipboardStore();
+  const { clipboardHistoryLimit, setClipboardHistoryLimit } = useSettingsStore();
   const [search, setSearch] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -63,6 +67,11 @@ export const ClipboardView = () => {
         startMonitoring();
     }
   }, []);
+
+  // Reload history when limit changes to reflect truncation immediately if needed
+  useEffect(() => {
+    loadHistory();
+  }, [clipboardHistoryLimit]);
 
   const filtered = items.filter(item => 
     item.content.toLowerCase().includes(search.toLowerCase())
@@ -78,16 +87,54 @@ export const ClipboardView = () => {
     deleteItem(id);
   }, [deleteItem]);
 
+  const LIMIT_OPTIONS = [10, 20, 30, 50, 100, 0]; // 0 for All
+
   return (
     <div className="flex flex-col h-full px-4 py-3">
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 dark:text-stone-600" size={16} />
-        <input 
-            className="w-full bg-white dark:bg-stone-900 h-10 rounded-xl pl-10 pr-4 text-sm text-stone-600 dark:text-stone-300 placeholder:text-stone-300 dark:placeholder:text-stone-600 focus:outline-none shadow-sm border border-stone-50 dark:border-stone-800 focus:shadow-md transition-shadow"
-            placeholder="Search your collection..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="relative mb-6 flex gap-2">
+        <div className="relative flex-1 transition-all">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 dark:text-stone-600" size={16} />
+            <input 
+                className="w-full bg-white dark:bg-stone-900 h-10 rounded-xl pl-10 pr-4 text-sm text-stone-600 dark:text-stone-300 placeholder:text-stone-300 dark:placeholder:text-stone-600 focus:outline-none shadow-sm border border-stone-50 dark:border-stone-800 focus:shadow-md transition-shadow"
+                placeholder="Search your collection..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+            />
+        </div>
+        
+        <Popover.Root>
+            <Popover.Trigger asChild>
+                <button className="transition-all h-10 px-3 bg-white dark:bg-stone-900 rounded-xl border border-stone-50 dark:border-stone-800 text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors flex items-center gap-2 shadow-sm">
+                    <History size={16} />
+                    <span className="text-xs font-medium">
+                        {clipboardHistoryLimit === 0 ? 'All' : `Last ${clipboardHistoryLimit}`}
+                    </span>
+                    <ChevronDown size={14} className="opacity-50" />
+                </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+                <Popover.Content className="z-50 min-w-[120px] bg-white dark:bg-stone-900 rounded-xl border border-stone-100 dark:border-stone-800 shadow-xl p-1 animate-in fade-in zoom-in-95 duration-200" sideOffset={5} align="end">
+                    <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                        History Limit
+                    </div>
+                    {LIMIT_OPTIONS.map(limit => (
+                        <button
+                            key={limit}
+                            onClick={() => setClipboardHistoryLimit(limit)}
+                            className={clsx(
+                                "w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors flex items-center justify-between",
+                                clipboardHistoryLimit === limit
+                                    ? "bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200"
+                                    : "text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800"
+                            )}
+                        >
+                            {limit === 0 ? `Keep All (${items.length})` : `Last ${limit}`}
+                            {clipboardHistoryLimit === limit && <div className="w-1.5 h-1.5 rounded-full bg-stone-800 dark:bg-stone-200" />}
+                        </button>
+                    ))}
+                </Popover.Content>
+            </Popover.Portal>
+        </Popover.Root>
       </div>
 
       <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-4 px-1 -mx-1 scrollbar-none">
