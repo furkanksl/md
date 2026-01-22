@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
+import { useLatestRelease } from "@/hooks/use-latest-release";
 
 export const Header = () => {
+  const { version, downloadUrl } = useLatestRelease();
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6 flex justify-between items-center bg-[#FAF9F6]/80 backdrop-blur-md transition-all border-b border-transparent hover:border-[#E7E5E4]">
       <div className="flex items-center gap-3">
@@ -22,8 +25,13 @@ export const Header = () => {
           <Github className="w-4 h-4" strokeWidth={1.5} />
           <span>GitHub</span>
         </a>
-        <Button className="rounded-full bg-[#44403C] text-[#FAF9F6] hover:bg-[#44403C]/90 shadow-lg shadow-[#44403C]/10 px-5 h-9 text-sm">
-          Download v0.3.0
+        <Button 
+          asChild
+          className="rounded-full bg-[#44403C] text-[#FAF9F6] hover:bg-[#44403C]/90 shadow-lg shadow-[#44403C]/10 px-5 h-9 text-sm"
+        >
+          <a href={downloadUrl}>
+            Download {version}
+          </a>
         </Button>
       </div>
     </header>

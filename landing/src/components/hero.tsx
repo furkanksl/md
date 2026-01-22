@@ -30,9 +30,11 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLatestRelease } from "@/hooks/use-latest-release";
 
 export const Hero = () => {
   const [activeTab, setActiveTab] = useState("chat");
+  const { downloadUrl } = useLatestRelease();
 
   useEffect(() => {
     const tabs = ["chat", "clipboard", "shortcuts", "layouts", "web", "settings"];
@@ -73,8 +75,9 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium text-[#44403C]/80  hover:scale-105 cursor-default transition-transform"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#E7E5E4] text-xs font-medium text-[#44403C]/80 shadow-sm hover:scale-105 cursor-default transition-transform"
          >
+            <Shield size={12} className="text-[#738F82]" strokeWidth={1.5} />
             <span className="tracking-wide">Local-First & Private</span>
          </motion.div> */}
          
@@ -84,8 +87,8 @@ export const Hero = () => {
             transition={{ delay: 0.3 }}
             className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-[#44403C] leading-[1.1]"
          >
-           The missing layer <br />
-           <span>of</span>
+           The missing layer <br />   
+            <span>of</span>
            <span className="text-[#738F82]"> macOS.</span>
          </motion.h1>
          
@@ -104,10 +107,13 @@ export const Hero = () => {
             transition={{ delay: 0.5 }}
             className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4"
          >
-           <Button size="lg" className="h-12 px-8 text-base rounded-full bg-[#44403C] hover:bg-[#383531] text-[#FAF9F6] shadow-xl shadow-[#44403C]/10 transition-transform group">
+         
+           <Button asChild size="lg" className="h-12 px-8 text-base rounded-full bg-[#44403C] hover:bg-[#383531] text-[#FAF9F6] shadow-xl shadow-[#44403C]/10 transition-transform group">
+           <a href={downloadUrl}>
              Download for macOS
              <ArrowRight className="ml-2 w-4 h-4 opacity-60 group-hover:translate-x-1 transition-transform" strokeWidth={1.5} />
-           </Button>
+             </a>
+               </Button>
            
            <div className="flex items-center gap-4 text-xs font-medium text-[#44403C]/40 px-2">
               <span className="flex items-center gap-1.5">
