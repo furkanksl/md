@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ZEN / ORGANIC MINIMALIST THEME (Strictly from Desktop App) */
+    
+    /* #FAF9F6 - Off White / Paper */
+    --background: 40 20% 98%; 
+    
+    /* #44403C - Warm Charcoal */
+    --foreground: 24 5% 26%; 
+
+    /* Pure White for Cards to pop against the off-white bg */
+    --card: 0 0% 100%;
+    --card-foreground: 24 5% 26%;
+
+    /* #738F82 - Muted Sage */
+    --primary: 150 10% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* #F2EFE9 - Warm Light Gray */
+    --secondary: 30 20% 94%;
+    --secondary-foreground: 24 5% 26%;
+
+    /* #E7E5E4 - Warm Gray */
+    --muted: 30 20% 90%;
+    --muted-foreground: 24 5% 60%;
+
+    /* #D4C5BE - Taupe */
+    --accent: 20 20% 80%;
+    --accent-foreground: 24 5% 26%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 30 10% 90%;
+    --input: 30 10% 90%;
+    --ring: 150 10% 50%;
+
+    /* Distinctive very round corners from desktop app */
+    --radius: 1.5rem; 
+  }
+
+  /* Enforce Light Mode Variables even in dark */
+  .dark {
+    --background: 40 20% 98%;
+    --foreground: 24 5% 26%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 5% 26%;
+    --primary: 150 10% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 20% 94%;
+    --secondary-foreground: 24 5% 26%;
+    --muted: 30 20% 90%;
+    --muted-foreground: 24 5% 60%;
+    --accent: 20 20% 80%;
+    --accent-foreground: 24 5% 26%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 10% 90%;
+    --input: 30 10% 90%;
+    --ring: 150 10% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    position: relative;
+    isolation: isolate;
+  }
+  
+  /* Background texture moved to pseudo-element to stay behind content */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(#44403C 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: 0 0;
+    opacity: 0.15; /* Subtle dots */
+    pointer-events: none;
+    mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+  }
+}
