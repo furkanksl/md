@@ -227,7 +227,12 @@ fn apply_preset_layout(layout: String) {
 fn check_accessibility_permission() -> bool {
     #[cfg(target_os = "macos")]
     unsafe {
-        accessibility_sys::AXIsProcessTrusted()
+        // Some systems might cache the result. Using WithOptions with empty dictionary
+        // can sometimes force a refresh, but AXIsProcessTrusted is standard.
+        // However, if the user toggles it, we want to know immediately.
+        // Let's stick to the standard call, but ensure we aren't using the WithOptions call that prompts.
+        let trusted = accessibility_sys::AXIsProcessTrusted();
+        trusted
     }
     #[cfg(not(target_os = "macos"))]
     {
