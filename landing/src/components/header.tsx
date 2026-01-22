@@ -6,7 +6,7 @@ export const Header = () => {
   const { version, downloadUrl } = useLatestRelease();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6 flex justify-between items-center bg-[#FAF9F6]/80 backdrop-blur-md transition-all border-b border-transparent hover:border-[#E7E5E4]">
+    <header className="fixed top-0 left-0 right-0 z-50 px-4 py-4 md:px-6 md:py-6 flex justify-between items-center bg-[#FAF9F6]/80 backdrop-blur-md transition-all border-b border-transparent hover:border-[#E7E5E4]">
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-[#44403C] text-[#FAF9F6] flex items-center justify-center shadow-lg shadow-[#44403C]/10 font-bold text-lg tracking-tighter">
           md

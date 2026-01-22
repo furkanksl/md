@@ -66,7 +66,7 @@ export const Hero = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-16 w-full">
+    <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-12 lg:gap-16 w-full">
       
       {/* Hero Copy */}
       <div className="flex-1 space-y-8 text-center lg:text-left pt-8 lg:pt-20 animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-xl mx-auto lg:mx-0">
@@ -134,7 +134,7 @@ export const Hero = () => {
         initial={{ opacity: 0, x: 100 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
-        className="relative w-[340px] h-[640px] shrink-0"
+        className="relative w-full max-w-[340px] h-[640px] shrink-0"
       >
          
          {/* Abstract Desktop Wallpaper Context */}

@@ -3,10 +3,10 @@ import { motion } from "framer-motion";
 
 export const InteractionDemo = () => {
   return (
-    <div className="w-full border-y border-[#E7E5E4] bg-white relative overflow-hidden h-full flex items-center">
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#E7E5E4] to-transparent"></div>
-      <div className="max-w-[1000px] mx-auto px-6 w-full">
-        <div className="flex flex-col md:flex-row items-center gap-16 md:gap-24">
+    <div className="w-full bg-white relative overflow-hidden h-full flex items-center">
+      {/* <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#E7E5E4] to-transparent"></div> */}
+      <div className="max-w-[1000px] mx-auto px-6 w-full py-12 md:py-0">
+        <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24">
           <div className="flex-1 space-y-6">
             <div className="inline-flex items-center gap-2 text-[#738F82] font-medium text-sm tracking-wide uppercase">
               <PanelLeft size={16} strokeWidth={1.5} />
@@ -19,12 +19,12 @@ export const InteractionDemo = () => {
               My Drawer lives on the edge of your screen. It stays out of your way when you're focused, and appears instantly when you move your mouse to the left edge.
             </p>
             <div className="flex items-center gap-3 pt-2">
-              <div className="h-10 px-4 rounded-full bg-[#F2EFE9] border border-[#E7E5E4] flex items-center gap-2 text-sm text-[#44403C]/80">
+              <div className="h-10 px-4 rounded-full bg-[#F2EFE9] border border-[#E7E5E4] flex items-center gap-2 text-xs sm:text-sm text-[#44403C]/80">
                 <MousePointer2 size={16} strokeWidth={1.5} />
                 <span>Hover Left Edge</span>
               </div>
               <ArrowRight size={16} className="text-[#44403C]/30" strokeWidth={1.5} />
-              <div className="h-10 px-4 rounded-full bg-[#44403C] text-[#FAF9F6] flex items-center gap-2 text-sm shadow-md">
+              <div className="h-10 px-4 rounded-full bg-[#44403C] text-[#FAF9F6] flex items-center gap-2 text-xs sm:text-sm shadow-md">
                 <PanelLeft size={16} strokeWidth={1.5} />
                 <span>Drawer Opens</span>
               </div>
@@ -33,7 +33,7 @@ export const InteractionDemo = () => {
 
           {/* Animation Container */}
           <div className="flex-1 w-full max-w-[400px]">
-            <div className="aspect-[4/3] bg-[#FAF9F6] rounded-2xl border border-[#E7E5E4] relative overflow-hidden shadow-sm ring-1 ring-[#000000]/5">
+            <div className="aspect-[4/3] bg-[#FAF9F6] rounded-2xl border border-[#E7E5E4] relative overflow-hidden shadow-sm ring-1 ring-[#000000]/5 w-full">
               {/* Mock Desktop Background */}
               <div className="absolute inset-0 bg-[radial-gradient(#E7E5E4_1px,transparent_1px)] [background-size:16px_16px] opacity-50" />
 
