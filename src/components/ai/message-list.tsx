@@ -103,73 +103,107 @@ export const MessageList = () => {
         const isUser = msg.role === "user";
         const isEditing = editingId === msg.id;
 
-        return (
-          <motion.div
-            key={msg.id || i}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className={clsx(
-              "flex flex-col max-w-[92%] min-w-0 group",
-              isUser ? "self-end items-end" : "self-start items-start"
-            )}
-          >
-            <div
-              className={clsx(
-                "px-3.5 py-2 text-xs leading-relaxed shadow-sm overflow-hidden relative",
-                isUser
-                  ? "bg-stone-800 text-stone-50 dark:bg-stone-100 dark:text-stone-900 rounded-[1.25rem] rounded-tr-none"
-                  : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 rounded-[1.25rem] rounded-tl-none border border-stone-100 dark:border-stone-800 overflow-x-auto scrollbar-none"
-              )}
-            >
-              {isEditing ? (
-                <div className="flex flex-col gap-2 min-w-[200px]">
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="bg-transparent border-none focus:outline-none w-full resize-none text-inherit"
-                    rows={Math.max(2, editContent.split("\n").length)}
-                    autoFocus
-                  />
-                  <div className="flex justify-end gap-2 mt-1">
-                    <button
-                      onClick={cancelEditing}
-                      className="p-1 hover:bg-white/20 rounded"
-                    >
-                      <X size={14} />
-                    </button>
-                    <button
-                      onClick={() => saveEdit(msg.id)}
-                      className="p-1 hover:bg-white/20 rounded"
-                    >
-                      <Check size={14} />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {msg.content === "" && !isUser ? (
-                    <LoadingDots />
-                  ) : (
-                    <MarkdownRenderer content={msg.content} />
-                  )}
-                </>
-              )}
-            </div>
+        // Normalize timestamp
+        const ts = msg.timestamp ? (typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp) : new Date();
 
-            {/* Edit Button for User Messages */}
-            {!isEditing && isUser && !isStreaming && (
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-full mr-2 top-1/2 -translate-y-1/2">
-                <button
-                  onClick={() => startEditing(msg.id, msg.content)}
-                  className="p-1.5 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-                  title="Edit"
-                >
-                  <Edit2 size={12} />
-                </button>
+        // Day separator: show if first message or day differs from previous
+        const prev = messages[i - 1];
+        const prevTs = prev ? (prev.timestamp ? (typeof prev.timestamp === 'string' ? new Date(prev.timestamp) : prev.timestamp) : null) : null;
+        const isNewDay = !prevTs || ts.toDateString() !== prevTs.toDateString();
+
+        // Time string (always shown outside the bubble)
+        const timeLabel = ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        // Localized date label for day separators
+        const dateLabel = (() => {
+          const today = new Date();
+          const yesterday = new Date();
+          yesterday.setDate(today.getDate() - 1);
+          if (ts.toDateString() === today.toDateString()) return new Intl.DateTimeFormat(undefined, { weekday: 'long', hour: undefined }).format(ts) === undefined ? 'Today' : (navigator.language && (new Intl.DateTimeFormat(navigator.language, { weekday: 'long' }).format(ts))) || 'Today';
+          if (ts.toDateString() === yesterday.toDateString()) return 'Yesterday';
+          return new Intl.DateTimeFormat(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }).format(ts);
+        })();
+
+        return (
+          <div key={msg.id || i} className="w-full">
+            {isNewDay && (
+              <div className="w-full flex items-center my-3">
+                <div className="flex-1 h-px bg-stone-100 dark:bg-stone-800" />
+                <div className="px-3 text-[11px] text-stone-400 dark:text-stone-500 whitespace-nowrap">{dateLabel}</div>
+                <div className="flex-1 h-px bg-stone-100 dark:bg-stone-800" />
               </div>
             )}
-          </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className={clsx(
+                "flex flex-col max-w-[92%] min-w-0",
+                isUser ? "self-end items-end" : "self-start items-start"
+              )}
+            >
+              <div
+                className={clsx(
+                  "px-3.5 py-2 text-xs leading-relaxed shadow-sm overflow-hidden relative",
+                  isUser
+                    ? "bg-stone-800 text-stone-50 dark:bg-stone-100 dark:text-stone-900 rounded-[1.25rem] rounded-tr-none"
+                    : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 rounded-[1.25rem] rounded-tl-none border border-stone-100 dark:border-stone-800 overflow-x-auto scrollbar-none"
+                )}
+              >
+                {isEditing ? (
+                  <div className="flex flex-col gap-2 min-w-[200px]">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="bg-transparent border-none focus:outline-none w-full resize-none text-inherit"
+                      rows={Math.max(2, editContent.split("\n").length)}
+                      autoFocus
+                    />
+                    <div className="flex justify-end gap-2 mt-1">
+                      <button
+                        onClick={cancelEditing}
+                        className="p-1 hover:bg-white/20 rounded"
+                      >
+                        <X size={14} />
+                      </button>
+                      <button
+                        onClick={() => saveEdit(msg.id)}
+                        className="p-1 hover:bg-white/20 rounded"
+                      >
+                        <Check size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {msg.content === "" && !isUser ? (
+                      <LoadingDots />
+                    ) : (
+                      <MarkdownRenderer content={msg.content} />
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Timestamp (always visible, outside bubble) */}
+              <div className={clsx("mt-1 text-[11px] text-stone-400 dark:text-stone-500 select-none", isUser ? "text-right" : "text-left")} aria-hidden>
+                {timeLabel}
+              </div>
+
+              {/* Edit Button for User Messages */}
+              {!isEditing && isUser && !isStreaming && (
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-full mr-2 top-1/2 -translate-y-1/2">
+                  <button
+                    onClick={() => startEditing(msg.id, msg.content)}
+                    className="p-1.5 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                    title="Edit"
+                  >
+                    <Edit2 size={12} />
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
         );
       })}
     </div>
