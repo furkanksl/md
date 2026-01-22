@@ -10,7 +10,7 @@
     "dev:desktop": "npm --workspace=my-drawer-desktop run dev",
     "build:desktop": "npm --workspace=my-drawer-desktop run build",
     "tauri:desktop": "npm --workspace=my-drawer-desktop run tauri",
-    "dev:landing": "npm --workspace=my-drawer-site run dev",
-    "build:landing": "npm --workspace=my-drawer-site run build"
+    "dev:landing": "npm --workspace=my-drawer-landing run dev",
+    "build:landing": "npm --workspace=my-drawer-landing run build"
   }
 }
