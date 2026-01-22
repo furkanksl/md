@@ -399,7 +399,7 @@ pub fn run() {
                                     let height = 800.0 * scale_factor; // Window height from config
 
                                     let start_x = -width as i32;
-                                    let end_x = 0;
+                                    let end_x = 30; // 30px offset for floating effect
                                     let center_y = ((screen_height as f64 - height) / 2.0) as i32;
 
                                     let duration_ms = 200;
