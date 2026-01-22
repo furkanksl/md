@@ -4,6 +4,7 @@ import { useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
 import { clsx } from 'clsx';
 import { Check, Sun, Moon, Shield } from 'lucide-react';
+import { toast } from 'sonner';
 
 const PROVIDERS = [
   { id: 'openai', name: 'OpenAI' },
@@ -71,6 +72,12 @@ export const SettingsView = () => {
         apiKey,
         model: 'auto',
         customEndpoint: activeProvider === 'custom' ? endpoint : undefined
+    });
+    toast.success("Settings saved", {
+      description: `${PROVIDERS.find(p => p.id === activeProvider)?.name} configuration updated successfully.`,
+      duration: 2000,
+      className: "group toast group-[.toaster]:bg-white dark:group-[.toaster]:bg-stone-900 group-[.toaster]:text-stone-950 dark:group-[.toaster]:text-stone-50 group-[.toaster]:border-stone-200 dark:group-[.toaster]:border-stone-800 group-[.toaster]:shadow-lg",
+      descriptionClassName: "group-[.toast]:text-stone-500 dark:group-[.toast]:text-stone-400",
     });
   };
 
