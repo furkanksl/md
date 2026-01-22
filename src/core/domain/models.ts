@@ -34,10 +34,13 @@ export const MODELS: ModelMetadata[] = [
   { id: "moonshotai/kimi-k2-instruct-0905", name: "Kimi K2 Instruct", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
   { id: "openai/gpt-oss-20b", name: "GPT OSS 20B", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
 
-  // Mistral (Latest)
-  { id: "mistral-large-latest", name: "Mistral Large 3", provider: "mistral", capabilities: { image: true, audio: false, tools: true } },
-  { id: "mistral-small-latest", name: "Mistral Small 3", provider: "mistral", capabilities: { image: false, audio: false, tools: true } },
-  { id: "codestral-latest", name: "Codestral 2", provider: "mistral", capabilities: { image: false, audio: false, tools: true } },
+  // Mistral (Latest Official)
+  { id: "mistral-large-latest", name: "Mistral Large 3", provider: "mistral", capabilities: { image: true, audio: false, tools: true } }, // 25.12
+  { id: "mistral-medium-latest", name: "Mistral Medium 3.1", provider: "mistral", capabilities: { image: true, audio: false, tools: true } }, // 25.08
+  { id: "mistral-small-latest", name: "Mistral Small 3.2", provider: "mistral", capabilities: { image: false, audio: false, tools: true } }, // 25.06
+  { id: "ministral-3-8b-latest", name: "Ministral 3 8B", provider: "mistral", capabilities: { image: true, audio: false, tools: true } }, // 25.12 Edge
+  { id: "codestral-latest", name: "Codestral 25.08", provider: "mistral", capabilities: { image: false, audio: false, tools: true } },
+  { id: "pixtral-large-latest", name: "Pixtral Large", provider: "mistral", capabilities: { image: true, audio: false, tools: true } }, // Multimodal
 ];
 
 export const getModelById = (id: string) => MODELS.find(m => m.id === id) || MODELS[0];
