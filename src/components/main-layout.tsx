@@ -21,10 +21,12 @@ import {
   Maximize,
   Globe,
   Settings,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 export const MainLayout = () => {
-  const { activeView, setActiveView, theme } = useUIStore();
+  const { activeView, setActiveView, theme, setTheme } = useUIStore();
   const { hasCompletedOnboarding } = useSettingsStore();
   const { startMonitoring } = useClipboardStore();
 
@@ -87,7 +89,25 @@ export const MainLayout = () => {
             <h1 className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 pointer-events-none font-sans">
             md
           </h1>
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-2 items-center">
+            {/* Minimal theme toggle */}
+            <button
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-stone-900 shadow-lg shadow-stone-200/50 dark:shadow-none border border-stone-100 dark:border-stone-800 transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 p-0"
+            >
+              <motion.div
+                key={theme}
+                initial={{ rotate: -10, opacity: 0, scale: 0.95 }}
+                animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                exit={{ rotate: 10, opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.22 }}
+                className="flex items-center justify-center w-5 h-5 text-stone-600 dark:text-stone-300"
+              >
+                {theme === 'light' ? <Moon size={16} strokeWidth={1.5} className="block" /> : <Sun size={16} strokeWidth={1.5} className="block" />}
+              </motion.div>
+            </button>
+
             <CustomTitlebar />
           </div>
         </header>
