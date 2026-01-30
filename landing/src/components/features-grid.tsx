@@ -1,7 +1,7 @@
 import { 
   BrainCircuit, 
   ClipboardCopy, 
-  LayoutTemplate, 
+  PanelRight, 
   Globe, 
   ShieldCheck
 } from "lucide-react";
@@ -61,11 +61,11 @@ export const FeaturesGrid = () => {
         <div className="md:col-span-2 md:row-span-1 bg-[#F2EFE9] rounded-[2rem] p-6 md:p-8 hover:bg-[#E7E5E4] transition-colors group">
             <div className="h-full flex flex-col justify-between gap-8 md:gap-0">
                 <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#44403C] shadow-sm">
-                    <LayoutTemplate size={24} strokeWidth={1.5} />
+                    <PanelRight size={24} strokeWidth={1.5} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-[#44403C] mb-1">Window Snap</h3>
-                    <p className="text-[#44403C]/60 text-sm">One-click window arrangements.</p>
+                    <h3 className="text-lg font-bold text-[#44403C] mb-1">Flexible Layouts</h3>
+                    <p className="text-[#44403C]/60 text-sm">Left, Right, or Hot Corners.</p>
                 </div>
             </div>
         </div>

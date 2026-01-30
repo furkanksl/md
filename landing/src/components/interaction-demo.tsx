@@ -16,12 +16,12 @@ export const InteractionDemo = () => {
               Hidden until you <br /> need it.
             </h2>
             <p className="text-lg text-[#44403C]/70 leading-relaxed">
-              My Drawer lives on the edge of your screen. It stays out of your way when you're focused, and appears instantly when you move your mouse to the left edge.
+              My Drawer lives on the edge of your screen. It stays out of your way when you're focused, and appears instantly when you move your mouse to your chosen edge or corner.
             </p>
             <div className="flex items-center gap-3 pt-2">
               <div className="h-10 px-4 rounded-full bg-[#F2EFE9] border border-[#E7E5E4] flex items-center gap-2 text-xs sm:text-sm text-[#44403C]/80">
                 <MousePointer2 size={16} strokeWidth={1.5} />
-                <span>Hover Left Edge</span>
+                <span>Hover Edge</span>
               </div>
               <ArrowRight size={16} className="text-[#44403C]/30" strokeWidth={1.5} />
               <div className="h-10 px-4 rounded-full bg-[#44403C] text-[#FAF9F6] flex items-center gap-2 text-xs sm:text-sm shadow-md">
