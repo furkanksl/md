@@ -2,10 +2,11 @@ pub mod layout_manager;
 
 use base64::prelude::*;
 use core_foundation::base::TCFType;
+use core_graphics::display::CGDisplay;
 use core_graphics::event::CGEvent;
 use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 use layout_manager::{get_open_windows, restore_windows, WindowInfo};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::time::Duration;
 use tauri::{Emitter, Manager, PhysicalPosition};
 use tauri_plugin_sql::{Migration, MigrationKind};
@@ -16,6 +17,8 @@ use sqlx::sqlite::SqlitePoolOptions;
 
 static IS_DRAWER_OPEN: AtomicBool = AtomicBool::new(false);
 static IS_ANIMATING: AtomicBool = AtomicBool::new(false);
+static DRAWER_CONFIG: AtomicU8 = AtomicU8::new(0); // 0=Left, 1=Right, 2=HotCorners
+static LAST_ACTIVE_SIDE: AtomicU8 = AtomicU8::new(0); // 0=Left, 1=Right
 
 fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
     std::thread::spawn(move || {
@@ -77,6 +80,21 @@ fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
 }
 
 #[tauri::command]
+fn set_drawer_config(config: String) {
+    let val = match config.as_str() {
+        "left" => 0,
+        "right" => 1,
+        "hot-corners" => 2,
+        "top-left" => 3,
+        "bottom-left" => 4,
+        "top-right" => 5,
+        "bottom-right" => 6,
+        _ => 0,
+    };
+    DRAWER_CONFIG.store(val, Ordering::Relaxed);
+}
+
+#[tauri::command]
 fn hide_drawer(window: tauri::Window) {
     if !IS_DRAWER_OPEN.load(Ordering::Relaxed) || IS_ANIMATING.load(Ordering::Relaxed) {
         return;
@@ -92,12 +110,33 @@ fn hide_drawer(window: tauri::Window) {
             .or_else(|| window.primary_monitor().ok().flatten());
         let scale_factor = monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(2.0);
         let screen_height = monitor.as_ref().map(|m| m.size().height).unwrap_or(2160); // Default to a common Retina height
+        let screen_width = monitor.as_ref().map(|m| m.size().width).unwrap_or(3840) as f64; // Approx 4k width
 
         let width = 400.0 * scale_factor;
         let height = 800.0 * scale_factor;
 
-        let start_x = 0;
-        let end_x = -width as i32;
+        let active_side = LAST_ACTIVE_SIDE.load(Ordering::Relaxed);
+
+        // Calculate Start (Current) and End X
+        // For hiding: End is off-screen.
+        // If Left: End = -width.
+        // If Right: End = screen_width.
+        
+        let end_x = if active_side == 1 {
+            screen_width as i32
+        } else {
+            -width as i32
+        };
+
+        // We assume current position is the "Open" position
+        // Left Open: 30
+        // Right Open: screen_width - width - 30
+        let start_x = if active_side == 1 {
+             (screen_width - width - 20.0 * scale_factor) as i32
+        } else {
+             (20.0 * scale_factor) as i32
+        };
+        
         let center_y = ((screen_height as f64 - height) / 2.0) as i32;
 
         let duration_ms = 200;
@@ -372,12 +411,77 @@ pub fn run() {
                         CGEventSource::new(CGEventSourceStateID::HIDSystemState).unwrap(),
                     ) {
                         let point = event.location();
+                        
+                        // Get screen dimensions locally to be responsive
+                        let display_id = unsafe { CGDisplay::main().id };
+                        let display = CGDisplay::new(display_id);
+                        let bounds = display.bounds();
+                        let screen_width = bounds.size.width;
+                        let screen_height = bounds.size.height;
 
-                        // Trigger if mouse is at the left edge AND drawer is closed AND not animating
-                        if point.x < 5.0
+                        let config = DRAWER_CONFIG.load(Ordering::Relaxed);
+                        let mut should_trigger = false;
+                        let mut trigger_side = 0; // 0=Left, 1=Right
+
+                        match config {
+                            0 => { // Left Only
+                                if point.x < 5.0 {
+                                    should_trigger = true;
+                                    trigger_side = 0;
+                                }
+                            },
+                            1 => { // Right Only
+                                if point.x > screen_width - 5.0 {
+                                    should_trigger = true;
+                                    trigger_side = 1;
+                                }
+                            },
+                            2 => { // Hot Corners
+                                // Top-Left or Bottom-Left -> Left Side
+                                if point.x < 5.0 && (point.y < 50.0 || point.y > screen_height - 50.0) {
+                                    should_trigger = true;
+                                    trigger_side = 0;
+                                }
+                                // Top-Right or Bottom-Right -> Right Side
+                                else if point.x > screen_width - 5.0 && (point.y < 50.0 || point.y > screen_height - 50.0) {
+                                    should_trigger = true;
+                                    trigger_side = 1;
+                                }
+                            },
+                            3 => { // Top-Left Only
+                                if point.x < 5.0 && point.y < 50.0 {
+                                    should_trigger = true;
+                                    trigger_side = 0;
+                                }
+                            },
+                            4 => { // Bottom-Left Only
+                                if point.x < 5.0 && point.y > screen_height - 50.0 {
+                                    should_trigger = true;
+                                    trigger_side = 0;
+                                }
+                            },
+                            5 => { // Top-Right Only
+                                if point.x > screen_width - 5.0 && point.y < 50.0 {
+                                    should_trigger = true;
+                                    trigger_side = 1;
+                                }
+                            },
+                            6 => { // Bottom-Right Only
+                                if point.x > screen_width - 5.0 && point.y > screen_height - 50.0 {
+                                    should_trigger = true;
+                                    trigger_side = 1;
+                                }
+                            },
+                            _ => {}
+                        }
+
+                        // Trigger if condition met AND drawer is closed AND not animating
+                        if should_trigger
                             && !IS_DRAWER_OPEN.load(Ordering::Relaxed)
                             && !IS_ANIMATING.load(Ordering::Relaxed)
                         {
+                            LAST_ACTIVE_SIDE.store(trigger_side, Ordering::Relaxed);
+                            
                             if let Some(window) = handle.get_webview_window("main") {
                                 IS_ANIMATING.store(true, Ordering::Relaxed);
                                 let win_clone = window.clone();
@@ -399,12 +503,25 @@ pub fn run() {
                                         monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(2.0);
                                     let screen_height =
                                         monitor.as_ref().map(|m| m.size().height).unwrap_or(2160);
+                                    let screen_width =
+                                        monitor.as_ref().map(|m| m.size().width).unwrap_or(3840) as f64;
 
                                     let width = 400.0 * scale_factor;
                                     let height = 800.0 * scale_factor; // Window height from config
+                                    
+                                    // Determine animation start/end based on trigger_side
+                                    let (start_x, end_x) = if trigger_side == 1 {
+                                        // Right Side
+                                        // Start: screen_width (offscreen right)
+                                        // End: screen_width - width - 30 (visible)
+                                        (screen_width as i32, (screen_width - width - 20.0 * scale_factor) as i32)
+                                    } else {
+                                        // Left Side
+                                        // Start: -width (offscreen left)
+                                        // End: 30 (visible)
+                                        (-width as i32, (20.0 * scale_factor) as i32)
+                                    };
 
-                                    let start_x = -width as i32;
-                                    let end_x = 30; // 30px offset for floating effect
                                     let center_y = ((screen_height as f64 - height) / 2.0) as i32;
 
                                     let duration_ms = 200;
@@ -467,7 +584,8 @@ pub fn run() {
             request_accessibility_permission,
             fetch_webpage,
             set_ignore_mouse_events,
-            hide_drawer
+            hide_drawer,
+            set_drawer_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

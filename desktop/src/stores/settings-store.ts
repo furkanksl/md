@@ -9,11 +9,13 @@ interface SettingsState {
   clipboardRetentionDays: number;
   hasCompletedOnboarding: boolean;
   autoHide: boolean;
+  drawerPosition: 'left' | 'right' | 'hot-corners' | 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right';
   setAIConfiguration: (provider: string, config: AIConfiguration) => void;
   setActiveProvider: (provider: string) => void;
   setClipboardHistoryLimit: (limit: number) => void;
   setHasCompletedOnboarding: (completed: boolean) => void;
   setAutoHide: (autoHide: boolean) => void;
+  setDrawerPosition: (position: 'left' | 'right' | 'hot-corners' | 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right') => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -25,6 +27,7 @@ export const useSettingsStore = create<SettingsState>()(
       clipboardRetentionDays: 30,
       hasCompletedOnboarding: false,
       autoHide: true, // Default enabled
+      drawerPosition: 'left',
       setAIConfiguration: (provider, config) =>
         set((state) => ({
           aiConfigurations: { ...state.aiConfigurations, [provider]: config },
@@ -33,6 +36,7 @@ export const useSettingsStore = create<SettingsState>()(
       setClipboardHistoryLimit: (limit) => set({ clipboardHistoryLimit: limit }),
       setHasCompletedOnboarding: (completed) => set({ hasCompletedOnboarding: completed }),
       setAutoHide: (autoHide) => set({ autoHide }),
+      setDrawerPosition: (position) => set({ drawerPosition: position }),
     }),
     {
       name: "settings-storage",
