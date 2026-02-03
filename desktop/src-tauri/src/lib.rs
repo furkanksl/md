@@ -74,6 +74,20 @@ fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
                             .bind(false)
                             .execute(&pool)
                             .await;
+
+                        // Enforce Limit
+                        let limit_row: Option<(String,)> = sqlx::query_as("SELECT value FROM settings WHERE key = 'clipboard_history_limit'")
+                            .fetch_optional(&pool)
+                            .await
+                            .unwrap_or(None);
+                        let limit = limit_row.and_then(|r| r.0.parse::<i32>().ok()).unwrap_or(50);
+
+                        if limit > 0 {
+                             let _ = sqlx::query("DELETE FROM clipboard WHERE id NOT IN (SELECT id FROM clipboard ORDER BY timestamp DESC LIMIT ?) AND pinned = 0")
+                                .bind(limit)
+                                .execute(&pool)
+                                .await;
+                        }
                             
                         let _ = app_handle.emit("clipboard-changed", ());
                     }
@@ -112,6 +126,20 @@ fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
                                 .bind(false)
                                 .execute(&pool)
                                 .await;
+
+                             // Enforce Limit
+                             let limit_row: Option<(String,)> = sqlx::query_as("SELECT value FROM settings WHERE key = 'clipboard_history_limit'")
+                                 .fetch_optional(&pool)
+                                 .await
+                                 .unwrap_or(None);
+                             let limit = limit_row.and_then(|r| r.0.parse::<i32>().ok()).unwrap_or(50);
+     
+                             if limit > 0 {
+                                  let _ = sqlx::query("DELETE FROM clipboard WHERE id NOT IN (SELECT id FROM clipboard ORDER BY timestamp DESC LIMIT ?) AND pinned = 0")
+                                     .bind(limit)
+                                     .execute(&pool)
+                                     .await;
+                             }
 
                              let _ = app_handle.emit("clipboard-changed", ());
                         }
