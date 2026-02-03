@@ -34,6 +34,7 @@ export const MainLayout = () => {
 
   useEffect(() => {
     startMonitoring();
+    useSettingsStore.getState().init();
   }, []);
 
   useEffect(() => {

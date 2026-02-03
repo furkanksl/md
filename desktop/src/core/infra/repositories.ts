@@ -341,3 +341,32 @@ export class NoteRepository {
     await db.execute("DELETE FROM notes WHERE id = $1", [id]);
   }
 }
+
+export class SettingsRepository {
+  async get<T>(key: string): Promise<T | null> {
+    const db = await dbClient.getDb();
+    const rows = await db.select<any[]>("SELECT value FROM settings WHERE key = $1", [key]);
+    if (rows.length === 0) return null;
+    try {
+      return JSON.parse(rows[0].value) as T;
+    } catch {
+      return rows[0].value as T; // Fallback for simple strings if not JSON
+    }
+  }
+
+  async set<T>(key: string, value: T): Promise<void> {
+    const db = await dbClient.getDb();
+    const strValue = typeof value === 'string' ? value : JSON.stringify(value);
+    
+    // Upsert (INSERT OR REPLACE)
+    await db.execute(
+      "INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, $3)",
+      [key, strValue, new Date().toISOString()]
+    );
+  }
+
+  async delete(key: string): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("DELETE FROM settings WHERE key = $1", [key]);
+  }
+}

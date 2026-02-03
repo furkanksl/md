@@ -98,6 +98,15 @@ class DatabaseClient {
       );
     `);
 
+    // 7. Settings (Key-Value Store)
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // --- MIGRATIONS (Simple check-and-add) ---
     try {
         // Check for missing columns in conversations

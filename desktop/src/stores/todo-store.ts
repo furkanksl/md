@@ -23,6 +23,8 @@ export interface Note {
 }
 
 interface TodoState {
+  isInitialized: boolean;
+
   // Checklists
   checklists: Checklist[];
   activeChecklistId: string | null;
@@ -55,6 +57,7 @@ const checklistItemRepo = new ChecklistItemRepository();
 const noteRepo = new NoteRepository();
 
 export const useTodoStore = create<TodoState>((set, get) => ({
+  isInitialized: false,
   checklists: [],
   activeChecklistId: null,
   notes: [],
@@ -66,15 +69,25 @@ export const useTodoStore = create<TodoState>((set, get) => ({
         checklistRepo.getAll(),
         noteRepo.getAll(),
       ]);
-      set({ checklists, notes });
+      set({ checklists, notes, isInitialized: true });
     } catch (e) {
       console.error("Failed to initialize TodoStore:", e);
+      set({ isInitialized: true }); // Still set true so app doesn't hang
     }
   },
 
   // --- Checklists ---
 
   createChecklist: async () => {
+    const state = get();
+    // Check if the most recent list is "empty" (default title and no items)
+    // Assuming lists are ordered by updatedAt DESC (newest first) in state
+    const recent = state.checklists[0];
+    if (recent && recent.title === "New List" && recent.items.length === 0) {
+      set({ activeChecklistId: recent.id });
+      return;
+    }
+
     try {
       const newChecklist = await checklistRepo.create("New List");
       set((state) => ({
@@ -234,6 +247,14 @@ export const useTodoStore = create<TodoState>((set, get) => ({
   // --- Notes ---
 
   createNote: async () => {
+    const state = get();
+    // Check if the most recent note is "empty"
+    const recent = state.notes[0];
+    if (recent && recent.title === "New Note" && recent.content === "") {
+        set({ activeNoteId: recent.id });
+        return;
+    }
+
     try {
       const newNote = await noteRepo.create("New Note");
       set((state) => ({

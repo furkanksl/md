@@ -71,7 +71,7 @@ const SidebarItem = ({
             </div>
           </div>
         </ContextMenuTrigger>
-        <ContextMenuContent className="w-40">
+        <ContextMenuContent className="w-24 bg-stone-50 dark:bg-stone-900">
           <ContextMenuItem onClick={onRename}>
             <Pencil className="mr-2 h-4 w-4" /> Rename
           </ContextMenuItem>
@@ -123,10 +123,10 @@ const ChecklistView = () => {
 
   // Auto-create if empty
   useEffect(() => {
-    if (checklists.length === 0) {
+    if (store.isInitialized && checklists.length === 0) {
       createChecklist();
     }
-  }, [checklists.length, createChecklist]);
+  }, [checklists.length, createChecklist, store.isInitialized]);
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const activeList = checklists.find((c) => c.id === activeChecklistId);
@@ -301,10 +301,10 @@ const NotesView = () => {
 
   // Auto-create if empty
   useEffect(() => {
-    if (notes.length === 0) {
+    if (store.isInitialized && notes.length === 0) {
       createNote();
     }
-  }, [notes.length, createNote]);
+  }, [notes.length, createNote, store.isInitialized]);
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const activeNote = notes.find((n) => n.id === activeNoteId);
