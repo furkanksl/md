@@ -11,6 +11,7 @@ import { ShortcutsView } from "./shortcuts/shortcuts-view";
 import { LayoutsView } from "./layouts/layouts-view";
 import { ScrapingView } from "./scraping/scraping-view";
 import { SettingsView } from "./settings/settings-view";
+import { TodoView } from "./todo/todo-view";
 import { OnboardingView } from "./onboarding/onboarding-view";
 import { CustomTitlebar } from "./shared/custom-titlebar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,25 +24,17 @@ import {
   Settings,
   Sun,
   Moon,
+  ListTodo,
 } from "lucide-react";
 
 export const MainLayout = () => {
   const { activeView, setActiveView, theme, setTheme } = useUIStore();
-  const { hasCompletedOnboarding, autoHide } = useSettingsStore();
+  const { hasCompletedOnboarding } = useSettingsStore();
   const { startMonitoring } = useClipboardStore();
 
   useEffect(() => {
     startMonitoring();
   }, []);
-
-  useEffect(() => {
-    // Sync auto-hide preference with Rust backend
-    // You might need to invoke a Rust command here if you want backend to respect it, 
-    // or if the blur logic is purely frontend (it is currently frontend 'handleBlur' -> 'invoke("hide_drawer")')
-    // We just need to check 'autoHide' inside handleBlur? 
-    // Wait, handleBlur is called by tauri://blur. 
-    // We can conditionally invoke hide_drawer.
-  }, [autoHide]);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -60,30 +53,35 @@ export const MainLayout = () => {
   // Ref to track latest autoHide preference without re-binding listeners constantly
   const autoHideRef = useRef(useSettingsStore.getState().autoHide);
   useEffect(() => {
-      useSettingsStore.subscribe((state) => {
-          autoHideRef.current = state.autoHide;
-      });
+    const unsubscribe = useSettingsStore.subscribe((state) => {
+      autoHideRef.current = state.autoHide;
+    });
+    return () => unsubscribe();
   }, []);
 
   // Listen for window blur event from Tauri
   useEffect(() => {
     const appWindow = getCurrentWindow();
     const unlistenBlur = appWindow.listen("tauri://blur", () => {
-        if (autoHideRef.current) {
-            invoke("hide_drawer");
-        }
+      if (autoHideRef.current) {
+        invoke("hide_drawer");
+      }
     });
     return () => {
       unlistenBlur.then((f) => f());
     };
   }, []);
 
-  const navItems = [
+  const bottomNavItems = [
     { id: "chat", label: "Journal", icon: MessageCircle },
+    { id: "tasks", label: "Tasks", icon: ListTodo },
     { id: "clipboard", label: "Collect", icon: Archive },
     { id: "shortcuts", label: "Apps", icon: Layers },
     { id: "layouts", label: "Flow", icon: Maximize },
     { id: "scraping", label: "Web", icon: Globe },
+  ] as const;
+
+  const headerNavItems = [
     { id: "settings", label: "Setup", icon: Settings },
   ] as const;
 
@@ -102,15 +100,40 @@ export const MainLayout = () => {
           className="h-12 shrink-0 flex items-center justify-between px-3 pl-7 z-50"
           data-tauri-drag-region
         >
-            <h1 className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 pointer-events-none font-sans">
+          <h1 className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 pointer-events-none font-sans">
             md
           </h1>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-1 items-center">
+             {/* Header Navigation Items */}
+             {hasCompletedOnboarding && headerNavItems.map((item) => {
+              const isActive = activeView === item.id;
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveView(item.id)}
+                  className={clsx(
+                    "w-8 h-8 flex items-center justify-center rounded-full transition-colors relative z-50",
+                    isActive
+                      ? "text-stone-800 dark:text-stone-100 bg-stone-100 dark:bg-stone-800"
+                      : "text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
+                  )}
+                  title={item.label}
+                >
+                  <Icon size={16} strokeWidth={1.5} />
+                </button>
+              );
+            })}
+            
+            <div className="w-px h-4 bg-stone-200 dark:bg-stone-800" />
+
             {/* Minimal theme toggle */}
             <button
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-stone-900 shadow-lg shadow-stone-200/50 dark:shadow-none border border-stone-100 dark:border-stone-800 transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 p-0"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              aria-label={
+                theme === "light" ? "Switch to dark mode" : "Switch to light mode"
+              }
+              className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 p-0"
             >
               <motion.div
                 key={theme}
@@ -118,9 +141,13 @@ export const MainLayout = () => {
                 animate={{ rotate: 0, opacity: 1, scale: 1 }}
                 exit={{ rotate: 10, opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.22 }}
-                className="flex items-center justify-center w-5 h-5 text-stone-600 dark:text-stone-300"
+                className="flex items-center justify-center w-5 h-5 text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
               >
-                {theme === 'light' ? <Moon size={16} strokeWidth={1.5} className="block" /> : <Sun size={16} strokeWidth={1.5} className="block" />}
+                {theme === "light" ? (
+                  <Moon size={16} strokeWidth={1.5} className="block" />
+                ) : (
+                  <Sun size={16} strokeWidth={1.5} className="block" />
+                )}
               </motion.div>
             </button>
 
@@ -132,76 +159,77 @@ export const MainLayout = () => {
         <main className="flex-1 overflow-hidden relative px-2">
           <AnimatePresence mode="wait">
             {!hasCompletedOnboarding ? (
-                <motion.div
-                    key="onboarding"
-                    initial={{ opacity: 0, filter: "blur(10px)" }}
-                    animate={{ opacity: 1, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, filter: "blur(10px)" }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    className="h-full w-full"
-                >
-                    <OnboardingView />
-                </motion.div>
+              <motion.div
+                key="onboarding"
+                initial={{ opacity: 0, filter: "blur(10px)" }}
+                animate={{ opacity: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, filter: "blur(10px)" }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="h-full w-full"
+              >
+                <OnboardingView />
+              </motion.div>
             ) : (
-                <motion.div
-                  key={activeView}
-                  initial={{ opacity: 0, filter: "blur(10px)" }}
-                  animate={{ opacity: 1, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, filter: "blur(10px)" }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="h-full w-full"
-                >
-                  {activeView === "chat" && <ChatView />}
-                  {activeView === "clipboard" && <ClipboardView />}
-                  {activeView === "shortcuts" && <ShortcutsView />}
-                  {activeView === "layouts" && <LayoutsView />}
-                  {activeView === "scraping" && <ScrapingView />}
-                  {activeView === "settings" && <SettingsView />}
-                </motion.div>
+              <motion.div
+                key={activeView}
+                initial={{ opacity: 0, filter: "blur(10px)" }}
+                animate={{ opacity: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, filter: "blur(10px)" }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="h-full w-full"
+              >
+                {activeView === "chat" && <ChatView />}
+                {activeView === "tasks" && <TodoView />}
+                {activeView === "clipboard" && <ClipboardView />}
+                {activeView === "shortcuts" && <ShortcutsView />}
+                {activeView === "layouts" && <LayoutsView />}
+                {activeView === "scraping" && <ScrapingView />}
+                {activeView === "settings" && <SettingsView />}
+              </motion.div>
             )}
           </AnimatePresence>
         </main>
 
         {/* Floating Nav Pill - Only show if onboarding completed */}
         {hasCompletedOnboarding && (
-            <div className="h-20 flex items-center justify-center shrink-0">
-              <nav className="flex items-center gap-1.5 bg-white dark:bg-stone-900 p-1.5 rounded-full shadow-lg shadow-stone-200/50 dark:shadow-none border border-stone-100 dark:border-stone-800">
-                {navItems.map((item) => {
-                  const isActive = activeView === item.id;
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveView(item.id)}
-                      className={clsx(
-                        "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 relative overflow-hidden group",
-                        isActive
-                          ? "text-stone-800 dark:text-stone-100"
-                          : "text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
-                      )}
-                      title={item.label}
-                    >
-                      {isActive && (
-                        <motion.div
-                          layoutId="nav-bg"
-                          className="absolute inset-0 bg-stone-100 dark:bg-stone-800 rounded-full"
-                          transition={{
-                            type: "spring",
-                            bounce: 0.2,
-                            duration: 0.2,
-                          }}
-                        />
-                      )}
-                      <Icon
-                        size={18}
-                        strokeWidth={isActive ? 2 : 1.5}
-                        className="relative z-10"
+          <div className="h-20 flex items-center justify-center shrink-0">
+            <nav className="flex items-center gap-1.5 bg-white dark:bg-stone-900 p-1.5 rounded-full shadow-lg shadow-stone-200/50 dark:shadow-none border border-stone-100 dark:border-stone-800">
+              {bottomNavItems.map((item) => {
+                const isActive = activeView === item.id;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveView(item.id as any)}
+                    className={clsx(
+                      "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 relative overflow-hidden group",
+                      isActive
+                        ? "text-stone-800 dark:text-stone-100"
+                        : "text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
+                    )}
+                    title={item.label}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-bg"
+                        className="absolute inset-0 bg-stone-100 dark:bg-stone-800 rounded-full"
+                        transition={{
+                          type: "spring",
+                          bounce: 0.2,
+                          duration: 0.2,
+                        }}
                       />
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
+                    )}
+                    <Icon
+                      size={18}
+                      strokeWidth={isActive ? 2 : 1.5}
+                      className="relative z-10"
+                    />
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         )}
       </div>
     </div>
