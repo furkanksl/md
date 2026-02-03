@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useUIStore } from "@/stores/ui-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useClipboardStore } from "@/stores/clipboard-store";
+import { useShortcutsStore } from "@/stores/shortcuts-store";
 import { clsx } from "clsx";
 import { ChatView } from "./ai/chat-view";
 import { ClipboardView } from "./clipboard/clipboard-view";
@@ -35,6 +36,7 @@ export const MainLayout = () => {
   useEffect(() => {
     startMonitoring();
     useSettingsStore.getState().init();
+    useShortcutsStore.getState().init();
   }, []);
 
   useEffect(() => {

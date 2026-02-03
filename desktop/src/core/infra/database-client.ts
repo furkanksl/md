@@ -107,6 +107,17 @@ class DatabaseClient {
       );
     `);
 
+    // 8. Shortcuts
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS shortcuts (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        path TEXT NOT NULL,
+        order_index INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // --- MIGRATIONS (Simple check-and-add) ---
     try {
         // Check for missing columns in conversations

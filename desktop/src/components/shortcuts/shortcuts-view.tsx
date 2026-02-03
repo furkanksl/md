@@ -3,13 +3,8 @@ import { readDir } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
 import { Search, Plus, Play, Trash2, AppWindow, Loader2, X, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface AppShortcut {
-  id: string;
-  name: string;
-  path: string;
-  icon?: string;
-}
+import { useShortcutsStore } from '@/stores/shortcuts-store';
+import { AppShortcut } from '@/types/shortcuts';
 
 // Icon Component to fetch and display app icon
 const AppIcon = ({ path, className }: { path: string, className?: string }) => {
@@ -41,20 +36,13 @@ const AppIcon = ({ path, className }: { path: string, className?: string }) => {
 };
 
 export const ShortcutsView = () => {
-  const [apps, setApps] = useState<AppShortcut[]>(() => {
-    const saved = localStorage.getItem('my-drawer-apps');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { apps, addApp, removeApp } = useShortcutsStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detectedApps, setDetectedApps] = useState<AppShortcut[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
   const [isLoadingApps, setIsLoadingApps] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    localStorage.setItem('my-drawer-apps', JSON.stringify(apps));
-  }, [apps]);
 
   // Infinite Scroll Observer
   useEffect(() => {
@@ -107,15 +95,9 @@ export const ShortcutsView = () => {
     }
   };
 
-  const addApp = (app: AppShortcut) => {
-    if (!apps.find(a => a.path === app.path)) {
-      setApps([...apps, app]);
-    }
+  const handleAddApp = async (app: AppShortcut) => {
+    await addApp(app);
     setIsModalOpen(false);
-  };
-
-  const removeApp = (id: string) => {
-    setApps(apps.filter(a => a.id !== id));
   };
 
   const launchApp = async (path: string) => {
@@ -222,7 +204,7 @@ export const ShortcutsView = () => {
                             {visibleApps.map((app) => (
                                                         <button
                                                             key={app.path}
-                                                            onClick={() => addApp(app)}
+                                                            onClick={() => handleAddApp(app)}
                                                             className="w-full flex items-center gap-3 p-2.5 hover:bg-white dark:hover:bg-stone-900 hover:shadow-sm rounded-xl transition-all text-left group border border-transparent hover:border-stone-100 dark:hover:border-stone-800"
                                                         >
                                                             <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-400 shrink-0">

@@ -1,6 +1,7 @@
 import { dbClient } from "./database-client";
 import { Conversation, Message } from "../domain/entities";
 import { Checklist, TodoItem, Note } from "@/stores/todo-store";
+import { AppShortcut } from "@/types/shortcuts";
 import { v4 as uuidv4 } from "uuid";
 
 export class ConversationRepository {
@@ -368,5 +369,37 @@ export class SettingsRepository {
   async delete(key: string): Promise<void> {
     const db = await dbClient.getDb();
     await db.execute("DELETE FROM settings WHERE key = $1", [key]);
+  }
+}
+
+export class ShortcutRepository {
+  async getAll(): Promise<AppShortcut[]> {
+    const db = await dbClient.getDb();
+    const rows = await db.select<any[]>("SELECT * FROM shortcuts ORDER BY order_index ASC, created_at DESC");
+    return rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      path: r.path,
+      orderIndex: r.order_index
+    }));
+  }
+
+  async add(shortcut: AppShortcut): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute(
+      "INSERT INTO shortcuts (id, name, path, order_index, created_at) VALUES ($1, $2, $3, $4, $5)",
+      [
+        shortcut.id,
+        shortcut.name,
+        shortcut.path,
+        0,
+        new Date().toISOString()
+      ]
+    );
+  }
+
+  async delete(id: string): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("DELETE FROM shortcuts WHERE id = $1", [id]);
   }
 }
