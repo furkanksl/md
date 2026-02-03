@@ -12,6 +12,9 @@ use tauri::{Emitter, Manager, PhysicalPosition};
 use tauri_plugin_sql::{Migration, MigrationKind};
 use arboard::Clipboard;
 use sqlx::sqlite::SqlitePoolOptions;
+use std::hash::{Hash, Hasher};
+use std::collections::hash_map::DefaultHasher;
+use image::ImageEncoder;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
@@ -49,28 +52,70 @@ fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
                 }
             };
 
-            let mut last_content = String::new();
+            let mut last_text_content = String::new();
+            let mut last_image_hash: u64 = 0;
 
             loop {
-                let current_text = clipboard.get_text().unwrap_or_default();
-                
-                if !current_text.trim().is_empty() && current_text != last_content {
-                    last_content = current_text.clone();
-                    
-                    let id = uuid::Uuid::new_v4().to_string();
-                    let now = chrono::Utc::now().to_rfc3339();
-                    
-                    let _ = sqlx::query("INSERT INTO clipboard (id, content, source_app, timestamp, character_count, pinned) VALUES (?, ?, ?, ?, ?, ?)")
-                        .bind(id)
-                        .bind(&current_text)
-                        .bind("System")
-                        .bind(now)
-                        .bind(current_text.len() as i32)
-                        .bind(false)
-                        .execute(&pool)
-                        .await;
+                // 1. Check Text
+                if let Ok(current_text) = clipboard.get_text() {
+                    if !current_text.trim().is_empty() && current_text != last_text_content {
+                        last_text_content = current_text.clone();
+                        last_image_hash = 0;
                         
-                    let _ = app_handle.emit("clipboard-changed", ());
+                        let id = uuid::Uuid::new_v4().to_string();
+                        let now = chrono::Utc::now().to_rfc3339();
+                        
+                        let _ = sqlx::query("INSERT INTO clipboard (id, content, source_app, timestamp, character_count, pinned) VALUES (?, ?, ?, ?, ?, ?)")
+                            .bind(id)
+                            .bind(&current_text)
+                            .bind("System")
+                            .bind(now)
+                            .bind(current_text.len() as i32)
+                            .bind(false)
+                            .execute(&pool)
+                            .await;
+                            
+                        let _ = app_handle.emit("clipboard-changed", ());
+                    }
+                }
+
+                // 2. Check Image
+                if let Ok(img) = clipboard.get_image() {
+                    let mut hasher = DefaultHasher::new();
+                    img.bytes.hash(&mut hasher);
+                    let current_hash = hasher.finish();
+
+                    if current_hash != last_image_hash && current_hash != 0 {
+                        last_image_hash = current_hash;
+                        last_text_content.clear();
+
+                        let width = img.width;
+                        let height = img.height;
+                        let raw_bytes = img.bytes.into_owned();
+
+                        let mut png_buffer = Vec::new();
+                        let encoder = image::codecs::png::PngEncoder::new(&mut png_buffer);
+                        
+                        if let Ok(_) = encoder.write_image(&raw_bytes, width as u32, height as u32, image::ColorType::Rgba8) {
+                             let base64_string = BASE64_STANDARD.encode(&png_buffer);
+                             let content = format!("data:image/png;base64,{}", base64_string);
+
+                             let id = uuid::Uuid::new_v4().to_string();
+                             let now = chrono::Utc::now().to_rfc3339();
+
+                             let _ = sqlx::query("INSERT INTO clipboard (id, content, source_app, timestamp, character_count, pinned) VALUES (?, ?, ?, ?, ?, ?)")
+                                .bind(id)
+                                .bind(&content)
+                                .bind("System")
+                                .bind(now)
+                                .bind(0)
+                                .bind(false)
+                                .execute(&pool)
+                                .await;
+
+                             let _ = app_handle.emit("clipboard-changed", ());
+                        }
+                    }
                 }
                 
                 tokio::time::sleep(Duration::from_secs(1)).await;
