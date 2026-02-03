@@ -3,7 +3,8 @@ import {
   ClipboardCopy, 
   PanelRight, 
   Globe, 
-  ShieldCheck
+  ShieldCheck,
+  ListTodo
 } from "lucide-react";
 
 export const FeaturesGrid = () => {
@@ -18,10 +19,10 @@ export const FeaturesGrid = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-6 grid-rows-2 gap-4 max-w-[1100px] mx-auto w-full h-auto md:h-[500px]">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 max-w-[1100px] mx-auto w-full h-auto">
         
         {/* 1. AI Chat (Large) - Sage Green */}
-        <div className="md:col-span-4 md:row-span-1 bg-[#738F82] rounded-[2rem] p-6 md:p-8 relative overflow-hidden group hover:brightness-105 transition-all">
+        <div className="md:col-span-4 bg-[#738F82] rounded-[2rem] p-6 md:p-8 relative overflow-hidden group hover:brightness-105 transition-all min-h-[240px]">
           <div className="relative z-10 h-full flex flex-col justify-between">
             <div className="flex justify-between items-start">
                 <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-[#FAF9F6] backdrop-blur-sm">
@@ -38,14 +39,14 @@ export const FeaturesGrid = () => {
         </div>
 
         {/* 2. Clipboard (Tall/Square) - Charcoal */}
-        <div className="md:col-span-2 md:row-span-1 bg-[#44403C] rounded-[2rem] p-6 md:p-8 text-[#FAF9F6] relative overflow-hidden group hover:brightness-110 transition-all">
+        <div className="md:col-span-2 bg-[#44403C] rounded-[2rem] p-6 md:p-8 text-[#FAF9F6] relative overflow-hidden group hover:brightness-110 transition-all min-h-[240px]">
            <div className="relative z-10 h-full flex flex-col justify-between gap-8 md:gap-0">
              <div className="w-12 h-12 rounded-2xl bg-[#57534E] flex items-center justify-center text-[#FAF9F6] shadow-inner">
                 <ClipboardCopy size={24} strokeWidth={1.5} />
              </div>
              <div>
                 <h3 className="text-xl font-bold mb-1">Clipboard</h3>
-                <p className="text-[#FAF9F6]/60 text-sm">Searchable, persistent history.</p>
+                <p className="text-[#FAF9F6]/60 text-sm">Searchable, persistent history with images.</p>
              </div>
            </div>
            {/* Decorative lists */}
@@ -57,8 +58,34 @@ export const FeaturesGrid = () => {
            </div>
         </div>
 
-        {/* 3. Window Layouts - Off-white */}
-        <div className="md:col-span-2 md:row-span-1 bg-[#F2EFE9] rounded-[2rem] p-6 md:p-8 hover:bg-[#E7E5E4] transition-colors group">
+        {/* 3. Tasks - Stone */}
+        <div className="md:col-span-3 bg-[#E7E5E4] rounded-[2rem] p-6 md:p-8 hover:bg-[#D6D3D1] transition-colors group min-h-[200px]">
+            <div className="h-full flex flex-col justify-between gap-8 md:gap-0">
+                <div className="w-12 h-12 rounded-2xl bg-[#FAF9F6] flex items-center justify-center text-[#44403C] shadow-sm">
+                    <ListTodo size={24} strokeWidth={1.5} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-bold text-[#44403C] mb-1">Focus Tasks</h3>
+                    <p className="text-[#44403C]/60 text-sm">Minimalist checklists and scratchpads with auto-delete.</p>
+                </div>
+            </div>
+        </div>
+
+        {/* 4. Web Research - White w/ Border */}
+        <div className="md:col-span-3 bg-white border border-[#E7E5E4] rounded-[2rem] p-6 md:p-8 hover:border-[#D4C5BE] transition-colors group min-h-[200px]">
+             <div className="h-full flex flex-col justify-between gap-8 md:gap-0">
+                <div className="w-12 h-12 rounded-2xl bg-[#F2EFE9] flex items-center justify-center text-[#44403C]">
+                    <Globe size={24} strokeWidth={1.5} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-bold text-[#44403C] mb-1">Research Agent</h3>
+                    <p className="text-[#44403C]/60 text-sm">Scrape and summarize web pages instantly.</p>
+                </div>
+            </div>
+        </div>
+
+        {/* 5. Window Layouts - Off-white */}
+        <div className="md:col-span-3 bg-[#F2EFE9] rounded-[2rem] p-6 md:p-8 hover:bg-[#E7E5E4] transition-colors group min-h-[200px]">
             <div className="h-full flex flex-col justify-between gap-8 md:gap-0">
                 <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#44403C] shadow-sm">
                     <PanelRight size={24} strokeWidth={1.5} />
@@ -70,21 +97,8 @@ export const FeaturesGrid = () => {
             </div>
         </div>
 
-        {/* 4. Web Research - White w/ Border */}
-        <div className="md:col-span-2 md:row-span-1 bg-white border border-[#E7E5E4] rounded-[2rem] p-6 md:p-8 hover:border-[#D4C5BE] transition-colors group">
-             <div className="h-full flex flex-col justify-between gap-8 md:gap-0">
-                <div className="w-12 h-12 rounded-2xl bg-[#F2EFE9] flex items-center justify-center text-[#44403C]">
-                    <Globe size={24} strokeWidth={1.5} />
-                </div>
-                <div>
-                    <h3 className="text-lg font-bold text-[#44403C] mb-1">Research Agent</h3>
-                    <p className="text-[#44403C]/60 text-sm">Scrape and summarize web pages.</p>
-                </div>
-            </div>
-        </div>
-
-        {/* 5. Privacy - White w/ Border */}
-        <div className="md:col-span-2 md:row-span-1 bg-white border border-[#E7E5E4] rounded-[2rem] p-6 md:p-8 hover:border-[#738F82] transition-colors group relative overflow-hidden">
+        {/* 6. Privacy - White w/ Border */}
+        <div className="md:col-span-3 bg-white border border-[#E7E5E4] rounded-[2rem] p-6 md:p-8 hover:border-[#738F82] transition-colors group relative overflow-hidden min-h-[200px]">
              <div className="h-full flex flex-col justify-between relative z-10 gap-8 md:gap-0">
                 <div className="w-12 h-12 rounded-2xl bg-[#F2EFE9] flex items-center justify-center text-[#738F82]">
                     <ShieldCheck size={24} strokeWidth={1.5} />
