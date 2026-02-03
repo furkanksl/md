@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useTodoStore } from "@/stores/todo-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Plus,
   Trash2,
@@ -12,6 +14,8 @@ import {
   Circle,
   ChevronLeft,
   Pencil,
+  MoreVertical,
+  Eraser,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +26,13 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 // --- Sub-Components ---
@@ -109,6 +120,7 @@ const BackButton = ({ onClick }: { onClick: () => void }) => (
 
 const ChecklistView = () => {
   const store = useTodoStore();
+  const { todoDeleteOnComplete, setTodoDeleteOnComplete } = useSettingsStore();
   const {
     checklists,
     activeChecklistId,
@@ -188,14 +200,39 @@ const ChecklistView = () => {
           className="font-semibold text-lg border-none shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
           placeholder="List Title"
         />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
-          onClick={() => setShowDeleteDialog(true)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 bg-stone-50 dark:bg-stone-900">
+            <DropdownMenuItem
+              className="flex items-center justify-between text-stone-600 focus:text-stone-800 dark:text-stone-400 dark:focus:text-stone-200 cursor-pointer"
+              onSelect={(e) => {
+                e.preventDefault();
+                setTodoDeleteOnComplete(!todoDeleteOnComplete);
+              }}
+            >
+              <div className="flex items-center">
+                <Eraser className="mr-2 h-4 w-4" />
+                <span>Auto-delete</span>
+              </div>
+              <Switch
+                checked={todoDeleteOnComplete}
+                className="ml-2 scale-75 data-[state=checked]:bg-stone-800 dark:data-[state=checked]:bg-stone-200"
+              />
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20 cursor-pointer"
+              onSelect={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="mr-1 h-4 w-4" /> Delete List
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <ConfirmDialog
           open={showDeleteDialog}

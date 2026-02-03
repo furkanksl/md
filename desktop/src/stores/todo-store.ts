@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { ChecklistRepository, ChecklistItemRepository, NoteRepository } from "@/core/infra/repositories";
+import { useSettingsStore } from "./settings-store";
 
 export interface TodoItem {
   id: string;
@@ -165,14 +166,14 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     const activeId = get().activeChecklistId;
     if (!activeId) return;
 
-    // Calculate new state for optimistic update
-    const activeList = get().checklists.find((l) => l.id === activeId);
+    const state = get();
+    const activeList = state.checklists.find((l) => l.id === activeId);
     if (!activeList) return;
     const item = activeList.items.find((i) => i.id === itemId);
     if (!item) return;
     const newCompleted = !item.completed;
 
-    // Optimistic update
+    // 1. Optimistic Toggle (Update UI immediately)
     set((state) => ({
       checklists: state.checklists.map((list) =>
         list.id === activeId
@@ -187,10 +188,42 @@ export const useTodoStore = create<TodoState>((set, get) => ({
       ),
     }));
 
+    // 2. Persist Toggle
     try {
       await checklistItemRepo.toggle(itemId, newCompleted);
     } catch (e) {
       console.error("Failed to toggle item:", e);
+    }
+
+    // 3. Auto-Delete with Delay
+    const deleteOnComplete = useSettingsStore.getState().todoDeleteOnComplete;
+    if (newCompleted && deleteOnComplete) {
+        // Wait for user to see the checkmark/strikethrough
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Check if still completed (in case user unchecked it quickly)
+        const currentList = get().checklists.find(l => l.id === activeId);
+        const currentItem = currentList?.items.find(i => i.id === itemId);
+        
+        if (currentItem && currentItem.completed) {
+             // Optimistic Delete
+             set((state) => ({
+                checklists: state.checklists.map((list) =>
+                    list.id === activeId
+                        ? {
+                            ...list,
+                            items: list.items.filter((i) => i.id !== itemId),
+                            updatedAt: Date.now(),
+                        }
+                        : list
+                ),
+            }));
+            try {
+                await checklistItemRepo.delete(itemId);
+            } catch (e) {
+                console.error("Failed to auto-delete item:", e);
+            }
+        }
     }
   },
 

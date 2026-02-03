@@ -12,6 +12,7 @@ interface SettingsState {
   hasCompletedOnboarding: boolean;
   autoHide: boolean;
   drawerPosition: 'left' | 'right' | 'hot-corners' | 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right';
+  todoDeleteOnComplete: boolean;
   
   // Actions
   init: () => Promise<void>;
@@ -21,6 +22,7 @@ interface SettingsState {
   setHasCompletedOnboarding: (completed: boolean) => Promise<void>;
   setAutoHide: (autoHide: boolean) => Promise<void>;
   setDrawerPosition: (position: SettingsState['drawerPosition']) => Promise<void>;
+  setTodoDeleteOnComplete: (enabled: boolean) => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -31,6 +33,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   hasCompletedOnboarding: false,
   autoHide: true,
   drawerPosition: 'left',
+  todoDeleteOnComplete: false,
 
   init: async () => {
     try {
@@ -41,7 +44,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         clipboardRetentionDays,
         hasCompletedOnboarding,
         autoHide,
-        drawerPosition
+        drawerPosition,
+        todoDeleteOnComplete
       ] = await Promise.all([
         settingsRepo.get<Record<string, AIConfiguration>>('ai_configurations'),
         settingsRepo.get<string>('active_provider'),
@@ -50,6 +54,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         settingsRepo.get<boolean>('has_completed_onboarding'),
         settingsRepo.get<boolean>('auto_hide'),
         settingsRepo.get<SettingsState['drawerPosition']>('drawer_position'),
+        settingsRepo.get<boolean>('todo_delete_on_complete'),
       ]);
 
       set({
@@ -60,6 +65,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         hasCompletedOnboarding: hasCompletedOnboarding ?? false,
         autoHide: autoHide ?? true,
         drawerPosition: drawerPosition || 'left',
+        todoDeleteOnComplete: todoDeleteOnComplete ?? false,
       });
     } catch (e) {
       console.error("Failed to load settings:", e);
@@ -95,5 +101,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setDrawerPosition: async (position) => {
     set({ drawerPosition: position });
     await settingsRepo.set('drawer_position', position);
+  },
+
+  setTodoDeleteOnComplete: async (enabled) => {
+    set({ todoDeleteOnComplete: enabled });
+    await settingsRepo.set('todo_delete_on_complete', enabled);
   }
 }));
