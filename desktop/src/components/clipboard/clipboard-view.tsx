@@ -1,17 +1,19 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useClipboardStore } from '@/stores/clipboard-store';
 import { useSettingsStore } from '@/stores/settings-store';
-import { Search, Copy, Trash2, Check, History, ChevronDown } from 'lucide-react';
+import { Search, Copy, Trash2, Check, History, ChevronDown, X, Calendar, AppWindow } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { clsx } from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const ClipboardItem = memo(({ item, onCopy, onDelete, copiedId }: { item: any, onCopy: (id: string, content: string) => void, onDelete: (id: string) => void, copiedId: string | null }) => {
+const ClipboardItem = memo(({ item, onCopy, onDelete, onClick, copiedId }: { item: any, onCopy: (id: string, content: string) => void, onDelete: (id: string) => void, onClick: (item: any) => void, copiedId: string | null }) => {
     return (
         <div
-            className="bg-white dark:bg-stone-900 p-4 rounded-[1.25rem] shadow-sm border border-stone-50 dark:border-stone-800 hover:shadow-md hover:-translate-y-1 transition-all group h-32 flex flex-col justify-between relative overflow-hidden"
+            onClick={() => onClick(item)}
+            className="bg-white dark:bg-stone-900 p-4 rounded-[1.25rem] shadow-sm border border-stone-50 dark:border-stone-800 hover:shadow-md hover:-translate-y-1 transition-all group h-32 flex flex-col justify-between relative overflow-hidden cursor-pointer"
         >
             <div className="flex justify-between items-start">
-                <span className="text-[9px] font-bold tracking-widest uppercase text-stone-300 dark:text-stone-600 group-hover:text-stone-500 dark:group-hover:text-stone-400 transition-colors">
+                <span className="text-[9px] font-bold tracking-widest uppercase text-stone-300 dark:text-stone-600 group-hover:text-stone-500 dark:group-hover:text-stone-400 transition-colors truncate max-w-[80px]">
                     {item.source_app || 'System'}
                 </span>
                 <span className="text-[9px] text-stone-300 dark:text-stone-600">
@@ -56,19 +58,17 @@ export const ClipboardView = () => {
   const { clipboardHistoryLimit, setClipboardHistoryLimit } = useSettingsStore();
   const [search, setSearch] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   useEffect(() => {
-    // Only load if empty to prevent flash/re-render on tab switch
     if (items.length === 0) {
         loadHistory();
     }
-    // Monitoring is idempotent but good to check
     if (!isMonitoring) {
         startMonitoring();
     }
   }, []);
 
-  // Reload history when limit changes to reflect truncation immediately if needed
   useEffect(() => {
     loadHistory();
   }, [clipboardHistoryLimit]);
@@ -85,13 +85,16 @@ export const ClipboardView = () => {
 
   const handleDelete = useCallback((id: string) => {
     deleteItem(id);
-  }, [deleteItem]);
+    if (selectedItem?.id === id) {
+        setSelectedItem(null);
+    }
+  }, [deleteItem, selectedItem]);
 
-  const LIMIT_OPTIONS = [10, 20, 30, 50, 100, 0]; // 0 for All
+  const LIMIT_OPTIONS = [10, 20, 30, 50, 100, 0];
 
   return (
-    <div className="flex flex-col h-full px-4 py-3">
-      <div className="relative mb-6 flex gap-2">
+    <div className="flex flex-col h-full px-4 py-3 relative overflow-hidden">
+      <div className="relative mb-6 flex gap-2 shrink-0">
         <div className="relative flex-1 transition-all">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 dark:text-stone-600" size={16} />
             <input 
@@ -137,17 +140,84 @@ export const ClipboardView = () => {
         </Popover.Root>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-4 px-1 -mx-1 scrollbar-none">
+      <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-4 px-1 -mx-1 scrollbar-none flex-1 min-h-0">
         {filtered.map((item) => (
             <ClipboardItem 
                 key={item.id} 
                 item={item} 
                 onCopy={handleCopy} 
-                onDelete={handleDelete} 
+                onDelete={handleDelete}
+                onClick={setSelectedItem}
                 copiedId={copiedId} 
             />
         ))}
       </div>
+
+      {/* Detail Modal */}
+      <AnimatePresence>
+        {selectedItem && (
+            <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="absolute inset-0 z-50 bg-[#FAF9F6] dark:bg-[#1C1917] flex flex-col"
+            >
+                {/* Modal Header */}
+                <div className="h-14 flex items-center justify-between px-4 shrink-0 border-b border-stone-100 dark:border-stone-800">
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setSelectedItem(null)}
+                            className="p-2 -ml-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors text-stone-500"
+                        >
+                            <X size={20} />
+                        </button>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-stone-800 dark:text-stone-200">Details</span>
+                            <span className="text-[10px] text-stone-400 dark:text-stone-500 font-mono">
+                                {selectedItem.character_count || selectedItem.content.length} chars
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handleCopy(selectedItem.id, selectedItem.content)}
+                            className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors"
+                            title="Copy"
+                        >
+                            {copiedId === selectedItem.id ? <Check size={18} /> : <Copy size={18} />}
+                        </button>
+                        <button
+                            onClick={() => { handleDelete(selectedItem.id); }}
+                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-stone-400 hover:text-red-500 transition-colors"
+                            title="Delete"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-4">
+                    <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-sm border border-stone-50 dark:border-stone-800 min-h-full whitespace-pre-wrap font-mono text-sm text-stone-700 dark:text-stone-300 leading-relaxed selection:bg-stone-200 dark:selection:bg-stone-700">
+                        {selectedItem.content}
+                    </div>
+                </div>
+
+                {/* Footer Metadata */}
+                <div className="h-12 bg-white dark:bg-stone-900 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between px-6 shrink-0 text-xs text-stone-400">
+                    <div className="flex items-center gap-2">
+                        <AppWindow size={14} />
+                        <span>{selectedItem.source_app || 'System'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Calendar size={14} />
+                        <span>{new Date(selectedItem.timestamp).toLocaleString()}</span>
+                    </div>
+                </div>
+            </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
