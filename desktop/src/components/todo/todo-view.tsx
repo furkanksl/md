@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTodoStore } from "@/stores/todo-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -133,12 +133,31 @@ const ChecklistView = () => {
     deleteItem,
   } = store;
 
+  const [shouldFocusTitle, setShouldFocusTitle] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const newTaskInputRef = useRef<HTMLInputElement>(null);
+
   // Auto-create if empty
   useEffect(() => {
     if (store.isInitialized && checklists.length === 0) {
       createChecklist();
     }
   }, [checklists.length, createChecklist, store.isInitialized]);
+
+  // Focus effect
+  useEffect(() => {
+    if (shouldFocusTitle && titleInputRef.current) {
+        // Small timeout to ensure visibility/transition
+        setTimeout(() => {
+            if (titleInputRef.current) {
+                titleInputRef.current.focus();
+                const len = titleInputRef.current.value.length;
+                titleInputRef.current.setSelectionRange(len, len);
+            }
+        }, 100);
+        setShouldFocusTitle(false);
+    }
+  }, [activeChecklistId, shouldFocusTitle]);
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const activeList = checklists.find((c) => c.id === activeChecklistId);
@@ -149,6 +168,11 @@ const ChecklistView = () => {
     if (!newItemText.trim()) return;
     addItem(newItemText.trim());
     setNewItemText("");
+  };
+
+  const handleRename = (id: string) => {
+      setShouldFocusTitle(true);
+      setActiveChecklist(id);
   };
 
   const sortedItems = activeList
@@ -180,7 +204,7 @@ const ChecklistView = () => {
                 isActive={false}
                 onClick={() => setActiveChecklist(list.id)}
                 onDelete={() => deleteChecklist(list.id)}
-                onRename={() => setActiveChecklist(list.id)}
+                onRename={() => handleRename(list.id)}
               />
             ))}
           </div>
@@ -195,8 +219,15 @@ const ChecklistView = () => {
       <header className="flex items-center gap-3 mb-4 shrink-0">
         <BackButton onClick={() => setActiveChecklist(null)} />
         <Input
+          ref={titleInputRef}
           value={activeList.title}
           onChange={(e) => updateChecklist(activeList.id, { title: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              newTaskInputRef.current?.focus();
+            }
+          }}
           className="font-semibold text-lg border-none shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
           placeholder="List Title"
         />
@@ -249,6 +280,7 @@ const ChecklistView = () => {
           <Plus className="h-4 w-4 text-stone-400" />
         </div>
         <Input
+          ref={newTaskInputRef}
           placeholder="Add a new task..."
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
@@ -336,6 +368,10 @@ const NotesView = () => {
     updateNote,
   } = store;
 
+  const [shouldFocusTitle, setShouldFocusTitle] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const noteBodyRef = useRef<HTMLTextAreaElement>(null);
+
   // Auto-create if empty
   useEffect(() => {
     if (store.isInitialized && notes.length === 0) {
@@ -343,8 +379,27 @@ const NotesView = () => {
     }
   }, [notes.length, createNote, store.isInitialized]);
 
+  // Focus effect
+  useEffect(() => {
+    if (shouldFocusTitle && titleInputRef.current) {
+        setTimeout(() => {
+            if (titleInputRef.current) {
+                titleInputRef.current.focus();
+                const len = titleInputRef.current.value.length;
+                titleInputRef.current.setSelectionRange(len, len);
+            }
+        }, 100);
+        setShouldFocusTitle(false);
+    }
+  }, [activeNoteId, shouldFocusTitle]);
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const activeNote = notes.find((n) => n.id === activeNoteId);
+
+  const handleRename = (id: string) => {
+      setShouldFocusTitle(true);
+      setActiveNote(id);
+  };
 
   // Wait for auto-create
   if (notes.length === 0) return null;
@@ -368,7 +423,7 @@ const NotesView = () => {
                 isActive={false}
                 onClick={() => setActiveNote(note.id)}
                 onDelete={() => deleteNote(note.id)}
-                onRename={() => setActiveNote(note.id)}
+                onRename={() => handleRename(note.id)}
               />
             ))}
           </div>
@@ -383,8 +438,15 @@ const NotesView = () => {
       <header className="flex items-center gap-3 mb-2 shrink-0">
         <BackButton onClick={() => setActiveNote(null)} />
         <Input
+          ref={titleInputRef}
           value={activeNote.title}
           onChange={(e) => updateNote(activeNote.id, { title: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              noteBodyRef.current?.focus();
+            }
+          }}
           className="font-semibold text-lg border-none shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
           placeholder="Note Title"
         />
@@ -408,6 +470,7 @@ const NotesView = () => {
       </header>
 
       <Textarea
+        ref={noteBodyRef}
         placeholder="Type anything here..."
         value={activeNote.content}
         onChange={(e) => updateNote(activeNote.id, { content: e.target.value })}
