@@ -62,6 +62,42 @@ class DatabaseClient {
       );
     `);
 
+    // 4. Checklists
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS checklists (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        order_index INTEGER DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 5. Checklist Items
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS checklist_items (
+        id TEXT PRIMARY KEY,
+        checklist_id TEXT NOT NULL,
+        text TEXT NOT NULL,
+        completed BOOLEAN DEFAULT 0,
+        order_index INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(checklist_id) REFERENCES checklists(id) ON DELETE CASCADE
+      );
+    `);
+
+    // 6. Notes
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS notes (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT DEFAULT '',
+        order_index INTEGER DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // --- MIGRATIONS (Simple check-and-add) ---
     try {
         // Check for missing columns in conversations

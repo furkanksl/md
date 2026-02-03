@@ -1,5 +1,6 @@
 import { dbClient } from "./database-client";
 import { Conversation, Message } from "../domain/entities";
+import { Checklist, TodoItem, Note } from "@/stores/todo-store";
 import { v4 as uuidv4 } from "uuid";
 
 export class ConversationRepository {
@@ -191,5 +192,152 @@ export class ClipboardRepository {
         "DELETE FROM clipboard WHERE id NOT IN (SELECT id FROM clipboard ORDER BY timestamp DESC LIMIT $1) AND pinned = 0",
         [limit]
     );
+  }
+}
+
+export class ChecklistRepository {
+  async getAll(): Promise<Checklist[]> {
+    const db = await dbClient.getDb();
+    const lists = await db.select<any[]>("SELECT * FROM checklists ORDER BY updated_at DESC");
+    
+    // Fetch items for each list
+    const result: Checklist[] = [];
+    for (const list of lists) {
+      const items = await db.select<any[]>(
+        "SELECT * FROM checklist_items WHERE checklist_id = $1 ORDER BY completed ASC, created_at DESC", 
+        [list.id]
+      );
+      
+      result.push({
+        id: list.id,
+        title: list.title,
+        updatedAt: new Date(list.updated_at).getTime(),
+        items: items.map(item => ({
+          id: item.id,
+          text: item.text,
+          completed: Number(item.completed) === 1,
+          createdAt: new Date(item.created_at).getTime()
+        }))
+      });
+    }
+    return result;
+  }
+
+  async create(title: string = "Untitled"): Promise<Checklist> {
+    const db = await dbClient.getDb();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    
+    await db.execute(
+      "INSERT INTO checklists (id, title, updated_at, created_at) VALUES ($1, $2, $3, $4)",
+      [id, title, now, now]
+    );
+
+    return {
+      id,
+      title,
+      items: [],
+      updatedAt: new Date(now).getTime()
+    };
+  }
+
+  async updateTitle(id: string, title: string): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute(
+      "UPDATE checklists SET title = $1, updated_at = $2 WHERE id = $3",
+      [title, new Date().toISOString(), id]
+    );
+  }
+
+  async delete(id: string): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("DELETE FROM checklists WHERE id = $1", [id]);
+  }
+}
+
+export class ChecklistItemRepository {
+  async add(checklistId: string, text: string): Promise<TodoItem> {
+    const db = await dbClient.getDb();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    
+    await db.execute(
+      "INSERT INTO checklist_items (id, checklist_id, text, completed, created_at) VALUES ($1, $2, $3, $4, $5)",
+      [id, checklistId, text, 0, now]
+    );
+
+    // Touch parent checklist
+    await db.execute("UPDATE checklists SET updated_at = $1 WHERE id = $2", [now, checklistId]);
+
+    return {
+      id,
+      text,
+      completed: false,
+      createdAt: new Date(now).getTime()
+    };
+  }
+
+  async toggle(id: string, completed: boolean): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("UPDATE checklist_items SET completed = $1 WHERE id = $2", [completed ? 1 : 0, id]);
+  }
+
+  async delete(id: string): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("DELETE FROM checklist_items WHERE id = $1", [id]);
+  }
+
+  async updateText(id: string, text: string): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("UPDATE checklist_items SET text = $1 WHERE id = $2", [text, id]);
+  }
+}
+
+export class NoteRepository {
+  async getAll(): Promise<Note[]> {
+    const db = await dbClient.getDb();
+    const rows = await db.select<any[]>("SELECT * FROM notes ORDER BY updated_at DESC");
+    return rows.map(r => ({
+      id: r.id,
+      title: r.title,
+      content: r.content,
+      updatedAt: new Date(r.updated_at).getTime()
+    }));
+  }
+
+  async create(title: string = "Untitled"): Promise<Note> {
+    const db = await dbClient.getDb();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    
+    await db.execute(
+      "INSERT INTO notes (id, title, content, updated_at, created_at) VALUES ($1, $2, $3, $4, $5)",
+      [id, title, "", now, now]
+    );
+
+    return {
+      id,
+      title,
+      content: "",
+      updatedAt: new Date(now).getTime()
+    };
+  }
+
+  async update(id: string, updates: Partial<Note>): Promise<void> {
+    const db = await dbClient.getDb();
+    const now = new Date().toISOString();
+    
+    if (updates.title !== undefined) {
+      await db.execute("UPDATE notes SET title = $1, updated_at = $2 WHERE id = $3", [updates.title, now, id]);
+    }
+    
+    if (updates.content !== undefined) {
+      await db.execute("UPDATE notes SET content = $1, updated_at = $2 WHERE id = $3", [updates.content, now, id]);
+    }
+  }
+
+  async delete(id: string): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("DELETE FROM notes WHERE id = $1", [id]);
   }
 }

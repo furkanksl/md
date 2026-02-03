@@ -71,7 +71,7 @@ const SidebarItem = ({
             </div>
           </div>
         </ContextMenuTrigger>
-        <ContextMenuContent className="w-40 bg-stone-50 dark:bg-stone-900">
+        <ContextMenuContent className="w-40">
           <ContextMenuItem onClick={onRename}>
             <Pencil className="mr-2 h-4 w-4" /> Rename
           </ContextMenuItem>
@@ -154,9 +154,9 @@ const ChecklistView = () => {
     return (
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
         <div className="flex items-center justify-end p-1 mb-2">
-          <Button onClick={createChecklist} size="sm" variant="ghost" className="gap-1">
-            <Plus className="h-4 w-4" />New
-          </Button>
+        <Button onClick={createChecklist} size="sm" variant="ghost" className="gap-1">
+          <Plus className="h-4 w-4" />New
+        </Button>
         </div>
         <ScrollArea className="flex-1 -mx-2 px-2">
           <div className="pb-4">
@@ -317,8 +317,8 @@ const NotesView = () => {
     return (
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
         <div className="flex items-center justify-end p-1 mb-2">
-          <Button onClick={createNote} size="sm" variant="ghost" className="gap-1">
-            <Plus className="h-4 w-4" /> New
+        <Button onClick={createNote} size="sm" variant="ghost" className="gap-1">
+          <Plus className="h-4 w-4" /> New
           </Button>
         </div>
         <ScrollArea className="flex-1 -mx-2 px-2">
@@ -386,6 +386,11 @@ const NotesView = () => {
 
 export const TodoView = () => {
   const [activeTab, setActiveTab] = useState("checklist");
+  const { init } = useTodoStore();
+
+  useEffect(() => {
+    init();
+  }, []);
 
   return (
     <div className="h-full flex flex-col p-4 pt-2 gap-4">
