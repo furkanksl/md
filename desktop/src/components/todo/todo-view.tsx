@@ -50,7 +50,7 @@ const SidebarItem = ({
           <div
             onClick={onClick}
             className={cn(
-              "group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all border mb-1",
+              "group flex items-center justify-between p-3 rounded-sm cursor-pointer transition-all border mb-1",
               isActive
                 ? "bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 shadow-sm"
                 : "border-transparent hover:bg-stone-100 dark:hover:bg-stone-800/50 text-stone-600 dark:text-stone-400"
@@ -154,8 +154,8 @@ const ChecklistView = () => {
     return (
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
         <div className="flex items-center justify-end p-1 mb-2">
-          <Button onClick={createChecklist} size="sm" variant="ghost">
-            <Plus className="h-4 w-4 mr-1" /> New
+          <Button onClick={createChecklist} size="sm" variant="ghost" className="gap-1">
+            <Plus className="h-4 w-4" />New
           </Button>
         </div>
         <ScrollArea className="flex-1 -mx-2 px-2">
@@ -317,8 +317,8 @@ const NotesView = () => {
     return (
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
         <div className="flex items-center justify-end p-1 mb-2">
-          <Button onClick={createNote} size="sm" variant="ghost">
-            <Plus className="h-4 w-4 mr-1" /> New
+          <Button onClick={createNote} size="sm" variant="ghost" className="gap-1">
+            <Plus className="h-4 w-4" /> New
           </Button>
         </div>
         <ScrollArea className="flex-1 -mx-2 px-2">
