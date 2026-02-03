@@ -107,3 +107,7 @@ body {
 .animate-soft-in {
   animation: soft-fade-in 0.1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
+
+div[role="menuitem"] {
+  @apply cursor-pointer;
+}
