@@ -26,7 +26,9 @@ import {
    Layout,
    Columns2,
    Grid2X2,
-   PanelRight
+   PanelRight,
+   EyeOff,
+   Shield
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
