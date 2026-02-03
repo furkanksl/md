@@ -5,7 +5,7 @@
   "identifier": "com.furkanksl.mydrawer",
   "build": {
     "beforeDevCommand": "bun run dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1223",
     "beforeBuildCommand": "bun run build",
     "frontendDist": "../dist"
   },
