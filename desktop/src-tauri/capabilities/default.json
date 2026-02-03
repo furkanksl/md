@@ -27,6 +27,7 @@
       ],
       "deny": []
     },
+    "http:allow-fetch-cancel",
     {
       "identifier": "fs:default",
       "allow": [{ "path": "/Applications" }, { "path": "/System/Applications" }]

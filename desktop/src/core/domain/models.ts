@@ -21,8 +21,8 @@ export const MODELS: ModelMetadata[] = [
   { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", provider: "anthropic", capabilities: { image: false, audio: false, tools: true } },
 
   // Google (Gemini 3)
-  { id: "gemini-3-pro", name: "Gemini 3 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true } },
-  { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true } },
+  { id: "gemini-3-pro-preview", name: "Gemini 3 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true } },
+  { id: "gemini-3-flash-preview", name: "Gemini 3 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true } },
 
   // Groq (Official Production & Preview IDs)
   { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
