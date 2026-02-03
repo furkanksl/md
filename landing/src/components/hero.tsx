@@ -26,7 +26,6 @@ import {
    Layout,
    Columns2,
    Grid2X2,
-   PanelRight,
    EyeOff,
    Shield
 } from "lucide-react";
