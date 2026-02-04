@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore } from "@/stores/settings-store";
-import { ArrowRight, Check, Shield } from "lucide-react";
+import { ArrowRight, Check, Shield, PanelLeft, PanelRight, MousePointer2 } from "lucide-react";
 import { clsx } from "clsx";
 
 export const OnboardingView = () => {
   const [step, setStep] = useState(0);
-  const { setHasCompletedOnboarding } = useSettingsStore();
+  const { setHasCompletedOnboarding, drawerPosition, setDrawerPosition } = useSettingsStore();
   const [hasPermission, setHasPermission] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
 
@@ -67,6 +67,109 @@ export const OnboardingView = () => {
             <p className="text-center text-stone-500 dark:text-stone-400 text-sm max-w-[280px]">
                 My Drawer runs locally and integrates deeply with your system to boost your productivity.
             </p> */}
+        </div>
+      )
+    },
+    {
+      id: "position",
+      title: "Drawer Position",
+      description: "Choose where you want your drawer to appear.",
+      content: (
+        <div className="flex flex-col gap-4 w-full py-4">
+            <div className="grid grid-cols-2 gap-2">
+                <button
+                    onClick={() => setDrawerPosition('left')}
+                    className={clsx(
+                        "flex items-center justify-center gap-2 p-3 rounded-xl border transition-all h-12",
+                        drawerPosition === 'left'
+                            ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
+                            : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                    )}
+                >
+                    <PanelLeft size={16} />
+                    <span className="text-xs font-medium uppercase tracking-wide">Left Edge</span>
+                </button>
+                <button
+                    onClick={() => setDrawerPosition('right')}
+                    className={clsx(
+                        "flex items-center justify-center gap-2 p-3 rounded-xl border transition-all h-12",
+                        drawerPosition === 'right'
+                            ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
+                            : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                    )}
+                >
+                    <PanelRight size={16} />
+                    <span className="text-xs font-medium uppercase tracking-wide">Right Edge</span>
+                </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        onClick={() => setDrawerPosition('top-left')}
+                        className={clsx(
+                            "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                            drawerPosition === 'top-left'
+                                ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
+                                : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                        )}
+                    >
+                        <div className="w-6 h-6 border-l-2 border-t-2 border-current rounded-tl-md" />
+                        <span className="text-[9px] font-medium uppercase tracking-wide">Top Left</span>
+                    </button>
+                    <button
+                        onClick={() => setDrawerPosition('bottom-left')}
+                        className={clsx(
+                            "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                            drawerPosition === 'bottom-left'
+                                ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
+                                : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                        )}
+                    >
+                        <div className="w-6 h-6 border-l-2 border-b-2 border-current rounded-bl-md" />
+                        <span className="text-[9px] font-medium uppercase tracking-wide">Btm Left</span>
+                    </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        onClick={() => setDrawerPosition('top-right')}
+                        className={clsx(
+                            "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                            drawerPosition === 'top-right'
+                                ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
+                                : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                        )}
+                    >
+                        <div className="w-6 h-6 border-r-2 border-t-2 border-current rounded-tr-md" />
+                        <span className="text-[9px] font-medium uppercase tracking-wide">Top Right</span>
+                    </button>
+                    <button
+                        onClick={() => setDrawerPosition('bottom-right')}
+                        className={clsx(
+                            "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                            drawerPosition === 'bottom-right'
+                                ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
+                                : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                        )}
+                    >
+                        <div className="w-6 h-6 border-r-2 border-b-2 border-current rounded-br-md" />
+                        <span className="text-[9px] font-medium uppercase tracking-wide">Btm Right</span>
+                    </button>
+                </div>
+            </div>
+
+            <button
+                onClick={() => setDrawerPosition('hot-corners')}
+                className={clsx(
+                    "flex items-center justify-center gap-2 p-3 rounded-xl border transition-all h-12 w-full",
+                    drawerPosition === 'hot-corners'
+                        ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
+                        : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                )}
+            >
+                <MousePointer2 size={16} />
+                <span className="text-xs font-medium uppercase tracking-wide">All Hot Corners</span>
+            </button>
         </div>
       )
     },
