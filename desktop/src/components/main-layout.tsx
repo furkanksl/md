@@ -40,6 +40,16 @@ export const MainLayout = () => {
   }, []);
 
   useEffect(() => {
+    if (window.umami) {
+      window.umami.track((props: any) => ({
+        ...props,
+        url: `/${activeView}`,
+        title: activeView.charAt(0).toUpperCase() + activeView.slice(1),
+      }));
+    }
+  }, [activeView]);
+
+  useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
