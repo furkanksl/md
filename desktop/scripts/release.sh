@@ -93,6 +93,9 @@ echo -e "${YELLOW}Building, Signing, and Notarizing Tauri App...${NC}"
 # The environment variables APPLE_* are automatically picked up by tauri build
 npm run tauri build
 
+echo -e "${YELLOW}Generating latest.json and organizing artifacts...${NC}"
+node scripts/generate-latest-json.cjs
+
 echo -e "${GREEN}Release build completed successfully!${NC}"
 echo -e "${YELLOW}Artifacts ready for GitHub Release:${NC}"
 echo -e "1. macOS App/DMG: ${GREEN}src-tauri/target/release/bundle/macos/${NC}"
