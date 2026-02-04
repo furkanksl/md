@@ -2,6 +2,8 @@ import { MainLayout } from "@/components/main-layout";
 import { Toaster } from "sonner";
 import { useUIStore } from "@/stores/ui-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useUpdateStore } from "@/stores/update-store";
+import { UpdatePoster } from "@/components/shared/update-poster";
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./app.css";
@@ -9,15 +11,20 @@ import "./app.css";
 function App() {
   const { theme } = useUIStore();
   const { drawerPosition } = useSettingsStore();
+  const { checkForUpdates } = useUpdateStore();
 
   useEffect(() => {
     // Sync drawer config on startup
     invoke('set_drawer_config', { config: drawerPosition });
+    
+    // Check for updates
+    checkForUpdates();
   }, [drawerPosition]);
   
   return (
     <>
       <MainLayout />
+      <UpdatePoster />
       <Toaster 
         position="bottom-center" 
         theme={theme} 

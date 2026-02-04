@@ -5,6 +5,7 @@ import { useUIStore } from "@/stores/ui-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useClipboardStore } from "@/stores/clipboard-store";
 import { useShortcutsStore } from "@/stores/shortcuts-store";
+import { useUpdateStore } from "@/stores/update-store";
 import { clsx } from "clsx";
 import { ChatView } from "./ai/chat-view";
 import { ClipboardView } from "./clipboard/clipboard-view";
@@ -33,6 +34,7 @@ export const MainLayout = () => {
   const { activeView, setActiveView, theme, setTheme } = useUIStore();
   const { hasCompletedOnboarding } = useSettingsStore();
   const { startMonitoring } = useClipboardStore();
+  const { updateAvailable, showPoster } = useUpdateStore();
 
   useEffect(() => {
     startMonitoring();
@@ -114,12 +116,26 @@ export const MainLayout = () => {
           className="h-12 shrink-0 flex items-center justify-between px-3 pl-7 z-50"
           data-tauri-drag-region
         >
-          <h1
-            className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 cursor-pointer font-sans pointer-events-auto hover:underline"
-            onClick={() => setActiveView("about")}
-          >
-            md
-          </h1>
+          <div className="relative">
+            <h1
+              className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 cursor-pointer font-sans pointer-events-auto hover:underline"
+              onClick={() => setActiveView("about")}
+            >
+              md
+            </h1>
+            {updateAvailable && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  showPoster();
+                }}
+                className="absolute -top-1 -right-2 flex h-3 w-3 cursor-pointer z-50 hover:scale-110 transition-transform"
+              >
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500 ring-2 ring-white dark:ring-stone-900"></span>
+              </button>
+            )}
+          </div>
           <div className="flex gap-1 items-center">
             {/* Header Navigation Items */}
             {hasCompletedOnboarding && headerNavItems.map((item) => {
