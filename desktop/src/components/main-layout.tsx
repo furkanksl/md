@@ -14,6 +14,7 @@ import { ScrapingView } from "./scraping/scraping-view";
 import { SettingsView } from "./settings/settings-view";
 import { TodoView } from "./todo/todo-view";
 import { OnboardingView } from "./onboarding/onboarding-view";
+import { AboutView } from "./settings/about-view";
 import { CustomTitlebar } from "./shared/custom-titlebar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -113,12 +114,15 @@ export const MainLayout = () => {
           className="h-12 shrink-0 flex items-center justify-between px-3 pl-7 z-50"
           data-tauri-drag-region
         >
-          <h1 className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 pointer-events-none font-sans">
+          <h1
+            className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 cursor-pointer font-sans pointer-events-auto hover:underline"
+            onClick={() => setActiveView("about")}
+          >
             md
           </h1>
           <div className="flex gap-1 items-center">
-             {/* Header Navigation Items */}
-             {hasCompletedOnboarding && headerNavItems.map((item) => {
+            {/* Header Navigation Items */}
+            {hasCompletedOnboarding && headerNavItems.map((item) => {
               const isActive = activeView === item.id;
               const Icon = item.icon;
               return (
@@ -137,7 +141,7 @@ export const MainLayout = () => {
                 </button>
               );
             })}
-            
+
             <div className="w-px h-4 bg-stone-200 dark:bg-stone-800" />
 
             {/* Minimal theme toggle */}
@@ -198,6 +202,7 @@ export const MainLayout = () => {
                 {activeView === "layouts" && <LayoutsView />}
                 {activeView === "scraping" && <ScrapingView />}
                 {activeView === "settings" && <SettingsView />}
+                {activeView === "about" && <AboutView />}
               </motion.div>
             )}
           </AnimatePresence>

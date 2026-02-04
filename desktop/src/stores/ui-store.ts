@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 
 interface UIState {
   sidebarVisible: boolean;
-  activeView: "chat" | "clipboard" | "shortcuts" | "layouts" | "scraping" | "settings" | "tasks";
+  activeView: "chat" | "clipboard" | "shortcuts" | "layouts" | "scraping" | "settings" | "tasks" | "about";
   theme: "light" | "dark";
   isHoveringEdge: boolean;
   setSidebarVisible: (visible: boolean) => void;

@@ -37,6 +37,13 @@
       "allow": [{ "path": "/Applications" }, { "path": "/System/Applications" }]
     },
     {
+      "identifier": "shell:allow-open",
+      "allow": [
+        { "href": "https://mydrawer.furkanksl.com" },
+        { "href": "https://github.com/furkanksl/md" }
+      ]
+    },
+    {
       "identifier": "shell:allow-execute",
       "allow": [
         {

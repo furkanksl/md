@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '@/stores/settings-store';
+import { useUIStore } from '@/stores/ui-store';
 import { clsx } from 'clsx';
 import { Check, Shield, CircleCheck, CircleX, Loader2, EyeOff, PanelLeft, PanelRight, MousePointer2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ const PROVIDERS = [
 
 export const SettingsView = () => {
     const { activeProvider, setActiveProvider, setAIConfiguration, aiConfigurations, autoHide, setAutoHide, drawerPosition, setDrawerPosition } = useSettingsStore();
+    const { setActiveView } = useUIStore();
     const [apiKey, setApiKey] = useState('');
     const [endpoint, setEndpoint] = useState('');
     const [hasPermission, setHasPermission] = useState(false);
@@ -400,6 +402,16 @@ export const SettingsView = () => {
                         </button>
                     </div>
                 </div>
+            </div>
+
+            {/* About Link */}
+            <div className="flex justify-center pb-4">
+                <button
+                    onClick={() => setActiveView("about")}
+                    className="text-[10px] text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-400 transition-colors hover:underline"
+                >
+                    About My Drawer
+                </button>
             </div>
         </div>
     );
