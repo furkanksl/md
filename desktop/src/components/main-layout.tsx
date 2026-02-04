@@ -15,7 +15,7 @@ import { ScrapingView } from "./scraping/scraping-view";
 import { SettingsView } from "./settings/settings-view";
 import { TodoView } from "./todo/todo-view";
 import { OnboardingView } from "./onboarding/onboarding-view";
-import { AboutView } from "./settings/about-view";
+import { AboutView } from "./about/about-view";
 import { CustomTitlebar } from "./shared/custom-titlebar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
