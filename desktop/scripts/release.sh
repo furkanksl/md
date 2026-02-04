@@ -66,6 +66,16 @@ if [ -z "$APPLE_TEAM_ID" ]; then
     MISSING_VARS=1
 fi
 
+# Tauri Updater credentials
+if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+    echo -e "${RED}Error: TAURI_SIGNING_PRIVATE_KEY is missing (required for updater signing).${NC}"
+    MISSING_VARS=1
+fi
+
+if [ -z "$TAURI_SIGNING_KEY_PASSWORD" ]; then
+    echo -e "${YELLOW}Warning: TAURI_SIGNING_KEY_PASSWORD is not set. Assuming empty password.${NC}"
+fi
+
 if [ $MISSING_VARS -ne 0 ]; then
     echo -e "${RED}Build aborted due to missing environment variables.${NC}"
     echo "Please ensure you have a .env file or exported variables for code signing and notarization."
@@ -84,3 +94,7 @@ echo -e "${YELLOW}Building, Signing, and Notarizing Tauri App...${NC}"
 npm run tauri build
 
 echo -e "${GREEN}Release build completed successfully!${NC}"
+echo -e "${YELLOW}Artifacts ready for GitHub Release:${NC}"
+echo -e "1. macOS App/DMG: ${GREEN}src-tauri/target/release/bundle/macos/${NC}"
+echo -e "2. Updater JSON:  ${GREEN}src-tauri/target/release/bundle/updater/latest.json${NC}"
+echo -e "3. Update Bundle: ${GREEN}src-tauri/target/release/bundle/updater/*.tar.gz${NC}"
