@@ -8,7 +8,9 @@ use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 use layout_manager::{get_open_windows, restore_windows, WindowInfo};
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::time::Duration;
-use tauri::{Emitter, Manager, PhysicalPosition};
+use tauri::{Emitter, Manager, PhysicalPosition, image::Image, AppHandle};
+use tauri::menu::{Menu, MenuItem, MenuEvent};
+use tauri::tray::TrayIconBuilder;
 use tauri_plugin_sql::{Migration, MigrationKind};
 use arboard::Clipboard;
 use sqlx::sqlite::SqlitePoolOptions;
@@ -466,6 +468,93 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
+
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            let tray_menu = Menu::with_items(app, &[
+                &MenuItem::with_id(app, "show", "Show My Drawer", true, None::<&str>)?,
+                &MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?,
+            ])?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon(Image::from_bytes(include_bytes!("../icons/tray.png")).expect("tray icon"))
+                .icon_as_template(true)
+                .menu(&tray_menu)
+                .on_menu_event(|app: &AppHandle, event: MenuEvent| {
+                     match event.id().as_ref() {
+                         "show" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                // Prevent multiple triggers
+                                if IS_ANIMATING.load(Ordering::Relaxed) || IS_DRAWER_OPEN.load(Ordering::Relaxed) {
+                                    return;
+                                }
+
+                                let win_clone = window.clone();
+                                std::thread::spawn(move || {
+                                    IS_ANIMATING.store(true, Ordering::Relaxed);
+                                    
+                                    // Move window to visible position
+                                    let monitor = win_clone.current_monitor().ok().flatten().or_else(|| win_clone.primary_monitor().ok().flatten());
+                                    if let Some(monitor) = monitor {
+                                        let scale_factor = monitor.scale_factor();
+                                        let screen_size = monitor.size();
+                                        let screen_width = screen_size.width as f64;
+                                        let screen_height = screen_size.height as f64;
+                                        
+                                        let width = 400.0 * scale_factor;
+                                        let height = 800.0 * scale_factor;
+                                        
+                                        let active_side = LAST_ACTIVE_SIDE.load(Ordering::Relaxed);
+                                        
+                                        // Calculate start (offscreen) and end (onscreen) positions
+                                        let (start_x, end_x) = if active_side == 1 {
+                                            // Right Side
+                                            (screen_width as i32, (screen_width - width - 20.0 * scale_factor) as i32)
+                                        } else {
+                                            // Left Side
+                                            (-width as i32, (20.0 * scale_factor) as i32)
+                                        };
+                                        
+                                        let center_y = ((screen_height - height) / 2.0) as i32;
+                                        
+                                        // Set initial position off-screen
+                                        win_clone.set_position(PhysicalPosition::new(start_x, center_y)).unwrap_or(());
+                                        win_clone.set_ignore_cursor_events(false).unwrap_or(());
+                                        win_clone.show().unwrap();
+                                        win_clone.set_focus().unwrap();
+
+                                        // Animate
+                                        let duration_ms = 200;
+                                        let steps = 20;
+                                        let step_delay = duration_ms / steps;
+
+                                        for i in 0..=steps {
+                                            let t = i as f64 / steps as f64;
+                                            // Ease out cubic
+                                            let eased_t = 1.0 - (1.0 - t).powi(3);
+                                            let current_x = (start_x as f64 + (end_x as f64 - start_x as f64) * eased_t) as i32;
+                                            
+                                            win_clone.set_position(PhysicalPosition::new(current_x, center_y)).unwrap_or(());
+                                            std::thread::sleep(Duration::from_millis(step_delay));
+                                        }
+                                        
+                                        // Ensure final position
+                                        win_clone.set_position(PhysicalPosition::new(end_x, center_y)).unwrap_or(());
+                                    }
+                                    
+                                    IS_DRAWER_OPEN.store(true, Ordering::Relaxed);
+                                    IS_ANIMATING.store(false, Ordering::Relaxed);
+                                });
+                            }
+                         }
+                         "quit" => {
+                             app.exit(0);
+                         }
+                         _ => {}
+                     }
+                })
+                .build(app)?;
 
             // Start Clipboard Monitor (Rust Background Thread)
             start_clipboard_monitor(app.handle().clone());

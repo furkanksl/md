@@ -5168,6 +5168,7 @@ dependencies = [
  "gtk",
  "heck 0.5.0",
  "http",
+ "image 0.25.9",
  "jni",
  "libc",
  "log",
