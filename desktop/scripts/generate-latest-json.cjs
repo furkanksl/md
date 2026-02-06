@@ -61,7 +61,9 @@ const latestJson = {
         "darwin-aarch64": aarch64Artifacts,
         "darwin-arm64": aarch64Artifacts,
         "darwin-x86_64": x86Artifacts,
-        "darwin-x64": x86Artifacts
+        "darwin-x64": x86Artifacts,
+        "aarch64-apple-darwin": aarch64Artifacts,
+        "x86_64-apple-darwin": x86Artifacts
     }
 };
 

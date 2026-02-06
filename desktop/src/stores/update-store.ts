@@ -77,10 +77,10 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
       const resolveTargetKeys = () => {
         const ua = navigator.userAgent.toLowerCase();
         if (ua.includes("arm64") || ua.includes("aarch64")) {
-          return ["darwin-aarch64", "darwin-arm64"];
+          return ["darwin-aarch64", "darwin-arm64", "aarch64-apple-darwin"];
         }
         if (ua.includes("x86_64") || ua.includes("x64") || ua.includes("intel")) {
-          return ["darwin-x86_64", "darwin-x64"];
+          return ["darwin-x86_64", "darwin-x64", "x86_64-apple-darwin"];
         }
         return [];
       };
@@ -125,7 +125,14 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
         }
       };
 
-      const update = await check();
+      let update: Update | null = null;
+      try {
+        update = await check();
+      } catch (e: any) {
+        console.error('Failed to check for updates (native):', e);
+        await appendLog("native:check failed", { error: e?.message || String(e) });
+      }
+
       if (update && update.available) {
         let resolvedBody: string | null = null;
         let releaseFetchError: string | null = null;
