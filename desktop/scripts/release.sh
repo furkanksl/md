@@ -72,8 +72,8 @@ if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
     MISSING_VARS=1
 fi
 
-if [ -z "$TAURI_SIGNING_KEY_PASSWORD" ]; then
-    echo -e "${YELLOW}Warning: TAURI_SIGNING_KEY_PASSWORD is not set. Assuming empty password.${NC}"
+if [ -z "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" ]; then
+    echo -e "${YELLOW}Warning: TAURI_SIGNING_PRIVATE_KEY_PASSWORD is not set. Assuming empty password.${NC}"
 fi
 
 if [ $MISSING_VARS -ne 0 ]; then
