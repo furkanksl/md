@@ -209,7 +209,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
 
             <form
                 className={clsx(
-                    "bg-white dark:bg-stone-900 rounded-[1.5rem] p-1 pl-3 pb-0 shadow-lg shadow-stone-200/40 dark:shadow-none border border-stone-100 dark:border-stone-800 flex gap-2 transition-all duration-200 ease-in-out focus-within:shadow-xl focus-within:shadow-stone-200/60 dark:focus-within:shadow-none min-h-[40px]",
+                    "bg-white dark:bg-stone-900 rounded-[1.5rem] p-1 px-2 shadow-lg shadow-stone-200/40 dark:shadow-none border border-stone-100 dark:border-stone-800 flex gap-1 transition-all duration-200 ease-in-out focus-within:shadow-xl focus-within:shadow-stone-200/60 dark:focus-within:shadow-none min-h-[40px]",
                     isExpanded ? "items-end" : "items-center"
                 )}
             >                <button
@@ -224,7 +224,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                 )}
                 disabled={attachments.length >= 3 || isStreaming}
             >
-                    <Paperclip size={16} strokeWidth={2} />
+                    <Paperclip size={16} strokeWidth={1.5} />
                 </button>
                 <input
                     type="file"
