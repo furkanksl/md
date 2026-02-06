@@ -1,7 +1,8 @@
 import { useUpdateStore } from "@/stores/update-store";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Sparkles, X, AlertCircle } from "lucide-react";
+import { Download, Sparkles, X, AlertCircle, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { open } from "@tauri-apps/plugin-shell";
 
 export const UpdatePoster = () => {
     const {
@@ -13,6 +14,7 @@ export const UpdatePoster = () => {
         error,
         installUpdate,
         dismissUpdate,
+        manualDownloadUrl,
     } = useUpdateStore();
 
     return (
@@ -99,13 +101,23 @@ export const UpdatePoster = () => {
                                         >
                                             Not now
                                         </button>
-                                        <button
-                                            onClick={installUpdate}
-                                            className="flex-[2] py-3 px-4 bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 rounded-full text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-stone-200/50 dark:shadow-none"
-                                        >
-                                            <Download size={14} />
-                                            Install Update
-                                        </button>
+                                        {manualDownloadUrl ? (
+                                            <button
+                                                onClick={() => open(manualDownloadUrl)}
+                                                className="flex-[2] py-3 px-4 bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 rounded-full text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-stone-200/50 dark:shadow-none"
+                                            >
+                                                <ExternalLink size={14} />
+                                                Download Update
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={installUpdate}
+                                                className="flex-[2] py-3 px-4 bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 rounded-full text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-stone-200/50 dark:shadow-none"
+                                            >
+                                                <Download size={14} />
+                                                Install Update
+                                            </button>
+                                        )}
                                     </div>
                                 </>
                             )}

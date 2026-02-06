@@ -1,12 +1,15 @@
 import { create } from 'zustand';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { getVersion } from '@tauri-apps/api/app';
+import { writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 
 interface UpdateStore {
   updateAvailable: boolean;
   posterVisible: boolean;
   version: string | null;
   body: string | null;
+  manualDownloadUrl: string | null;
   isDownloading: boolean;
   downloadProgress: number | null;
   error: string | null;
@@ -24,6 +27,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
   posterVisible: false,
   version: null,
   body: null,
+  manualDownloadUrl: null,
   isDownloading: false,
   downloadProgress: null,
   error: null,
@@ -45,6 +49,82 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
 
   checkForUpdates: async () => {
     try {
+      const appendLog = async (message: string, data?: unknown) => {
+        const line = `[${new Date().toISOString()}] ${message}${data ? ` ${JSON.stringify(data)}` : ""}\n`;
+        try {
+          await writeTextFile("updater.log", line, {
+            append: true,
+            baseDir: BaseDirectory.AppData,
+          });
+        } catch {
+          // Ignore logging failures.
+        }
+      };
+
+      const compareVersions = (a: string, b: string) => {
+        const sanitize = (value: string) =>
+          value.replace(/^v/i, "").split(".").map((part) => parseInt(part, 10) || 0);
+        const aParts = sanitize(a);
+        const bParts = sanitize(b);
+        const maxLen = Math.max(aParts.length, bParts.length);
+        for (let i = 0; i < maxLen; i += 1) {
+          const diff = (aParts[i] || 0) - (bParts[i] || 0);
+          if (diff !== 0) return diff;
+        }
+        return 0;
+      };
+
+      const resolveTargetKeys = () => {
+        const ua = navigator.userAgent.toLowerCase();
+        if (ua.includes("arm64") || ua.includes("aarch64")) {
+          return ["darwin-aarch64", "darwin-arm64"];
+        }
+        if (ua.includes("x86_64") || ua.includes("x64") || ua.includes("intel")) {
+          return ["darwin-x86_64", "darwin-x64"];
+        }
+        return [];
+      };
+
+      const fallbackCheck = async () => {
+        const endpoint = "https://github.com/furkanksl/md/releases/latest/download/latest.json";
+        try {
+          const res = await fetch(endpoint, { cache: "no-store" });
+          if (!res.ok) {
+            await appendLog("fallback:latest.json fetch failed", { status: res.status });
+            return null;
+          }
+          const data = await res.json();
+          const latestVersion = data?.version;
+          if (!latestVersion) {
+            await appendLog("fallback:latest.json missing version");
+            return null;
+          }
+          const currentVersion = await getVersion();
+          if (compareVersions(latestVersion, currentVersion) <= 0) {
+            await appendLog("fallback:no update", { currentVersion, latestVersion });
+            return null;
+          }
+
+          const targetKeys = resolveTargetKeys();
+          const platforms = data?.platforms || {};
+          const platformEntry =
+            targetKeys.map((key) => platforms[key]).find(Boolean) ||
+            platforms["darwin-aarch64"] ||
+            platforms["darwin-arm64"] ||
+            platforms["darwin-x86_64"] ||
+            platforms["darwin-x64"];
+
+          return {
+            version: latestVersion,
+            body: data?.notes || "A new update is available.",
+            url: platformEntry?.url || data?.url || "https://github.com/furkanksl/md/releases/latest",
+          };
+        } catch (err: any) {
+          await appendLog("fallback:error", { message: err?.message || "unknown" });
+          return null;
+        }
+      };
+
       const update = await check();
       if (update && update.available) {
         let resolvedBody: string | null = null;
@@ -84,9 +164,24 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
           body: resolvedBody,
           error: releaseFetchError,
           updateManifest: update,
+          manualDownloadUrl: null,
         });
       } else {
-        set({ updateAvailable: false, posterVisible: false });
+        const fallback = await fallbackCheck();
+        if (fallback) {
+          set({
+            updateAvailable: true,
+            posterVisible: true,
+            version: fallback.version,
+            body: fallback.body,
+            manualDownloadUrl: fallback.url,
+            updateManifest: null,
+            error: null,
+          });
+          await appendLog("fallback:update available", { version: fallback.version });
+        } else {
+          set({ updateAvailable: false, posterVisible: false, manualDownloadUrl: null });
+        }
       }
     } catch (e) {
       console.error('Failed to check for updates:', e);
