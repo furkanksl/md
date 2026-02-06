@@ -44,3 +44,4 @@ uuid = { version = "1.19.0", features = ["v4"] }
 chrono = { version = "0.4.42", features = ["serde"] }
 image = "0.24"
 tauri-plugin-updater = "2.10.0"
+tauri-plugin-process = "2.3.0"

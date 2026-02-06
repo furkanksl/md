@@ -16,6 +16,9 @@
     "sql:allow-select",
     "clipboard-manager:default",
     "global-shortcut:default",
+    "process:allow-restart",
+    "updater:allow-check",
+    "updater:allow-download-and-install",
     {
       "identifier": "http:default",
       "allow": [
@@ -23,7 +26,8 @@
         { "url": "https://api.anthropic.com/*" },
         { "url": "https://generativelanguage.googleapis.com/*" },
         { "url": "https://api.groq.com/*" },
-        { "url": "https://api.mistral.ai/*" }
+        { "url": "https://api.mistral.ai/*" },
+        { "url": "https://api.github.com/*" }
       ],
       "deny": []
     },
