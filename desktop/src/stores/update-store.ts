@@ -47,11 +47,42 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
     try {
       const update = await check();
       if (update && update.available) {
+        let resolvedBody: string | null = null;
+        let releaseFetchError: string | null = null;
+        try {
+          const withV = await fetch(
+            `https://api.github.com/repos/furkanksl/md/releases/tags/v${update.version}`
+          );
+
+          let releaseData = null;
+          if (withV.ok) {
+            releaseData = await withV.json();
+          } else {
+            releaseFetchError = `GitHub release fetch failed (v): ${withV.status}`;
+            const withoutV = await fetch(
+              `https://api.github.com/repos/furkanksl/md/releases/tags/${update.version}`
+            );
+            if (withoutV.ok) {
+              releaseData = await withoutV.json();
+            } else {
+              releaseFetchError = `GitHub release fetch failed: ${withoutV.status}`;
+            }
+          }
+          if (releaseData && typeof releaseData.body === "string" && releaseData.body.trim() !== "") {
+            resolvedBody = releaseData.body;
+          }
+        } catch (e: any) {
+          releaseFetchError = `GitHub release fetch error: ${e?.message || "unknown"}`;
+        }
+        if (!resolvedBody || resolvedBody.trim() === "") {
+          resolvedBody = update.body || null;
+        }
         set({
           updateAvailable: true,
           posterVisible: true,
           version: update.version,
-          body: update.body,
+          body: resolvedBody,
+          error: releaseFetchError,
           updateManifest: update,
         });
       } else {
