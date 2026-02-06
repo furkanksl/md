@@ -26,6 +26,10 @@ if (!tarFile || !sigFile) {
 const signature = fs.readFileSync(path.join(macosDir, sigFile), 'utf8');
 const pub_date = new Date().toISOString();
 
+// GitHub normalizes spaces to dots in asset names; mirror that in URLs/artifacts.
+const urlTarFile = tarFile.replace(/ /g, '.');
+const urlSigFile = sigFile.replace(/ /g, '.');
+
 const latestJson = {
     version: version,
     notes: "Update via Tauri.",
@@ -33,11 +37,11 @@ const latestJson = {
     platforms: {
         "darwin-aarch64": {
             "signature": signature,
-            "url": `https://github.com/furkanksl/md/releases/latest/download/${tarFile}`
+            "url": `https://github.com/furkanksl/md/releases/latest/download/${urlTarFile}`
         },
         "darwin-x86_64": {
             "signature": signature,
-            "url": `https://github.com/furkanksl/md/releases/latest/download/${tarFile}`
+            "url": `https://github.com/furkanksl/md/releases/latest/download/${urlTarFile}`
         }
     }
 };
@@ -45,7 +49,7 @@ const latestJson = {
 fs.writeFileSync(path.join(updaterDir, 'latest.json'), JSON.stringify(latestJson, null, 2));
 
 // Copy files to updater dir
-fs.copyFileSync(path.join(macosDir, tarFile), path.join(updaterDir, tarFile));
-fs.copyFileSync(path.join(macosDir, sigFile), path.join(updaterDir, sigFile));
+fs.copyFileSync(path.join(macosDir, tarFile), path.join(updaterDir, urlTarFile));
+fs.copyFileSync(path.join(macosDir, sigFile), path.join(updaterDir, urlSigFile));
 
 console.log(`Successfully generated latest.json and moved artifacts to ${updaterDir}`);
