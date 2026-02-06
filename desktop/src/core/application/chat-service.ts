@@ -256,6 +256,12 @@ export class ChatService {
     // Actually, I should update the repo.
     await convRepo.updateModel(id, modelId, providerId);
   }
+
+  async rewindConversation(conversationId: string, messageId: string) {
+    const msg = await msgRepo.getById(messageId);
+    if (!msg) throw new Error("Message not found");
+    await msgRepo.deleteFromTimestamp(conversationId, msg.timestamp as Date);
+  }
 }
 
 export const chatService = new ChatService();

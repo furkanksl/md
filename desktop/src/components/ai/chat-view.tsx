@@ -23,6 +23,7 @@ import {
 
 export const ChatView = () => {
   const {
+    messages,
     selectedModelId,
     setSelectedModelId,
     activeConversationId,
@@ -228,7 +229,7 @@ export const ChatView = () => {
 
       {/* Messages */}
       <div className="flex-1 min-h-0 w-full relative">
-        {activeConversationId ? (
+        {messages.length > 0 ? (
           <MessageList />
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-stone-300 dark:text-stone-700 gap-4">

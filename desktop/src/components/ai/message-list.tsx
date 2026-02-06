@@ -3,7 +3,14 @@ import { useChatStore } from "@/stores/chat-store";
 import { clsx } from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { MarkdownRenderer } from "../shared/markdown-renderer";
-import { Edit2, X, Check, File as FileIcon } from "lucide-react";
+import { Edit2, X, File as FileIcon, RefreshCw, RotateCcw, ArrowUp } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const LoadingDots = () => (
   <div className="flex gap-1 py-1 px-2">
@@ -32,6 +39,8 @@ export const MessageList = () => {
     editMessage,
     activeConversationId,
     conversations,
+    regenerate,
+    rewind
   } = useChatStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -94,10 +103,12 @@ export const MessageList = () => {
     setEditContent("");
   };
 
-  const saveEdit = async (id: string) => {
-    if (!editContent.trim()) return;
+  const saveEdit = async () => {
+    if (!editingId || !editContent.trim()) return;
+    const id = editingId;
     setEditingId(null);
     await editMessage(id, editContent);
+    setEditContent("");
   };
 
   return (
@@ -118,14 +129,13 @@ export const MessageList = () => {
 
       {messages.map((msg, i) => {
         const isUser = msg.role === "user";
-        const isEditing = editingId === msg.id;
 
         // Normalize timestamp
-        const ts = msg.timestamp ? (typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp) : new Date();
+        const ts = new Date(msg.timestamp || new Date());
 
         // Day separator: show if first message or day differs from previous
         const prev = messages[i - 1];
-        const prevTs = prev ? (prev.timestamp ? (typeof prev.timestamp === 'string' ? new Date(prev.timestamp) : prev.timestamp) : null) : null;
+        const prevTs = prev?.timestamp ? new Date(prev.timestamp) : null;
         const isNewDay = !prevTs || ts.toDateString() !== prevTs.toDateString();
 
         // Time string (always shown outside the bubble)
@@ -155,7 +165,7 @@ export const MessageList = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
               className={clsx(
-                "flex flex-col max-w-[92%] min-w-0",
+                "flex flex-col max-w-[92%] min-w-0 group relative",
                 isUser ? "self-end items-end" : "self-start items-start"
               )}
             >
@@ -167,38 +177,10 @@ export const MessageList = () => {
                     : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 rounded-[1.25rem] rounded-tl-none border border-stone-100 dark:border-stone-800 overflow-x-auto scrollbar-none"
                 )}
               >
-                {isEditing ? (
-                  <div className="flex flex-col gap-2 min-w-[200px]">
-                    <textarea
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      className="bg-transparent border-none focus:outline-none w-full resize-none text-inherit"
-                      rows={Math.max(2, editContent.split("\n").length)}
-                      autoFocus
-                    />
-                    <div className="flex justify-end gap-2 mt-1">
-                      <button
-                        onClick={cancelEditing}
-                        className="p-1 hover:bg-white/20 rounded"
-                      >
-                        <X size={14} />
-                      </button>
-                      <button
-                        onClick={() => saveEdit(msg.id)}
-                        className="p-1 hover:bg-white/20 rounded"
-                      >
-                        <Check size={14} />
-                      </button>
-                    </div>
-                  </div>
+                {msg.content === "" && !isUser ? (
+                  <LoadingDots />
                 ) : (
-                  <>
-                    {msg.content === "" && !isUser ? (
-                      <LoadingDots />
-                    ) : (
-                      <MarkdownRenderer content={msg.content} />
-                    )}
-                  </>
+                  <MarkdownRenderer content={msg.content} />
                 )}
               </div>
 
@@ -233,15 +215,29 @@ export const MessageList = () => {
                 {timeLabel}
               </div>
 
-              {/* Edit Button for User Messages */}
-              {!isEditing && isUser && !isStreaming && (
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-full mr-2 top-1/2 -translate-y-1/2">
+              {/* Action Buttons for User Messages */}
+              {isUser && !isStreaming && (
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-0 -top-6 flex items-center gap-1">
                   <button
-                    onClick={() => startEditing(msg.id, msg.content)}
-                    className="p-1.5 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                    onClick={() => startEditing(msg.id, typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content))}
+                    className="p-1 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                     title="Edit"
                   >
                     <Edit2 size={12} />
+                  </button>
+                  <button
+                    onClick={() => regenerate(msg.id)}
+                    className="p-1 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                    title="Regenerate"
+                  >
+                    <RefreshCw size={12} />
+                  </button>
+                  <button
+                    onClick={() => rewind(msg.id)}
+                    className="p-1 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                    title="Rollback (Delete)"
+                  >
+                    <RotateCcw size={12} />
                   </button>
                 </div>
               )}
@@ -276,6 +272,38 @@ export const MessageList = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingId} onOpenChange={(open) => !open && cancelEditing()}>
+        <DialogContent hideClose={true} className="max-w-[90%] w-full p-4 gap-2 rounded-3xl md:rounded-2xl sm:rounded-2xl">
+          <DialogHeader className="text-left space-y-0">
+            <DialogTitle className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase">
+              Edit Message
+            </DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <Textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              autoFocus
+              onFocus={(e) => e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length)}
+              className="min-h-[150px] resize-none bg-stone-50 dark:bg-stone-900/50 border-stone-200 dark:border-stone-800 focus-visible:ring-stone-400 dark:focus-visible:ring-stone-600 rounded-2xl pb-9"
+            />
+            <button
+              onClick={saveEdit}
+              disabled={!editContent.trim()}
+              className={clsx(
+                "absolute bottom-2 right-2 w-8 h-8 rounded-full p-0 flex items-center justify-center transition-all duration-300 shadow-none",
+                !editContent.trim()
+                  ? "bg-stone-100 text-stone-300 cursor-not-allowed dark:bg-stone-800 dark:text-stone-600"
+                  : "bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-stone-900 text-white"
+              )}
+            >
+              <ArrowUp size={16} strokeWidth={2.5} />
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

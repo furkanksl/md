@@ -124,6 +124,14 @@ export class MessageRepository {
         [conversationId, timestamp.toISOString()]
     );
   }
+
+  async deleteFromTimestamp(conversationId: string, timestamp: Date): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute(
+        "DELETE FROM messages WHERE conversation_id = $1 AND timestamp >= $2", 
+        [conversationId, timestamp.toISOString()]
+    );
+  }
 }
 
 export class FolderRepository {

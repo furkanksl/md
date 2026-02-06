@@ -40,6 +40,8 @@ interface ChatState {
   moveChatToFolder: (chatId: string, folderId: string | null) => Promise<void>;
   moveChatToRoot: (chatId: string) => Promise<void>;
   editMessage: (messageId: string, newContent: string) => Promise<void>;
+  rewind: (messageId: string) => Promise<void>;
+  regenerate: (messageId: string) => Promise<void>;
   reorderFolders: (order: string[]) => void;
   reorderRootChats: (order: string[]) => void;
   reorderFolderChats: (folderId: string, order: string[]) => void;
@@ -75,6 +77,28 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const conv = get().conversations[id];
         set({ messages: msgs, selectedModelId: conv?.modelId || "gpt-5.2" });
     }
+  },
+  
+  rewind: async (messageId) => {
+      const { activeConversationId, messages } = get();
+      if (!activeConversationId) return;
+
+      const msgIndex = messages.findIndex(m => m.id === messageId);
+      if (msgIndex === -1) return;
+
+      // Optimistic update: Remove this message and everything after
+      const newMessages = messages.slice(0, msgIndex);
+      set({ messages: newMessages });
+
+      // Persist
+      await chatService.rewindConversation(activeConversationId, messageId);
+  },
+
+  regenerate: async (messageId) => {
+      const { messages } = get();
+      const msg = messages.find(m => m.id === messageId);
+      if (!msg) return;
+      await get().editMessage(messageId, typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content));
   },
 
   syncStructure: async () => {
