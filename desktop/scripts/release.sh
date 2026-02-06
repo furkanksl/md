@@ -91,14 +91,14 @@ npm run build
 # 3. Build & Sign & Notarize (Tauri)
 echo -e "${YELLOW}Building, Signing, and Notarizing Tauri App...${NC}"
 # The environment variables APPLE_* are automatically picked up by tauri build
-npm run tauri build
+npm run tauri build -- --target universal-apple-darwin
 
 echo -e "${YELLOW}Generating latest.json and organizing artifacts...${NC}"
 node scripts/generate-latest-json.cjs
 
 echo -e "${GREEN}Release build completed successfully!${NC}"
 echo -e "${YELLOW}Artifacts ready for GitHub Release:${NC}"
-echo -e "1. macOS App/DMG: ${GREEN}src-tauri/target/release/bundle/macos/${NC}"
-echo -e "2. Updater JSON:  ${GREEN}src-tauri/target/release/bundle/updater/latest.json${NC}"
-echo -e "3. Update Bundle: ${GREEN}src-tauri/target/release/bundle/updater/*.tar.gz${NC}"
-echo -e "4. Signature File: ${GREEN}src-tauri/target/release/bundle/updater/*.tar.gz.sig${NC}"
+echo -e "1. macOS App/DMG: ${GREEN}src-tauri/target/universal-apple-darwin/release/bundle/macos/${NC}"
+echo -e "2. Updater JSON:  ${GREEN}src-tauri/target/universal-apple-darwin/release/bundle/updater/latest.json${NC}"
+echo -e "3. Update Bundle: ${GREEN}src-tauri/target/universal-apple-darwin/release/bundle/updater/*.tar.gz${NC}"
+echo -e "4. Signature File: ${GREEN}src-tauri/target/universal-apple-darwin/release/bundle/updater/*.tar.gz.sig${NC}"

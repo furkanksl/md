@@ -5,7 +5,10 @@ const tauriConfigPath = path.join(__dirname, '../src-tauri/tauri.conf.json');
 const tauriConfig = JSON.parse(fs.readFileSync(tauriConfigPath, 'utf8'));
 const version = tauriConfig.version;
 
-const bundleDir = path.join(__dirname, '../src-tauri/target/release/bundle');
+const bundleDir = path.join(
+    __dirname,
+    '../src-tauri/target/universal-apple-darwin/release/bundle'
+);
 const macosDir = path.join(bundleDir, 'macos');
 const updaterDir = path.join(bundleDir, 'updater');
 
