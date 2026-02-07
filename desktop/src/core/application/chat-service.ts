@@ -36,10 +36,22 @@ export class ChatService {
     providerId: string, 
     apiKey: string,
     previousMessages: any[],
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
+    customModelConfig?: { baseUrl: string; modelId: string }
   ) {
     // 1. Validation
-    const model = getModelById(modelId);
+    let model = getModelById(modelId);
+    
+    // If not found in static list, check if it's a custom model configuration
+    if (!model && providerId === 'custom' && customModelConfig) {
+        model = {
+            id: modelId,
+            name: customModelConfig.modelId, // Use the API model ID as name or passed name
+            provider: 'custom',
+            capabilities: { image: false, audio: false, tools: false } // Assume basic capabilities for custom
+        };
+    }
+
     if (!model) {
         throw new Error(`Model ${modelId} not found`);
     }
@@ -60,7 +72,7 @@ export class ChatService {
     await msgRepo.create(userMsg);
 
     // 3. Setup AI
-    const provider = getProvider(providerId, apiKey);
+    const providerFn = getProvider(providerId, apiKey, customModelConfig ? { baseUrl: customModelConfig.baseUrl } : undefined);
     
     // 4. Sanitize History
     const sanitizedHistory = previousMessages.map(msg => {
@@ -73,7 +85,7 @@ export class ChatService {
                  // Keep text
                  if (part.type === 'text') return true;
                  // Keep images ONLY if model supports them
-                 if (part.type === 'image') return model.capabilities.image;
+                 if (part.type === 'image') return model!.capabilities.image;
                  return false;
              });
 
@@ -113,8 +125,16 @@ export class ChatService {
 
     // console.log("Sending Payload to AI:", JSON.stringify(messagesPayload, null, 2)); // Debug
     
+    // Use the custom model ID if provided, otherwise the selected model ID
+    const targetModelId = customModelConfig?.modelId || modelId;
+
+    // Explicitly use .chat() if available (common for OpenAI-compatible providers)
+    // This avoids issues where the default resolution might pick the wrong endpoint style
+    const providerInstance = providerFn as any;
+    const modelInstance = providerInstance.chat ? providerInstance.chat(targetModelId) : providerFn(targetModelId);
+
     const result = await streamText({
-      model: provider(modelId) as any,
+      model: modelInstance,
       messages: messagesPayload,
       abortSignal,
       onFinish: async ({ text }: any) => {
@@ -140,7 +160,8 @@ export class ChatService {
     modelId: string,
     providerId: string,
     apiKey: string,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
+    customModelConfig?: { baseUrl: string; modelId: string }
   ) {
     // 1. Get Message
     const msg = await msgRepo.getById(messageId);
@@ -163,14 +184,23 @@ export class ChatService {
     const previousMessages = allMessages.slice(0, -1);
 
     // 5. Validation (Same as sendMessage)
-    const model = getModelById(modelId);
+    let model = getModelById(modelId);
+    if (!model && providerId === 'custom' && customModelConfig) {
+        model = {
+            id: modelId,
+            name: customModelConfig.modelId,
+            provider: 'custom',
+            capabilities: { image: false, audio: false, tools: false }
+        };
+    }
     if (!model) throw new Error(`Model ${modelId} not found`);
+    
     if (currentMsg.attachments.length > 0 && !model.capabilities.image) {
       throw new Error(`The selected model (${model.name}) does not support images.`);
     }
 
     // 6. Setup AI
-    const provider = getProvider(providerId, apiKey);
+    const providerFn = getProvider(providerId, apiKey, customModelConfig ? { baseUrl: customModelConfig.baseUrl } : undefined);
 
     // 7. Sanitize History (Same logic as sendMessage)
     const sanitizedHistory = previousMessages.map(msg => {
@@ -178,7 +208,7 @@ export class ChatService {
         if (Array.isArray(msg.content)) {
              let validParts = (msg.content as any[]).filter((part: any) => {
                  if (part.type === 'text') return true;
-                 if (part.type === 'image') return model.capabilities.image;
+                 if (part.type === 'image') return model!.capabilities.image;
                  return false;
              });
              if (validParts.length === 0) validParts = [{ type: 'text', text: '[Image not supported]' }];
@@ -206,8 +236,13 @@ export class ChatService {
 
     const messagesPayload = [...sanitizedHistory, { role: "user", content: currentContent }];
 
+    const targetModelId = customModelConfig?.modelId || modelId;
+
+    const providerInstance = providerFn as any;
+    const modelInstance = providerInstance.chat ? providerInstance.chat(targetModelId) : providerFn(targetModelId);
+
     const result = await streamText({
-      model: provider(modelId) as any,
+      model: modelInstance,
       messages: messagesPayload as any, // Cast to any to avoid complex union type issues with AI SDK
       abortSignal,
       onFinish: async ({ text }: any) => {

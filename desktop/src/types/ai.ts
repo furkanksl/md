@@ -31,6 +31,16 @@ export const ConversationSchema = z.object({
 });
 export type Conversation = z.infer<typeof ConversationSchema>;
 
+export const CustomModelSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  provider: z.literal("custom"),
+  baseUrl: z.string(),
+  apiKey: z.string().optional(),
+  modelId: z.string(), // The actual model string sent to the API
+});
+export type CustomModel = z.infer<typeof CustomModelSchema>;
+
 export const AIConfigurationSchema = z.object({
   provider: z.enum(["anthropic", "openai", "google", "mistral", "groq", "custom"]),
   apiKey: z.string(),
@@ -41,6 +51,7 @@ export const AIConfigurationSchema = z.object({
     topP: z.number().optional(),
   }).optional(),
   systemPrompt: z.string().optional(),
-  customEndpoint: z.string().optional(), // Removed .url() validation to allow localhost or partial paths if needed
+  customEndpoint: z.string().optional(), // Deprecated in favor of customModels but kept for compat
+  customModels: z.array(CustomModelSchema).optional(),
 });
 export type AIConfiguration = z.infer<typeof AIConfigurationSchema>;

@@ -22,12 +22,10 @@
     {
       "identifier": "http:default",
       "allow": [
-        { "url": "https://api.openai.com/*" },
-        { "url": "https://api.anthropic.com/*" },
-        { "url": "https://generativelanguage.googleapis.com/*" },
-        { "url": "https://api.groq.com/*" },
-        { "url": "https://api.mistral.ai/*" },
-        { "url": "https://api.github.com/*" }
+        { "url": "http://*" },
+        { "url": "https://*" },
+        { "url": "http://*:*" },
+        { "url": "https://*:*" }
       ],
       "deny": []
     },
@@ -43,8 +41,7 @@
     {
       "identifier": "shell:allow-open",
       "allow": [
-        { "href": "https://mydrawer.furkanksl.com" },
-        { "href": "https://github.com/furkanksl/md" }
+        { "href": "^https?://", "regex": true }
       ]
     },
     {

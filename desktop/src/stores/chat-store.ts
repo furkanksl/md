@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { chatService } from "@/core/application/chat-service";
 import { Conversation, Message } from "@/core/domain/entities";
-import { getModelById } from "@/core/domain/models";
+import { getModelById, MODELS } from "@/core/domain/models";
 import { useSettingsStore } from "./settings-store";
 import { v4 as uuidv4 } from "uuid";
 
@@ -46,6 +46,36 @@ interface ChatState {
   reorderRootChats: (order: string[]) => void;
   reorderFolderChats: (folderId: string, order: string[]) => void;
 }
+
+// Helper to resolve model including custom ones
+const resolveModel = (id: string) => {
+    // 1. Try standard models (exact match)
+    const standard = MODELS.find(m => m.id === id);
+    if (standard) return { model: standard, customConfig: undefined };
+
+    // 2. Try custom models
+    const settings = useSettingsStore.getState();
+    const customModels = settings.aiConfigurations['custom']?.customModels || [];
+    const foundCustom = customModels.find(m => m.id === id);
+    
+    if (foundCustom) {
+        return {
+            model: {
+                id: foundCustom.id,
+                name: foundCustom.name,
+                provider: 'custom' as const,
+                capabilities: { image: false, audio: false, tools: false }
+            },
+            customConfig: {
+                baseUrl: foundCustom.baseUrl,
+                modelId: foundCustom.modelId
+            }
+        };
+    }
+
+    // 3. Fallback to default via getModelById (which returns GPT-5.2 usually)
+    return { model: getModelById(id), customConfig: undefined };
+};
 
 export const useChatStore = create<ChatState>((set, get) => ({
   conversations: {},
@@ -133,7 +163,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   createConversation: async () => {
-    const model = getModelById(get().selectedModelId || "gpt-5.2");
+    const { model } = resolveModel(get().selectedModelId || "gpt-5.2");
     if (!model) return;
     const c = await chatService.createConversation("New Chat", model.id, model.provider);
     set(state => ({
@@ -197,13 +227,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const { activeConversationId, selectedModelId, messages } = get();
       if (!activeConversationId) return;
 
-      const model = getModelById(selectedModelId);
+      const { model, customConfig } = resolveModel(selectedModelId);
       if (!model) return;
 
       const settings = useSettingsStore.getState();
       const config = settings.aiConfigurations[model.provider];
       
-      if (!config?.apiKey) {
+      let apiKey = config?.apiKey;
+      // Resolve custom API key
+      if (model.provider === 'custom' && customConfig) {
+           const foundCustom = settings.aiConfigurations['custom']?.customModels?.find(m => m.id === selectedModelId);
+           apiKey = foundCustom?.apiKey || apiKey || 'not-needed';
+      }
+      
+      if (!apiKey) {
           throw new Error(`API Key for ${model.provider} is missing.`);
       }
 
@@ -241,8 +278,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
               activeConversationId,
               selectedModelId,
               model.provider,
-              config.apiKey,
-              controller.signal
+              apiKey,
+              controller.signal,
+              customConfig
           );
 
           let fullText = "";
@@ -306,13 +344,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (!activeConversationId) return; // Should not happen
     }
 
-    const model = getModelById(selectedModelId);
+    const { model, customConfig } = resolveModel(selectedModelId);
     if (!model) return;
 
     const settings = useSettingsStore.getState();
     const config = settings.aiConfigurations[model.provider];
     
-    if (!config?.apiKey) {
+    let apiKey = config?.apiKey;
+    if (model.provider === 'custom' && customConfig) {
+         const foundCustom = settings.aiConfigurations['custom']?.customModels?.find(m => m.id === selectedModelId);
+         apiKey = foundCustom?.apiKey || apiKey || 'not-needed';
+    }
+    
+    if (!apiKey) {
         throw new Error(`API Key for ${model.provider} is missing. Please add it in Settings.`);
     }
 
@@ -351,9 +395,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
             attachments,
             selectedModelId,
             model.provider,
-            config.apiKey,
+            apiKey,
             messages.map(m => ({ role: m.role, content: m.content })),
-            controller.signal
+            controller.signal,
+            customConfig
         );
 
         let fullText = "";

@@ -1,11 +1,17 @@
 export interface ModelMetadata {
   id: string;
   name: string;
-  provider: "openai" | "anthropic" | "google" | "mistral" | "groq";
+  provider: "openai" | "anthropic" | "google" | "mistral" | "groq" | "custom";
   capabilities: {
     image: boolean;
     audio: boolean;
     tools: boolean;
+  };
+  // For custom models
+  config?: {
+    baseUrl: string;
+    apiKey?: string;
+    modelId: string;
   };
 }
 

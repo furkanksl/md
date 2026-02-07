@@ -38,13 +38,28 @@ export const ChatView = () => {
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
 
-  const currentModel = getModelById(selectedModelId);
-
   // Filter available models based on API keys
-  const availableModels = MODELS.filter((m) => {
+  const standardModels = MODELS.filter((m) => {
     const config = aiConfigurations[m.provider];
     return config && config.apiKey && config.apiKey.length > 0;
   });
+
+  const customConfig = aiConfigurations['custom'];
+  const customModels = (customConfig?.customModels || []).map(cm => ({
+    id: cm.id,
+    name: cm.name,
+    provider: 'custom' as const,
+    capabilities: { image: false, audio: false, tools: false }, // Assume basic text for now
+    config: {
+      baseUrl: cm.baseUrl,
+      apiKey: cm.apiKey,
+      modelId: cm.modelId
+    }
+  }));
+
+  const availableModels = [...standardModels, ...customModels];
+
+  const currentModel = availableModels.find(m => m.id === selectedModelId) || getModelById(selectedModelId) || availableModels[0];
 
   // Auto-select valid model if current one is invalid
   useEffect(() => {
