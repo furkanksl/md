@@ -1,9 +1,15 @@
 import { useState } from 'react';
 import { clsx } from 'clsx';
-import { Check, Plus, Trash2, Pencil, Play, X, Loader2 } from 'lucide-react';
+import { Check, Plus, Trash2, Pencil, Play, X, Loader2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateText, LanguageModel } from 'ai';
 import { CustomModel } from '@/types/ai';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CustomModelManagerProps {
     customModels: CustomModel[];
@@ -11,7 +17,6 @@ interface CustomModelManagerProps {
 }
 
 export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManagerProps) => {
-    // ... (state declarations remain same)
     const [editingModelId, setEditingModelId] = useState<string | null>(null);
     const [newModelName, setNewModelName] = useState('');
     const [newModelId, setNewModelId] = useState('');
@@ -27,7 +32,6 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
         setEditingModelId(null);
     };
 
-    // ... (handleAddOrUpdateCustomModel, handleEditCustomModel, handleRemoveCustomModel remain same)
     const handleAddOrUpdateCustomModel = () => {
         if (!newModelName || !newModelId || !newBaseUrl) {
             toast.error("Missing fields", { description: "Name, Model ID, and Base URL are required." });
@@ -35,7 +39,7 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
         }
 
         let cleanBaseUrl = newBaseUrl.trim();
-        
+
         // Helper to remove trailing slash
         const removeTrailingSlash = (url: string) => {
             while (url.endsWith('/')) {
@@ -45,17 +49,17 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
         };
 
         cleanBaseUrl = removeTrailingSlash(cleanBaseUrl);
-        
+
         if (cleanBaseUrl.endsWith('/chat/completions')) {
             cleanBaseUrl = cleanBaseUrl.slice(0, -'/chat/completions'.length);
         }
-        
+
         cleanBaseUrl = removeTrailingSlash(cleanBaseUrl);
 
         if (editingModelId) {
             // Update existing
-            onUpdate(customModels.map(m => 
-                m.id === editingModelId 
+            onUpdate(customModels.map(m =>
+                m.id === editingModelId
                     ? { ...m, name: newModelName, modelId: newModelId, baseUrl: cleanBaseUrl, apiKey: newModelApiKey }
                     : m
             ));
@@ -96,21 +100,19 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
         try {
             const { createOpenAI } = await import("@ai-sdk/openai");
             const { customFetch } = await import("@/core/infra/ai/custom-fetch");
-            
+
             console.log(`[Settings] Creating provider with baseURL: ${model.baseUrl}`);
-            
+
             const customProvider = createOpenAI({
                 baseURL: model.baseUrl,
                 apiKey: model.apiKey || 'not-needed',
                 fetch: customFetch
             });
-            
+
             console.log(`[Settings] Testing custom model: ${model.name} (${model.baseUrl})`);
-            
+
             // Explicitly use .chat() to ensure we target /chat/completions
-            const modelInstance = customProvider.chat 
-                ? customProvider.chat(model.modelId) 
-                : customProvider(model.modelId);
+            const modelInstance = customProvider.chat ? customProvider.chat(model.modelId) : customProvider(model.modelId);
 
             const result = await generateText({
                 model: modelInstance as LanguageModel,
@@ -133,13 +135,12 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
         }
     };
 
-    // ... (JSX return remains the same)
     return (
         <div className="space-y-4">
-             {/* List existing custom models */}
+            {/* List existing custom models */}
             {customModels.length > 0 && (
                 <div className="space-y-2">
-                     <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">
+                    <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">
                         Configured Models
                     </label>
                     <div className="flex flex-col gap-2">
@@ -155,22 +156,22 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
                                         disabled={!!testingModelId}
                                         className={clsx(
                                             "p-1.5 rounded-lg transition-colors",
-                                            testingModelId === model.id 
-                                                ? "text-blue-500 bg-blue-50 dark:bg-blue-900/20" 
+                                            testingModelId === model.id
+                                                ? "text-blue-500 bg-blue-50 dark:bg-blue-900/20"
                                                 : "text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700"
                                         )}
                                         title="Test Connection"
                                     >
                                         {testingModelId === model.id ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => handleEditCustomModel(model)}
                                         className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-lg transition-colors"
                                         title="Edit Model"
                                     >
                                         <Pencil size={14} />
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => handleRemoveCustomModel(model.id)}
                                         className="p-1.5 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                         title="Remove Model"
@@ -191,8 +192,8 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
                         {editingModelId ? 'Edit Model' : 'Add New Model'}
                     </label>
                     {editingModelId && (
-                        <button 
-                            onClick={resetForm} 
+                        <button
+                            onClick={resetForm}
                             className="text-[10px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 flex items-center gap-1"
                         >
                             <X size={10} /> Cancel
@@ -216,7 +217,19 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
                         />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-medium text-stone-400 uppercase tracking-wide ml-1">Base URL</label>
+                        <div className="flex items-center gap-1.5 ml-1">
+                            <label className="text-[9px] font-medium text-stone-400 uppercase tracking-wide">Base URL</label>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Info size={10} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className='dark:bg-stone-50 bg-stone-800 dark:text-stone-600 text-stone-300 border border-stone-100 dark:border-stone-700 shadow-sm shadow-stone-200/50 dark:shadow-black/50 rounded-sm!'>
+                                        <p className="text-xs">Example: http://localhost:1234/v1</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                         <input
                             className="w-full bg-stone-50 dark:bg-stone-800 h-9 rounded-xl px-3 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-100 dark:focus:ring-stone-700 transition-all font-mono text-xs"
                             placeholder="http://localhost:1234/v1"
@@ -237,7 +250,7 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
                     disabled={!newModelName || !newModelId || !newBaseUrl}
                     className={clsx(
                         "w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-colors disabled:opacity-50",
-                        editingModelId 
+                        editingModelId
                             ? "bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 hover:opacity-90"
                             : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700"
                     )}
