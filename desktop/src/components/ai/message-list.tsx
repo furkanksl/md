@@ -3,7 +3,7 @@ import { useChatStore } from "@/stores/chat-store";
 import { clsx } from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { MarkdownRenderer } from "../shared/markdown-renderer";
-import { Edit2, X, File as FileIcon, RefreshCw, RotateCcw, ArrowUp } from "lucide-react";
+import { X, File as FileIcon, ArrowUp } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { MessageActions } from "./message-actions";
 
 const LoadingDots = () => (
   <div className="flex gap-1 py-1 px-2">
@@ -150,6 +151,8 @@ export const MessageList = () => {
           return new Intl.DateTimeFormat(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }).format(ts);
         })();
 
+        const contentString = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+
         return (
           <div key={msg.id || i} className="w-full">
             {isNewDay && (
@@ -211,35 +214,25 @@ export const MessageList = () => {
               )}
 
               {/* Timestamp (always visible, outside bubble) */}
-              <div className={clsx("mt-1 text-[11px] text-stone-400 dark:text-stone-500 select-none", isUser ? "text-right" : "text-left")} aria-hidden>
+              <div className={clsx("mt-1 text-[11px] text-stone-400 dark:text-stone-500 select-none flex items-center gap-2", isUser ? "justify-end" : "justify-start")} aria-hidden>
                 {timeLabel}
+                {!isUser && !isStreaming && (
+                  <MessageActions 
+                      isUser={false}
+                      content={contentString}
+                  />
+                )}
               </div>
 
-              {/* Action Buttons for User Messages */}
+              {/* Action Buttons for User */}
               {isUser && !isStreaming && (
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-0 -top-6 flex items-center gap-1">
-                  <button
-                    onClick={() => startEditing(msg.id, typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content))}
-                    className="p-1 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-                    title="Edit"
-                  >
-                    <Edit2 size={12} />
-                  </button>
-                  <button
-                    onClick={() => regenerate(msg.id)}
-                    className="p-1 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-                    title="Regenerate"
-                  >
-                    <RefreshCw size={12} />
-                  </button>
-                  <button
-                    onClick={() => rewind(msg.id)}
-                    className="p-1 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-                    title="Rollback (Delete)"
-                  >
-                    <RotateCcw size={12} />
-                  </button>
-                </div>
+                <MessageActions 
+                    isUser={true}
+                    content={contentString}
+                    onEdit={() => startEditing(msg.id, contentString)}
+                    onRegenerate={() => regenerate(msg.id)}
+                    onRewind={() => rewind(msg.id)}
+                />
               )}
             </motion.div>
           </div>
