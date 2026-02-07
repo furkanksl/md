@@ -185,31 +185,49 @@ export const ChatView = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="center"
-              className="w-48 max-h-64 overflow-y-auto scrollbar-none bg-white dark:bg-stone-900 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 py-1 border border-stone-100 dark:border-stone-800 z-50"
+              className="w-64 max-h-[32rem] overflow-y-auto scrollbar-none bg-white dark:bg-stone-900 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 py-1 border border-stone-100 dark:border-stone-800 z-50"
             >
               {availableModels.length === 0 ? (
                 <div className="px-4 py-2 text-xs text-stone-500 dark:text-stone-400 italic text-center">
                   No providers configured
                 </div>
               ) : (
-                availableModels.map((m) => (
-                  <DropdownMenuItem
-                    key={m.id}
-                    onClick={() => setSelectedModelId(m.id)}
-                    className={clsx(
-                      "w-full px-4 py-2 text-xs transition-colors flex items-center justify-between cursor-pointer focus:bg-stone-50 dark:focus:bg-stone-800 focus:text-stone-900 dark:focus:text-stone-100",
-                      selectedModelId === m.id
-                        ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
-                        : "text-stone-600 dark:text-stone-400"
+                Object.entries(
+                  availableModels.reduce((acc, model) => {
+                    if (!acc[model.provider]) {
+                      acc[model.provider] = [];
+                    }
+                    acc[model.provider]?.push(model);
+                    return acc;
+                  }, {} as Record<string, typeof availableModels>)
+                ).map(([provider, models], index) => (
+                  <div key={provider}>
+                    {index > 0 && (
+                      <div className="h-px bg-stone-100 dark:bg-stone-800 mx-2 my-1" />
                     )}
-                  >
-                    <span>{m.name}</span>
-                    {m.capabilities.image && (
-                      <span className="text-[10px] opacity-40 uppercase">
-                        Vision
-                      </span>
-                    )}
-                  </DropdownMenuItem>
+                    <div className="px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">
+                      {provider}
+                    </div>
+                    {models.map((m) => (
+                      <DropdownMenuItem
+                        key={m.id}
+                        onClick={() => setSelectedModelId(m.id)}
+                        className={clsx(
+                          "w-full px-4 py-2 text-xs transition-colors flex items-center justify-between cursor-pointer focus:bg-stone-50 dark:focus:bg-stone-800 focus:text-stone-900 dark:focus:text-stone-100",
+                          selectedModelId === m.id
+                            ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
+                            : "text-stone-600 dark:text-stone-400"
+                        )}
+                      >
+                        <span>{m.name}</span>
+                        {m.capabilities.image && (
+                          <span className="text-[10px] opacity-40 uppercase">
+                            Vision
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
                 ))
               )}
             </DropdownMenuContent>
