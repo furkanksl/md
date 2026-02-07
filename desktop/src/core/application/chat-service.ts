@@ -200,10 +200,24 @@ export class ChatService {
     providerId: string,
     apiKey: string,
     abortSignal?: AbortSignal,
-    customModelConfig?: { baseUrl: string; modelId: string }
+    customModelConfig?: { baseUrl: string; modelId: string },
+    recoveryMessage?: Message
   ) {
     // 1. Get Message
-    const msg = await msgRepo.getById(messageId);
+    let msg = await msgRepo.getById(messageId);
+    
+    // Recovery mechanism for messages in store but not in DB
+    if (!msg && recoveryMessage) {
+        console.warn(`Message ${messageId} not found in DB. Recovering from store state.`);
+        // Ensure it's associated with the correct conversation
+        if (recoveryMessage.conversationId !== conversationId) {
+            console.error("Recovery message mismatch conversationId");
+        } else {
+             await msgRepo.create(recoveryMessage);
+             msg = await msgRepo.getById(messageId);
+        }
+    }
+
     if (!msg) throw new Error("Message not found");
 
     // 2. Update Content

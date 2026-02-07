@@ -288,7 +288,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
               model.provider,
               apiKey,
               controller.signal,
-              customConfig
+              customConfig,
+              targetMsg // Pass message from store as recovery backup
           );
 
           let fullText = "";
