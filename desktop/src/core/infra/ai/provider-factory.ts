@@ -10,7 +10,11 @@ export const getProvider = (providerId: string, apiKey: string) => {
     case "openai":
       return createOpenAI({ apiKey, fetch: customFetch });
     case "anthropic":
-      return createAnthropic({ apiKey, fetch: customFetch });
+      return createAnthropic({
+        apiKey,
+        fetch: customFetch,
+        headers: { "anthropic-dangerous-direct-browser-access": "true" },
+      });
     case "google":
       return createGoogleGenerativeAI({ apiKey, fetch: customFetch });
     case "mistral":

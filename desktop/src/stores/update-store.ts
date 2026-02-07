@@ -3,6 +3,7 @@ import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { getVersion } from '@tauri-apps/api/app';
 import { writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
+import { customFetch } from '../core/infra/ai/custom-fetch';
 
 interface UpdateStore {
   updateAvailable: boolean;
@@ -88,7 +89,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
       const fallbackCheck = async () => {
         const endpoint = "https://github.com/furkanksl/md/releases/latest/download/latest.json";
         try {
-          const res = await fetch(endpoint, { cache: "no-store" });
+          const res = await customFetch(endpoint, { cache: "no-store" });
           if (!res.ok) {
             await appendLog("fallback:latest.json fetch failed", { status: res.status });
             return null;
@@ -137,7 +138,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
         let resolvedBody: string | null = null;
         let releaseFetchError: string | null = null;
         try {
-          const withV = await fetch(
+          const withV = await customFetch(
             `https://api.github.com/repos/furkanksl/md/releases/tags/v${update.version}`
           );
 
@@ -146,7 +147,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
             releaseData = await withV.json();
           } else {
             releaseFetchError = `GitHub release fetch failed (v): ${withV.status}`;
-            const withoutV = await fetch(
+            const withoutV = await customFetch(
               `https://api.github.com/repos/furkanksl/md/releases/tags/${update.version}`
             );
             if (withoutV.ok) {
