@@ -5,6 +5,7 @@ import { SettingsRepository } from "@/core/infra/repositories";
 const settingsRepo = new SettingsRepository();
 
 interface SettingsState {
+  // Data
   aiConfigurations: Record<string, AIConfiguration>; // provider -> config
   activeProvider: string;
   clipboardHistoryLimit: number;
@@ -13,7 +14,8 @@ interface SettingsState {
   autoHide: boolean;
   drawerPosition: 'left' | 'right' | 'hot-corners' | 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right';
   todoDeleteOnComplete: boolean;
-  
+  enabledModels: string[];
+
   // Actions
   init: () => Promise<void>;
   setAIConfiguration: (provider: string, config: AIConfiguration) => Promise<void>;
@@ -23,7 +25,22 @@ interface SettingsState {
   setAutoHide: (autoHide: boolean) => Promise<void>;
   setDrawerPosition: (position: SettingsState['drawerPosition']) => Promise<void>;
   setTodoDeleteOnComplete: (enabled: boolean) => Promise<void>;
+  toggleModel: (modelId: string) => Promise<void>;
+  setEnabledModels: (models: string[]) => Promise<void>;
 }
+
+const DEFAULT_ENABLED_MODELS = [
+    // OpenAI
+    "gpt-5.2", "gpt-5-mini", "gpt-4o",
+    // Anthropic
+    "claude-opus-4-6", "claude-sonnet-4-5-20250929",
+    // Google
+    "gemini-3-pro-preview", "gemini-2.5-flash",
+    // Mistral
+    "mistral-large-latest", "mistral-small-latest",
+    // Groq
+    "llama-3.3-70b-versatile", "llama-3.1-8b-instant"
+];
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   aiConfigurations: {},
@@ -34,6 +51,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   autoHide: true,
   drawerPosition: 'left',
   todoDeleteOnComplete: false,
+  enabledModels: DEFAULT_ENABLED_MODELS,
 
   init: async () => {
     try {
@@ -45,7 +63,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         hasCompletedOnboarding,
         autoHide,
         drawerPosition,
-        todoDeleteOnComplete
+        todoDeleteOnComplete,
+        enabledModels
       ] = await Promise.all([
         settingsRepo.get<Record<string, AIConfiguration>>('ai_configurations'),
         settingsRepo.get<string>('active_provider'),
@@ -55,6 +74,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         settingsRepo.get<boolean>('auto_hide'),
         settingsRepo.get<SettingsState['drawerPosition']>('drawer_position'),
         settingsRepo.get<boolean>('todo_delete_on_complete'),
+        settingsRepo.get<string[]>('enabled_models'),
       ]);
 
       set({
@@ -66,6 +86,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         autoHide: autoHide ?? true,
         drawerPosition: drawerPosition || 'left',
         todoDeleteOnComplete: todoDeleteOnComplete ?? false,
+        enabledModels: enabledModels || DEFAULT_ENABLED_MODELS,
       });
     } catch (e) {
       console.error("Failed to load settings:", e);
@@ -106,5 +127,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTodoDeleteOnComplete: async (enabled) => {
     set({ todoDeleteOnComplete: enabled });
     await settingsRepo.set('todo_delete_on_complete', enabled);
+  },
+
+  toggleModel: async (modelId) => {
+      const { enabledModels } = get();
+      const newModels = enabledModels.includes(modelId)
+          ? enabledModels.filter(id => id !== modelId)
+          : [...enabledModels, modelId];
+      
+      set({ enabledModels: newModels });
+      await settingsRepo.set('enabled_models', newModels);
+  },
+
+  setEnabledModels: async (models) => {
+      set({ enabledModels: models });
+      await settingsRepo.set('enabled_models', models);
   }
 }));

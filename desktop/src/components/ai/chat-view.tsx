@@ -31,17 +31,20 @@ export const ChatView = () => {
     setActiveConversationId,
     createConversation,
   } = useChatStore();
-  const { aiConfigurations } = useSettingsStore();
+  const { aiConfigurations, enabledModels } = useSettingsStore();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
 
-  // Filter available models based on API keys
+  // Filter available models based on API keys and enabled settings
   const standardModels = MODELS.filter((m) => {
     const config = aiConfigurations[m.provider];
-    return config && config.apiKey && config.apiKey.length > 0;
+    const isConfigured = config && config.apiKey && config.apiKey.length > 0;
+    // Default to true if enabledModels is undefined (migration safety), but store initializes it.
+    const isEnabled = enabledModels ? enabledModels.includes(m.id) : true;
+    return isConfigured && isEnabled;
   });
 
   const customConfig = aiConfigurations['custom'];

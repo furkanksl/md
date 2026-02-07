@@ -23,8 +23,8 @@ export const SettingsView = () => {
     return (
         <div className="h-full px-4 py-3 overflow-y-auto scrollbar-none space-y-6">
             <BehaviorSection />
-            <PermissionsSection />
             <IntelligenceSection />
+            <PermissionsSection />
 
             {/* About Link */}
             <div className="flex justify-center pb-4">

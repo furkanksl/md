@@ -7,9 +7,11 @@ import { getProvider } from '@/core/infra/ai/provider-factory';
 import { generateText, LanguageModel } from 'ai';
 import { CustomModel, AIConfiguration } from '@/types/ai';
 import { CustomModelManager } from './custom-model-manager';
+import { MODELS } from '@/core/domain/models';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const PROVIDERS = [
-    { id: 'openai', name: 'OpenAI', testModel: 'gpt-5-mini-2025-08-07' },
+    { id: 'openai', name: 'OpenAI', testModel: 'gpt-5-mini' },
     { id: 'anthropic', name: 'Anthropic', testModel: 'claude-haiku-4-5-20251001' },
     { id: 'google', name: 'Google', testModel: 'gemini-3-flash-preview' },
     { id: 'mistral', name: 'Mistral', testModel: 'mistral-small-latest' },
@@ -18,39 +20,75 @@ const PROVIDERS = [
 ];
 
 export const IntelligenceSection = () => {
-    const { activeProvider, setActiveProvider, setAIConfiguration, aiConfigurations } = useSettingsStore();
+    const { activeProvider, setActiveProvider, setAIConfiguration, aiConfigurations, enabledModels: storeEnabledModels, setEnabledModels } = useSettingsStore();
     const [apiKey, setApiKey] = useState('');
     const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
     const [customModels, setCustomModels] = useState<CustomModel[]>([]);
+    const [localEnabledModels, setLocalEnabledModels] = useState<string[]>([]);
+    const [saveState, setSaveState] = useState<'idle' | 'saved'>('idle');
 
+    // Sync from store on provider change or store update
     useEffect(() => {
         const config = aiConfigurations[activeProvider];
         setApiKey(config?.apiKey || '');
         setTestStatus('idle');
-        
+        setSaveState('idle');
+
         if (activeProvider === 'custom') {
             setCustomModels(config?.customModels || []);
         }
-    }, [activeProvider, aiConfigurations]);
+        // Initialize local enabled models from store
+        setLocalEnabledModels(storeEnabledModels);
+    }, [activeProvider, aiConfigurations, storeEnabledModels]);
 
-    const handleSave = () => {
-        setAIConfiguration(activeProvider, {
+    // Check for changes
+    const hasChanges = (() => {
+        const config = aiConfigurations[activeProvider];
+        const storeApiKey = config?.apiKey || '';
+        const storeCustomModels = config?.customModels || [];
+
+        const isApiKeyChanged = apiKey !== storeApiKey;
+        // Simple deep compare for custom models
+        const isCustomModelsChanged = activeProvider === 'custom' && JSON.stringify(customModels) !== JSON.stringify(storeCustomModels);
+
+        // Compare enabled models sets (order doesn't matter strictly but usually consistent, sorting ensures accuracy)
+        const sortedLocal = [...localEnabledModels].sort();
+        const sortedStore = [...storeEnabledModels].sort();
+        const isEnabledModelsChanged = JSON.stringify(sortedLocal) !== JSON.stringify(sortedStore);
+
+        return isApiKeyChanged || isCustomModelsChanged || isEnabledModelsChanged;
+    })();
+
+    const handleSave = async () => {
+        await setAIConfiguration(activeProvider, {
             provider: activeProvider as AIConfiguration['provider'],
-            apiKey: activeProvider === 'custom' ? 'custom' : apiKey, // specific api keys are in customModels
+            apiKey: activeProvider === 'custom' ? 'custom' : apiKey,
             model: 'auto',
             customModels: activeProvider === 'custom' ? customModels : undefined
         });
+
+        await setEnabledModels(localEnabledModels);
+
         toast.success("Settings saved", {
             description: `${PROVIDERS.find(p => p.id === activeProvider)?.name} configuration updated successfully.`,
             duration: 2000,
-            className: "group toast group-[.toaster]:bg-white dark:group-[.toaster]:bg-stone-900 group-[.toaster]:text-stone-950 dark:group-[.toaster]:text-stone-50 group-[.toaster]:border-stone-200 dark:group-[.toaster]:border-stone-800 group-[.toaster]:shadow-lg",
-            descriptionClassName: "group-[.toast]:text-stone-500 dark:group-[.toast]:text-stone-400",
         });
-        setTestStatus('idle');
+        setSaveState('saved');
+
+        // Reset save state after delay
+        setTimeout(() => setSaveState('idle'), 2000);
+    };
+
+    const toggleLocalModel = (modelId: string) => {
+        setLocalEnabledModels(prev =>
+            prev.includes(modelId)
+                ? prev.filter(id => id !== modelId)
+                : [...prev, modelId]
+        );
+        setSaveState('idle');
     };
 
     const handleTestConnection = async () => {
-        // Standard provider test only
         if (activeProvider === 'custom') return;
 
         if (!apiKey) {
@@ -115,32 +153,64 @@ export const IntelligenceSection = () => {
 
             <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-6 border border-stone-100 dark:border-stone-800 shadow-sm flex flex-col gap-4">
                 {activeProvider !== 'custom' ? (
-                    <div>
-                        <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 ml-1">
-                            API Access Key
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="password"
-                                className={clsx(
-                                    "w-full bg-stone-50 dark:bg-stone-800 h-10 rounded-xl px-4 pr-10 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 transition-all font-mono text-xs",
-                                    testStatus === 'error' ? "focus:ring-red-200 dark:focus:ring-red-900/50" : "focus:ring-stone-100 dark:focus:ring-stone-700"
-                                )}
-                                placeholder="sk-..."
-                                value={apiKey}
-                                onChange={(e) => { setApiKey(e.target.value); setTestStatus('idle'); }}
-                            />
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                {testStatus === 'testing' && <Loader2 size={14} className="animate-spin text-stone-400" />}
-                                {testStatus === 'success' && <CircleCheck size={14} className="text-green-500" />}
-                                {testStatus === 'error' && <CircleX size={14} className="text-red-500" />}
+                    <>
+                        <div>
+                            <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 ml-1">
+                                API Access Key
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="password"
+                                    className={clsx(
+                                        "w-full bg-stone-50 dark:bg-stone-800 h-10 rounded-xl px-4 pr-10 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 transition-all font-mono text-xs",
+                                        testStatus === 'error' ? "focus:ring-red-200 dark:focus:ring-red-900/50" : "focus:ring-stone-100 dark:focus:ring-stone-700"
+                                    )}
+                                    placeholder="sk-..."
+                                    value={apiKey}
+                                    onChange={(e) => { setApiKey(e.target.value); setSaveState('idle'); }}
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    {testStatus === 'testing' && <Loader2 size={14} className="animate-spin text-stone-400" />}
+                                    {testStatus === 'success' && <CircleCheck size={14} className="text-green-500" />}
+                                    {testStatus === 'error' && <CircleX size={14} className="text-red-500" />}
+                                </div>
                             </div>
                         </div>
-                    </div>
+
+                        <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-stone-800">
+                            <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">
+                                Enabled Models
+                            </label>
+                            <div className="flex flex-col gap-1 max-h-48 overflow-y-auto scrollbar-none">
+                                {MODELS.filter(m => m.provider === activeProvider).map(model => (
+                                    <label key={model.id} className="flex items-center gap-3 p-2 hover:bg-stone-50 dark:hover:bg-stone-800 rounded-lg cursor-pointer transition-colors">
+                                        <div className={clsx(
+                                            "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                                            localEnabledModels.includes(model.id)
+                                                ? "bg-stone-800 border-stone-800 text-white dark:bg-stone-100 dark:border-stone-100 dark:text-stone-900"
+                                                : "border-stone-300 dark:border-stone-600 bg-transparent"
+                                        )}>
+                                            {localEnabledModels.includes(model.id) && <Check size={10} strokeWidth={3} />}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            className="hidden"
+                                            checked={localEnabledModels.includes(model.id)}
+                                            onChange={() => toggleLocalModel(model.id)}
+                                        />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-medium text-stone-700 dark:text-stone-200">{model.name}</span>
+                                            <span className="text-[10px] text-stone-400 font-mono">{model.id}</span>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    </>
                 ) : (
-                    <CustomModelManager 
-                        customModels={customModels} 
-                        onUpdate={setCustomModels} 
+                    <CustomModelManager
+                        customModels={customModels}
+                        onUpdate={(models) => { setCustomModels(models); setSaveState('idle'); }}
                     />
                 )}
 
@@ -156,9 +226,39 @@ export const IntelligenceSection = () => {
                     )}
                     <button
                         onClick={handleSave}
-                        className="px-6 py-2 bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 rounded-xl text-xs font-medium hover:opacity-90 transition-opacity shadow-lg shadow-stone-200/50 dark:shadow-none"
+                        disabled={!hasChanges && saveState !== 'saved'}
+                        className={clsx(
+                            "w-[130px] px-6 py-2 rounded-xl text-xs font-medium transition-all duration-200 shadow-lg shadow-stone-200/50 dark:shadow-none flex items-center justify-center",
+                            saveState === 'saved'
+                                ? "bg-green-600 text-white hover:bg-green-700"
+                                : hasChanges
+                                    ? "bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 hover:opacity-90"
+                                    : "bg-stone-200 text-stone-400 dark:bg-stone-800 dark:text-stone-600 cursor-not-allowed shadow-none"
+                        )}
                     >
-                        Save Changes
+                        <AnimatePresence mode="wait" initial={false}>
+                            {saveState === 'saved' ? (
+                                <motion.div
+                                    key="saved"
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -5 }}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Check size={14} strokeWidth={2.5} />
+                                    <span>Saved</span>
+                                </motion.div>
+                            ) : (
+                                <motion.span
+                                    key="save"
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -5 }}
+                                >
+                                    Save Changes
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
                     </button>
                 </div>
             </div>
