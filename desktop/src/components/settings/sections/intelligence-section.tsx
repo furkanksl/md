@@ -89,6 +89,7 @@ export const IntelligenceSection = () => {
     };
 
     const handleTestConnection = async () => {
+        // Standard provider test only
         if (activeProvider === 'custom') return;
 
         if (!apiKey) {
@@ -111,6 +112,7 @@ export const IntelligenceSection = () => {
             if (result.text) {
                 setTestStatus('success');
                 toast.success("Connection Successful", { description: "Provider is working." });
+                setTimeout(() => setTestStatus('idle'), 2000);
             } else {
                 throw new Error("No response received.");
             }
@@ -119,6 +121,7 @@ export const IntelligenceSection = () => {
             setTestStatus('error');
             const errorMessage = error instanceof Error ? error.message : "Could not connect to the provider.";
             toast.error("Connection Failed", { description: errorMessage });
+            setTimeout(() => setTestStatus('idle'), 2000);
         }
     };
 
@@ -167,7 +170,7 @@ export const IntelligenceSection = () => {
                                     )}
                                     placeholder="sk-..."
                                     value={apiKey}
-                                    onChange={(e) => { setApiKey(e.target.value); setSaveState('idle'); }}
+                                    onChange={(e) => { setApiKey(e.target.value); setTestStatus('idle'); setSaveState('idle'); }}
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                     {testStatus === 'testing' && <Loader2 size={14} className="animate-spin text-stone-400" />}
@@ -219,16 +222,64 @@ export const IntelligenceSection = () => {
                         <button
                             onClick={handleTestConnection}
                             disabled={testStatus === 'testing' || !apiKey}
-                            className="px-4 py-2 bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400 rounded-xl text-xs font-medium hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors disabled:opacity-50"
+                            className={clsx(
+                                "px-4 py-2 bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400 rounded-xl text-xs font-medium hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[90px]",
+                                testStatus === 'error' && "bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
+                                testStatus === 'success' && "bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+                            )}
                         >
-                            {testStatus === 'testing' ? 'Testing...' : 'Test Key'}
+                            <AnimatePresence mode="wait" initial={false}>
+                                {testStatus === 'testing' ? (
+                                    <motion.div
+                                        key="testing"
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -5 }}
+                                        className="flex items-center gap-1"
+                                    >
+                                        <Loader2 size={12} className="animate-spin" />
+                                        <span>Testing</span>
+                                    </motion.div>
+                                ) : testStatus === 'success' ? (
+                                    <motion.div
+                                        key="success"
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -5 }}
+                                        className="flex items-center gap-1"
+                                    >
+                                        <Check size={12} strokeWidth={2.5} />
+                                        <span>Working</span>
+                                    </motion.div>
+                                ) : testStatus === 'error' ? (
+                                    <motion.div
+                                        key="error"
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -5 }}
+                                        className="flex items-center gap-1"
+                                    >
+                                        <CircleX size={12} />
+                                        <span>Failed</span>
+                                    </motion.div>
+                                ) : (
+                                    <motion.span
+                                        key="idle"
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -5 }}
+                                    >
+                                        Test Key
+                                    </motion.span>
+                                )}
+                            </AnimatePresence>
                         </button>
                     )}
                     <button
                         onClick={handleSave}
                         disabled={!hasChanges && saveState !== 'saved'}
                         className={clsx(
-                            "w-[130px] px-6 py-2 rounded-xl text-xs font-medium transition-all duration-200 shadow-lg shadow-stone-200/50 dark:shadow-none flex items-center justify-center",
+                            "px-6 py-2 rounded-xl text-xs font-medium transition-all duration-200 shadow-lg shadow-stone-200/50 dark:shadow-none flex items-center justify-center",
                             saveState === 'saved'
                                 ? "bg-green-600 text-white hover:bg-green-700"
                                 : hasChanges
