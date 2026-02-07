@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { readDir } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
-import { Search, Plus, Play, Trash2, AppWindow, Loader2, X, Layers } from 'lucide-react';
+import { Search, Plus, Play, Trash2, AppWindow, Loader2, X, Layers, LayoutGrid, List } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useShortcutsStore } from '@/stores/shortcuts-store';
 import { AppShortcut } from '@/types/shortcuts';
+import { clsx } from 'clsx';
 
 // Icon Component to fetch and display app icon
 const AppIcon = ({ path, className }: { path: string, className?: string }) => {
@@ -42,6 +43,7 @@ export const ShortcutsView = () => {
   const [visibleCount, setVisibleCount] = useState(10);
   const [isLoadingApps, setIsLoadingApps] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Infinite Scroll Observer
@@ -108,16 +110,47 @@ export const ShortcutsView = () => {
     }
   };
 
-  const filteredDetected = detectedApps.filter(app => 
-    app.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter detected apps:
+  // 1. Must match search query
+  // 2. Must NOT be in the saved 'apps' list
+  const filteredDetected = detectedApps.filter(app => {
+    const matchesSearch = app.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const isAlreadySaved = apps.some(saved => saved.path === app.path);
+    return matchesSearch && !isAlreadySaved;
+  });
 
   const visibleApps = filteredDetected.slice(0, visibleCount);
 
   return (
     <div className="h-full px-4 py-3 flex flex-col relative overflow-hidden">
       <div className="flex justify-between items-center mb-4 shrink-0">
-        <h2 className="text-xl font-light text-stone-800 dark:text-stone-200">My Apps</h2>
+        <div className="flex items-center gap-3">
+            <h2 className="text-xl font-light text-stone-800 dark:text-stone-200">My Apps</h2>
+            <div className="flex bg-stone-100 dark:bg-stone-800 rounded-lg p-0.5">
+                <button
+                    onClick={() => setViewMode('grid')}
+                    className={clsx(
+                        "p-1.5 rounded-md transition-all",
+                        viewMode === 'grid' 
+                            ? "bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm" 
+                            : "text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+                    )}
+                >
+                    <LayoutGrid size={14} />
+                </button>
+                <button
+                    onClick={() => setViewMode('list')}
+                    className={clsx(
+                        "p-1.5 rounded-md transition-all",
+                        viewMode === 'list' 
+                            ? "bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm" 
+                            : "text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+                    )}
+                >
+                    <List size={14} />
+                </button>
+            </div>
+        </div>
         <button 
           onClick={scanApplications}
           className="flex items-center gap-1.5 bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-stone-700 dark:hover:bg-stone-200 transition-colors shadow-lg shadow-stone-200/50 dark:shadow-none"
@@ -134,28 +167,63 @@ export const ShortcutsView = () => {
             <p className="text-sm">No apps pinned yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2">
+          <div className={clsx(
+              viewMode === 'grid' 
+                ? "grid grid-cols-4 gap-4 p-2" 
+                : "grid grid-cols-1 gap-2"
+          )}>
             {apps.map((app) => (
                 <div 
                 key={app.id}
                 onClick={() => launchApp(app.path)}
-                className="bg-white dark:bg-stone-900 p-3 rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer group flex items-center justify-between"
+                className={clsx(
+                    "group relative transition-all cursor-pointer",
+                    viewMode === 'list' 
+                        ? "bg-white dark:bg-stone-900 p-3 rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm hover:shadow-md hover:scale-[1.01] flex items-center justify-between"
+                        : "aspect-square flex items-center justify-center rounded-2xl hover:bg-stone-100 dark:hover:bg-stone-800/50"
+                )}
+                title={app.name}
                 >
-                <div className="flex items-center gap-3 min-w-0">
-                    <AppIcon path={app.path} className="w-10 h-10 rounded-xl object-contain shrink-0" />
-                    <span className="font-medium text-sm text-stone-700 dark:text-stone-300 truncate">{app.name}</span>
+                <div className={clsx("flex items-center min-w-0", viewMode === 'list' ? "gap-3" : "justify-center w-full h-full")}>
+                    <AppIcon 
+                        path={app.path} 
+                        className={clsx(
+                            "object-contain shrink-0 transition-transform group-hover:scale-110",
+                            viewMode === 'list' ? "w-10 h-10 rounded-xl" : "w-12 h-12 rounded-2xl drop-shadow-sm"
+                        )} 
+                    />
+                    {viewMode === 'list' && (
+                        <span className="font-medium text-sm text-stone-700 dark:text-stone-300 truncate">{app.name}</span>
+                    )}
                 </div>
                 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                    onClick={(e) => { e.stopPropagation(); removeApp(app.id); }}
-                    className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-stone-400 hover:text-red-500 rounded-lg transition-colors"
-                    >
-                    <Trash2 size={14} />
-                    </button>
-                    <div className="p-1.5 bg-stone-50 dark:bg-stone-800 rounded-lg text-stone-400 group-hover:text-stone-800 dark:group-hover:text-stone-200">
-                    <Play size={14} fill="currentColor" />
-                    </div>
+                {/* Actions */}
+                <div className={clsx(
+                    "flex items-center gap-1 transition-opacity",
+                    viewMode === 'list' 
+                        ? "opacity-0 group-hover:opacity-100" 
+                        : "absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 scale-90"
+                )}>
+                    {viewMode === 'grid' ? (
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); removeApp(app.id); }}
+                            className="p-1 bg-white dark:bg-stone-800 rounded-full shadow-md text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border border-stone-100 dark:border-stone-700 transition-colors"
+                        >
+                            <Trash2 size={12} />
+                        </button>
+                    ) : (
+                        <>
+                            <button 
+                            onClick={(e) => { e.stopPropagation(); removeApp(app.id); }}
+                            className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-stone-400 hover:text-red-500 rounded-lg transition-colors"
+                            >
+                            <Trash2 size={14} />
+                            </button>
+                            <div className="p-1.5 bg-stone-50 dark:bg-stone-800 rounded-lg text-stone-400 group-hover:text-stone-800 dark:group-hover:text-stone-200">
+                            <Play size={14} fill="currentColor" />
+                            </div>
+                        </>
+                    )}
                 </div>
                 </div>
             ))}
