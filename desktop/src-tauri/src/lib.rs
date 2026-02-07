@@ -253,13 +253,17 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn get_app_icon(path: String) -> Result<String, String> {
+async fn get_app_icon(path: String) -> Result<String, String> {
     #[cfg(target_os = "macos")]
     unsafe {
         use cocoa::base::{id, nil};
         use cocoa::foundation::NSString;
         use objc::{class, msg_send, sel, sel_impl};
 
+        // Perform icon extraction and conversion
+        // Note: While Cocoa UI usually needs main thread, icon extraction often works on background.
+        // If this causes issues, we might need to dispatch to main thread for specific calls.
+        
         let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
         let path_ns = NSString::alloc(nil).init_str(&path);
         let icon: id = msg_send![workspace, iconForFile: path_ns];
