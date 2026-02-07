@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSettingsStore } from '@/stores/settings-store';
 import { clsx } from 'clsx';
-import { Check, CircleCheck, CircleX, Loader2 } from 'lucide-react';
+import { Check, CircleCheck, CircleX, Loader2, Globe, Image as ImageIcon, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { getProvider } from '@/core/infra/ai/provider-factory';
 import { generateText, LanguageModel } from 'ai';
@@ -64,6 +64,7 @@ export const IntelligenceSection = () => {
             provider: activeProvider as AIConfiguration['provider'],
             apiKey: activeProvider === 'custom' ? 'custom' : apiKey,
             model: 'auto',
+            // enableWebSearch is no longer managed here; derived from model capability
             customModels: activeProvider === 'custom' ? customModels : undefined
         });
 
@@ -170,7 +171,7 @@ export const IntelligenceSection = () => {
                                     )}
                                     placeholder="sk-..."
                                     value={apiKey}
-                                    onChange={(e) => { setApiKey(e.target.value); setTestStatus('idle'); setSaveState('idle'); }}
+                                    onChange={(e) => { setApiKey(e.target.value); setSaveState('idle'); }}
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                     {testStatus === 'testing' && <Loader2 size={14} className="animate-spin text-stone-400" />}
@@ -202,7 +203,24 @@ export const IntelligenceSection = () => {
                                             onChange={() => toggleLocalModel(model.id)}
                                         />
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-medium text-stone-700 dark:text-stone-200">{model.name}</span>
+                                            <div className="text-xs font-medium text-stone-700 dark:text-stone-200 flex items-center justify-center gap-1">
+                                                {model.name}
+                                                {model.capabilities.webSearch && (
+                                                    <span className="p-1 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-[4px] flex items-center justify-center" title="Web Search">
+                                                        <Globe size={10} />
+                                                    </span>
+                                                )}
+                                                {model.capabilities.image && (
+                                                    <div className="p-1 bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 rounded-[4px] flex items-center justify-center" title="Image Support">
+                                                        <ImageIcon size={10} />
+                                                    </div>
+                                                )}
+                                                {model.capabilities.tools && (
+                                                    <span className="p-1 bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 rounded-[4px] flex items-center justify-center" title="Tool Support">
+                                                        <Wrench size={10} />
+                                                    </span>
+                                                )}
+                                            </div>
                                             <span className="text-[10px] text-stone-400 font-mono">{model.id}</span>
                                         </div>
                                     </label>
@@ -235,7 +253,7 @@ export const IntelligenceSection = () => {
                                         initial={{ opacity: 0, y: 5 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -5 }}
-                                        className="flex items-center gap-1"
+                                        className="flex items-center gap-2"
                                     >
                                         <Loader2 size={12} className="animate-spin" />
                                         <span>Testing</span>
@@ -246,7 +264,7 @@ export const IntelligenceSection = () => {
                                         initial={{ opacity: 0, y: 5 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -5 }}
-                                        className="flex items-center gap-1"
+                                        className="flex items-center gap-2"
                                     >
                                         <Check size={12} strokeWidth={2.5} />
                                         <span>Working</span>
@@ -257,7 +275,7 @@ export const IntelligenceSection = () => {
                                         initial={{ opacity: 0, y: 5 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -5 }}
-                                        className="flex items-center gap-1"
+                                        className="flex items-center gap-2"
                                     >
                                         <CircleX size={12} />
                                         <span>Failed</span>

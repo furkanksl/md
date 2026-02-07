@@ -8,6 +8,7 @@ import { customFetch } from "./custom-fetch";
 interface ProviderConfig {
   baseUrl?: string;
   headers?: Record<string, string>;
+  enableWebSearch?: boolean;
 }
 
 export const getProvider = (providerId: string, apiKey: string, config?: ProviderConfig) => {
@@ -21,7 +22,11 @@ export const getProvider = (providerId: string, apiKey: string, config?: Provide
         headers: { "anthropic-dangerous-direct-browser-access": "true" },
       });
     case "google":
-      return createGoogleGenerativeAI({ apiKey, fetch: customFetch });
+      const google = createGoogleGenerativeAI({ apiKey, fetch: customFetch });
+      // @ts-ignore - useSearchGrounding is supported in latest SDK but types might lag
+      return (modelId: string) => google(modelId, {
+          useSearchGrounding: config?.enableWebSearch
+      });
     case "mistral":
       return createMistral({ apiKey, fetch: customFetch });
     case "groq":

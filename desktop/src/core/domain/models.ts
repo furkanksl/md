@@ -6,6 +6,7 @@ export interface ModelMetadata {
     image: boolean;
     audio: boolean;
     tools: boolean;
+    webSearch?: boolean; // New capability for grounding/search
   };
   // For custom models
   config?: {
@@ -16,26 +17,24 @@ export interface ModelMetadata {
 }
 
 export const MODELS: ModelMetadata[] = [
-  // OpenAI (2026 Series)
-  { id: "gpt-5.3", name: "GPT-5.3", provider: "openai", capabilities: { image: true, audio: true, tools: true } },
-  // { id: "gpt-5.3-codex", name: "GPT-5.3 Codex", provider: "openai", capabilities: { image: true, audio: true, tools: true } },
-  { id: "gpt-5.2", name: "GPT-5.2", provider: "openai", capabilities: { image: true, audio: true, tools: true } },
-  // { id: "gpt-5.2-codex", name: "GPT-5.2 Codex", provider: "openai", capabilities: { image: true, audio: true, tools: true } },
-  { id: "gpt-5-mini", name: "GPT-5 Mini", provider: "openai", capabilities: { image: true, audio: true, tools: true } },
-  { id: "gpt-4o", name: "GPT-4o", provider: "openai", capabilities: { image: true, audio: true, tools: true } },
-  { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai", capabilities: { image: true, audio: true, tools: true } },
-  
+ // OpenAI (2026 Series)
+ { id: "gpt-5.3", name: "GPT-5.3", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+ { id: "gpt-5.2", name: "GPT-5.2", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+ { id: "gpt-5-mini", name: "GPT-5 Mini", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+ { id: "gpt-4o", name: "GPT-4o", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+ { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+ 
   // Anthropic (4.x Series)
-  { id: "claude-opus-4-6", name: "Claude Opus 4.6", provider: "anthropic", capabilities: { image: true, audio: false, tools: true } },
-  { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5", provider: "anthropic", capabilities: { image: true, audio: false, tools: true } },
-  { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", provider: "anthropic", capabilities: { image: false, audio: false, tools: true } },
-  { id: "claude-opus-4-1", name: "Claude Opus 4.1", provider: "anthropic", capabilities: { image: true, audio: false, tools: true } },
+  { id: "claude-opus-4-6", name: "Claude Opus 4.6", provider: "anthropic", capabilities: { image: true, audio: false, tools: true, webSearch: true } },
+  { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5", provider: "anthropic", capabilities: { image: true, audio: false, tools: true, webSearch: true } },
+  { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", provider: "anthropic", capabilities: { image: false, audio: false, tools: true, webSearch: true } },
+  { id: "claude-opus-4-1", name: "Claude Opus 4.1", provider: "anthropic", capabilities: { image: true, audio: false, tools: true, webSearch: true } },
 
-  // Google (Gemini 3 & 2.5)
-  { id: "gemini-3-pro-preview", name: "Gemini 3 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true } },
-  { id: "gemini-3-flash-preview", name: "Gemini 3 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true } },
-  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true } },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true } },
+  // Google (Gemini 3 & 2.5) - Web Search Supported
+  { id: "gemini-3-pro-preview", name: "Gemini 3 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+  { id: "gemini-3-flash-preview", name: "Gemini 3 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
 
   // Groq (Llama 3.x & Specialized)
   { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", provider: "groq", capabilities: { image: false, audio: false, tools: true } },

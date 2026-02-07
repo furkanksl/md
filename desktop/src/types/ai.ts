@@ -64,6 +64,7 @@ export const AIConfigurationSchema = z.object({
     topP: z.number().optional(),
   }).optional(),
   systemPrompt: z.string().optional(),
+  enableWebSearch: z.boolean().optional(),
   customEndpoint: z.string().optional(), // Deprecated in favor of customModels but kept for compat
   customModels: z.array(CustomModelSchema).optional(),
 });

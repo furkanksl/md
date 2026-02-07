@@ -4,6 +4,8 @@ import { streamText, LanguageModel, ImagePart, TextPart } from "ai";
 import { Message, Attachment } from "@/core/domain/entities";
 import { getModelById } from "../domain/models";
 import { v4 as uuidv4 } from "uuid";
+import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 
 // Define CoreMessage locally if not exported from 'ai' or for strict control
 interface CoreMessage {
@@ -61,8 +63,41 @@ export class ChatService {
   async rewindConversation(conversationId: string, messageId: string) {
     const msg = await msgRepo.getById(messageId);
     if (!msg) throw new Error("Message not found");
-    // Ensure we pass a Date object if repository expects it, assuming msg.timestamp is string/Date
     await msgRepo.deleteFromTimestamp(conversationId, new Date(msg.timestamp));
+  }
+
+  // TODO:openai still cannot do web search, need to fix this
+  private _prepareTools(providerId: string, enableWebSearch?: boolean) {
+    let tools: any = undefined;
+    if (enableWebSearch) {
+        tools = {};
+        
+        if (providerId === 'anthropic') {
+            try {
+                // @ts-ignore
+                if (anthropic.tools && anthropic.tools.webSearch_20250305) {
+                     // @ts-ignore
+                     tools.web_search = anthropic.tools.webSearch_20250305();
+                }
+            } catch (e) {
+                console.warn("Failed to load Anthropic web search tool", e);
+            }
+        }
+        
+        if (providerId === 'openai') {
+            try {
+                // @ts-ignore
+                if (openai.tools && openai.tools.webSearch) {
+                    // Use 'webSearch' key for OpenAI as per docs and enable external access explicitly
+                    // @ts-ignore
+                    tools.webSearch = openai.tools.webSearch({ externalWebAccess: true });
+                }
+            } catch (e) {
+                console.warn("Failed to load OpenAI web search tool", e);
+            }
+        }
+    }
+    return tools;
   }
 
   async sendMessage(
@@ -74,7 +109,8 @@ export class ChatService {
     apiKey: string,
     previousMessages: CoreMessage[],
     abortSignal?: AbortSignal,
-    customModelConfig?: { baseUrl: string; modelId: string }
+    customModelConfig?: { baseUrl: string; modelId: string },
+    enableWebSearch?: boolean
   ) {
     // 1. Validation
     let model = getModelById(modelId);
@@ -110,7 +146,10 @@ export class ChatService {
     await msgRepo.create(userMsg);
 
     // 3. Setup AI
-    const providerFn = getProvider(providerId, apiKey, customModelConfig ? { baseUrl: customModelConfig.baseUrl } : undefined);
+    const providerFn = getProvider(providerId, apiKey, { 
+        baseUrl: customModelConfig?.baseUrl,
+        enableWebSearch
+    });
     
     // 4. Sanitize History
     const sanitizedHistory: CoreMessage[] = previousMessages.map(msg => {
@@ -171,10 +210,13 @@ export class ChatService {
     const providerInstance = providerFn as unknown as { chat: (id: string) => LanguageModel };
     const modelInstance = providerInstance.chat ? providerInstance.chat(targetModelId) : providerFn(targetModelId);
 
+    const tools = this._prepareTools(providerId, enableWebSearch);
+
     const result = await streamText({
       model: modelInstance,
       messages: messagesPayload as any, // Cast to any to avoid complex union type issues with AI SDK (CoreMessage mismatch)
       abortSignal,
+      tools,
       onFinish: async ({ text }) => {
         const assistantMsg: Message = {
           id: uuidv4(),
@@ -201,7 +243,8 @@ export class ChatService {
     apiKey: string,
     abortSignal?: AbortSignal,
     customModelConfig?: { baseUrl: string; modelId: string },
-    recoveryMessage?: Message
+    recoveryMessage?: Message,
+    enableWebSearch?: boolean
   ) {
     // 1. Get Message
     let msg = await msgRepo.getById(messageId);
@@ -254,7 +297,10 @@ export class ChatService {
     }
 
     // 6. Setup AI
-    const providerFn = getProvider(providerId, apiKey, customModelConfig ? { baseUrl: customModelConfig.baseUrl } : undefined);
+    const providerFn = getProvider(providerId, apiKey, { 
+        baseUrl: customModelConfig?.baseUrl,
+        enableWebSearch
+    });
 
     // 7. Sanitize History (Same logic as sendMessage)
     const sanitizedHistory: CoreMessage[] = previousMessages.map(msg => {
@@ -297,10 +343,13 @@ export class ChatService {
     const providerInstance = providerFn as unknown as { chat: (id: string) => LanguageModel };
     const modelInstance = providerInstance.chat ? providerInstance.chat(targetModelId) : providerFn(targetModelId);
 
+    const tools = this._prepareTools(providerId, enableWebSearch);
+
     const result = await streamText({
       model: modelInstance,
       messages: messagesPayload as any, // Cast to any to avoid complex union type issues with AI SDK
       abortSignal,
+      tools,
       onFinish: async ({ text }) => {
         const assistantMsg: Message = {
           id: uuidv4(),

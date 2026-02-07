@@ -67,7 +67,7 @@ const resolveModel = (id: string) => {
                 id: foundCustom.id,
                 name: foundCustom.name,
                 provider: 'custom' as const,
-                capabilities: { image: false, audio: false, tools: false }
+                capabilities: { image: false, audio: false, tools: false, webSearch: false }
             },
             customConfig: {
                 baseUrl: foundCustom.baseUrl,
@@ -243,6 +243,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const config = settings.aiConfigurations[model.provider];
       
       let apiKey = config?.apiKey;
+      // Derive web search support directly from model capabilities
+      let enableWebSearch = model.capabilities.webSearch;
+      
       if (model.provider === 'custom' && customConfig) {
            const foundCustom = settings.aiConfigurations['custom']?.customModels?.find(m => m.id === selectedModelId);
            apiKey = foundCustom?.apiKey || apiKey || 'not-needed';
@@ -289,7 +292,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
               apiKey,
               controller.signal,
               customConfig,
-              targetMsg // Pass message from store as recovery backup
+              targetMsg,
+              enableWebSearch
           );
 
           let fullText = "";
@@ -362,6 +366,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const config = settings.aiConfigurations[model.provider];
     
     let apiKey = config?.apiKey;
+    // Derive web search support directly from model capabilities
+    let enableWebSearch = model.capabilities.webSearch;
+    
     if (model.provider === 'custom' && customConfig) {
          const foundCustom = settings.aiConfigurations['custom']?.customModels?.find(m => m.id === selectedModelId);
          apiKey = foundCustom?.apiKey || apiKey || 'not-needed';
@@ -409,7 +416,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
             apiKey,
             messages.map(m => ({ role: m.role, content: m.content })),
             controller.signal,
-            customConfig
+            customConfig,
+            enableWebSearch
         );
 
         let fullText = "";
