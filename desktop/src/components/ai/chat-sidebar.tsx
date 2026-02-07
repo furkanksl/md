@@ -303,7 +303,11 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
               if (contextMenu.type === "folder") deleteFolder(contextMenu.id);
               else deleteConversation(contextMenu.id);
             }}
-            onMoveToRoot={() => moveChatToRoot(contextMenu.id)}
+            onMoveToRoot={
+              contextMenu.type === "chat" && conversations[contextMenu.id]?.folderId
+                ? () => moveChatToRoot(contextMenu.id)
+                : undefined
+            }
             onMoveToFolder={(folderId: string) =>
               moveChatToFolder(contextMenu.id, folderId)
             }

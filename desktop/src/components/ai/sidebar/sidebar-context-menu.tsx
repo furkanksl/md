@@ -1,3 +1,4 @@
+import { useRef, useState, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import {
   Folder,
@@ -13,7 +14,7 @@ interface SidebarContextMenuProps {
   onDelete: () => void;
   onMoveToRoot?: () => void;
   onMoveToFolder: (folderId: string) => void;
-  folders: any[];
+  folders: { id: string; name: string }[];
   onClose: () => void;
 }
 
@@ -28,10 +29,42 @@ export const SidebarContextMenu = ({
   folders,
   onClose,
 }: SidebarContextMenuProps) => {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [style, setStyle] = useState<React.CSSProperties>({
+    top: y,
+    left: x,
+    opacity: 0,
+    pointerEvents: 'none' // Prevent clicks while calculating
+  });
+
+  useLayoutEffect(() => {
+    if (menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect();
+      let newTop = y;
+      const newLeft = x;
+
+      // Check for bottom overflow
+      if (y + rect.height > window.innerHeight) {
+        newTop = y - rect.height;
+      }
+
+      // Ensure it doesn't go off top
+      if (newTop < 10) newTop = 10;
+
+      setStyle({
+        top: newTop,
+        left: newLeft,
+        opacity: 1,
+        pointerEvents: 'auto'
+      });
+    }
+  }, [x, y]);
+
   return createPortal(
     <div
-      className="fixed z-[60] bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 min-w-[160px] py-1 text-sm font-medium overflow-hidden"
-      style={{ top: y, left: x }}
+      ref={menuRef}
+      className="fixed max-w-[200px] z-[60] bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 min-w-[120px] py-1 text-sm font-medium overflow-hidden transition-opacity duration-75"
+      style={style}
       onClick={(e) => e.stopPropagation()}
     >
       <button
@@ -61,18 +94,20 @@ export const SidebarContextMenu = ({
           <div className="px-4 py-1 text-[10px] text-stone-400 uppercase tracking-wider">
             Move to
           </div>
-          {folders.map((f: any) => (
-            <button
-              key={f.id}
-              onClick={() => {
-                onMoveToFolder(f.id);
-                onClose();
-              }}
-              className="w-full text-left px-4 py-1.5 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-400 truncate"
-            >
-              {f.name}
-            </button>
-          ))}
+          <div className="max-h-24 overflow-y-auto scrollbar-none">
+            {folders.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => {
+                  onMoveToFolder(f.id);
+                  onClose();
+                }}
+                className="w-full text-left px-4 py-1.5 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-400 truncate"
+              >
+                {f.name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

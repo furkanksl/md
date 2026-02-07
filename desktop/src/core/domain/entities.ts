@@ -17,6 +17,12 @@ export const MessageSchema = z.object({
   content: z.string(),
   attachments: z.array(AttachmentSchema).default([]),
   timestamp: z.string().or(z.date()),
+  status: z.enum(["pending", "streaming", "completed", "error"]).optional(),
+  metadata: z.object({
+    model: z.string().optional(),
+    tokenCount: z.number().optional(),
+    cost: z.number().optional(),
+  }).optional(),
 });
 
 export type Message = z.infer<typeof MessageSchema>;

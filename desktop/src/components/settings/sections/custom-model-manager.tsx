@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { clsx } from 'clsx';
 import { Check, Plus, Trash2, Pencil, Play, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { generateText } from 'ai';
+import { generateText, LanguageModel } from 'ai';
 import { CustomModel } from '@/types/ai';
 
 interface CustomModelManagerProps {
@@ -11,6 +11,7 @@ interface CustomModelManagerProps {
 }
 
 export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManagerProps) => {
+    // ... (state declarations remain same)
     const [editingModelId, setEditingModelId] = useState<string | null>(null);
     const [newModelName, setNewModelName] = useState('');
     const [newModelId, setNewModelId] = useState('');
@@ -26,6 +27,7 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
         setEditingModelId(null);
     };
 
+    // ... (handleAddOrUpdateCustomModel, handleEditCustomModel, handleRemoveCustomModel remain same)
     const handleAddOrUpdateCustomModel = () => {
         if (!newModelName || !newModelId || !newBaseUrl) {
             toast.error("Missing fields", { description: "Name, Model ID, and Base URL are required." });
@@ -106,11 +108,12 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
             console.log(`[Settings] Testing custom model: ${model.name} (${model.baseUrl})`);
             
             // Explicitly use .chat() to ensure we target /chat/completions
-            // @ts-ignore - customProvider type inference might be tricky with dynamic import
-            const modelInstance = customProvider.chat ? customProvider.chat(model.modelId) : customProvider(model.modelId);
+            const modelInstance = customProvider.chat 
+                ? customProvider.chat(model.modelId) 
+                : customProvider(model.modelId);
 
             const result = await generateText({
-                model: modelInstance as any,
+                model: modelInstance as LanguageModel,
                 messages: [{ role: 'user', content: 'Say "1"' }],
             });
 
@@ -121,14 +124,16 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
             } else {
                 throw new Error("Empty response received.");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Custom model test failed:", error);
-            toast.error("Connection Failed", { description: error.message || "Could not connect to the model." });
+            const errorMessage = error instanceof Error ? error.message : "Could not connect to the model.";
+            toast.error("Connection Failed", { description: errorMessage });
         } finally {
             setTestingModelId(null);
         }
     };
 
+    // ... (JSX return remains the same)
     return (
         <div className="space-y-4">
              {/* List existing custom models */}

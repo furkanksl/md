@@ -1,14 +1,20 @@
 import { create } from "zustand";
 import { chatService } from "@/core/application/chat-service";
-import { Conversation, Message } from "@/core/domain/entities";
+import { Conversation, Message, Attachment } from "@/core/domain/entities";
 import { getModelById, MODELS } from "@/core/domain/models";
 import { useSettingsStore } from "./settings-store";
 import { v4 as uuidv4 } from "uuid";
 
+interface Folder {
+    id: string;
+    name: string;
+    conversationIds: string[];
+}
+
 interface ChatState {
   // Data
   conversations: Record<string, Conversation>;
-  folders: Record<string, any>;
+  folders: Record<string, Folder>;
   messages: Message[];
   folderOrder: string[];
   rootChatOrder: string[];
@@ -28,7 +34,7 @@ interface ChatState {
   // Async Actions
   syncStructure: () => Promise<void>;
   createConversation: () => Promise<void>;
-  sendMessage: (content: string, attachments: any[]) => Promise<void>;
+  sendMessage: (content: string, attachments: Attachment[]) => Promise<void>;
   stopGeneration: () => void;
   
   // Organization
@@ -47,13 +53,10 @@ interface ChatState {
   reorderFolderChats: (folderId: string, order: string[]) => void;
 }
 
-// Helper to resolve model including custom ones
 const resolveModel = (id: string) => {
-    // 1. Try standard models (exact match)
     const standard = MODELS.find(m => m.id === id);
     if (standard) return { model: standard, customConfig: undefined };
 
-    // 2. Try custom models
     const settings = useSettingsStore.getState();
     const customModels = settings.aiConfigurations['custom']?.customModels || [];
     const foundCustom = customModels.find(m => m.id === id);
@@ -73,7 +76,6 @@ const resolveModel = (id: string) => {
         };
     }
 
-    // 3. Fallback to default via getModelById (which returns GPT-5.2 usually)
     return { model: getModelById(id), customConfig: undefined };
 };
 
@@ -116,11 +118,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const msgIndex = messages.findIndex(m => m.id === messageId);
       if (msgIndex === -1) return;
 
-      // Optimistic update: Remove this message and everything after
       const newMessages = messages.slice(0, msgIndex);
       set({ messages: newMessages });
 
-      // Persist
       await chatService.rewindConversation(activeConversationId, messageId);
   },
 
@@ -134,21 +134,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
   syncStructure: async () => {
     const { folders, conversations } = await chatService.getSidebarData();
     
-    const folderMap: Record<string, any> = {};
+    const folderMap: Record<string, Folder> = {};
     const folderOrder: string[] = [];
     
-    folders.forEach((f: any) => {
+    folders.forEach((f: { id: string; name: string }) => {
       folderMap[f.id] = { ...f, conversationIds: [] };
       folderOrder.push(f.id);
     });
 
-    const convMap: Record<string, any> = {};
+    const convMap: Record<string, Conversation> = {};
     const rootChats: string[] = [];
 
     conversations.forEach((c: Conversation) => {
       convMap[c.id] = c;
-      if (c.folderId && folderMap[c.folderId]) {
-        folderMap[c.folderId].conversationIds.push(c.id);
+      if (c.folderId) {
+          const folder = folderMap[c.folderId];
+          if (folder) {
+              folder.conversationIds.push(c.id);
+          } else {
+              rootChats.push(c.id);
+          }
       } else {
         rootChats.push(c.id);
       }
@@ -189,9 +194,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   renameFolder: async (id, name) => {
     await chatService.renameFolder(id, name);
-    set(state => ({
-      folders: { ...state.folders, [id]: { ...state.folders[id], name } }
-    }));
+    set(state => {
+        const folder = state.folders[id];
+        if (!folder) return {};
+        return {
+            folders: { ...state.folders, [id]: { ...folder, name } }
+        };
+    });
   },
 
   deleteConversation: async (id) => {
@@ -209,7 +218,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (!conv) return state;
       return {
         conversations: { ...state.conversations, [id]: { ...conv, title } }
-      } as any;
+      };
     });
   },
 
@@ -234,7 +243,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const config = settings.aiConfigurations[model.provider];
       
       let apiKey = config?.apiKey;
-      // Resolve custom API key
       if (model.provider === 'custom' && customConfig) {
            const foundCustom = settings.aiConfigurations['custom']?.customModels?.find(m => m.id === selectedModelId);
            apiKey = foundCustom?.apiKey || apiKey || 'not-needed';
@@ -244,15 +252,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
           throw new Error(`API Key for ${model.provider} is missing.`);
       }
 
-      // 1. Locate message
       const msgIndex = messages.findIndex(m => m.id === messageId);
       if (msgIndex === -1) return;
 
-      // 2. Truncate History & Update Content (Optimistic)
       const truncatedMessages = messages.slice(0, msgIndex + 1);
-      truncatedMessages[msgIndex] = { ...truncatedMessages[msgIndex], content: newContent } as any;
+      const targetMsg = truncatedMessages[msgIndex];
+      const updatedMsg: Message = { ...targetMsg, content: newContent } as Message;
+      truncatedMessages[msgIndex] = updatedMsg;
 
-      // 3. Prepare Assistant Placeholder
       const assistantId = uuidv4();
       const assistantMsg: Message = {
           id: assistantId,
@@ -260,7 +267,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
           role: "assistant",
           content: "",
           attachments: [],
-          timestamp: new Date()
+          timestamp: new Date().toISOString(),
+          status: "pending"
       };
 
       const controller = new AbortController();
@@ -326,22 +334,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   reorderFolders: (order) => set({ folderOrder: order }),
   reorderRootChats: (order) => set({ rootChatOrder: order }),
-  reorderFolderChats: (fid, order) => set(state => ({
-    folders: { ...state.folders, [fid]: { ...state.folders[fid], conversationIds: order } }
-  })),
+  reorderFolderChats: (fid, order) => set(state => {
+      const folder = state.folders[fid];
+      if (!folder) return {};
+      return {
+        folders: { ...state.folders, [fid]: { ...folder, conversationIds: order } }
+      };
+  }),
 
   sendMessage: async (content, attachments) => {
     let { activeConversationId, selectedModelId, messages } = get();
     
-    // Auto-create chat if none active
     if (!activeConversationId) {
         await get().createConversation();
-        // Refresh state after creation
         const newState = get();
         activeConversationId = newState.activeConversationId;
         messages = newState.messages;
         
-        if (!activeConversationId) return; // Should not happen
+        if (!activeConversationId) return; 
     }
 
     const { model, customConfig } = resolveModel(selectedModelId);
@@ -360,17 +370,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         throw new Error(`API Key for ${model.provider} is missing. Please add it in Settings.`);
     }
 
-    // 1. Optimistic Update (User Message)
     const userMsg: Message = {
         id: uuidv4(),
         conversationId: activeConversationId,
         role: "user",
         content,
         attachments,
-        timestamp: new Date()
+        timestamp: new Date().toISOString(),
+        status: "completed"
     };
 
-    // 2. Prepare Assistant Placeholder
     const assistantId = uuidv4();
     const assistantMsg: Message = {
         id: assistantId,
@@ -378,7 +387,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         role: "assistant",
         content: "",
         attachments: [],
-        timestamp: new Date()
+        timestamp: new Date().toISOString(),
+        status: "pending"
     };
 
     const controller = new AbortController();
@@ -413,7 +423,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
             console.log("Generation aborted");
-            // If we have some text, keep it. If not, mark as cancelled.
             set(state => {
                 const msgs = state.messages.map(m => {
                     if (m.id === assistantId) {
@@ -425,7 +434,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     return m;
                 });
                 
-                // Sync the partial/cancelled message to DB
                 const finalMsg = msgs.find(m => m.id === assistantId);
                 if (finalMsg) {
                     chatService.saveMessageToDb(finalMsg).catch(console.error);

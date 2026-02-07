@@ -1,9 +1,22 @@
 import { z } from "zod";
 
+export interface Attachment {
+  name?: string;
+  type?: string;
+  path?: string;
+  base64?: string;
+}
+
+export const ContentPartSchema = z.union([
+  z.object({ type: z.literal('text'), text: z.string() }),
+  z.object({ type: z.literal('image'), image: z.string() }),
+]);
+
 export const MessageSchema = z.object({
   id: z.string().uuid(),
   role: z.enum(["user", "assistant", "system"]),
-  content: z.union([z.string(), z.array(z.any())]), // structured content array support
+  content: z.union([z.string(), z.array(ContentPartSchema)]), 
+  attachments: z.array(z.custom<Attachment>()).default([]),
   timestamp: z.string().datetime(),
   metadata: z.object({
     model: z.string().optional(),

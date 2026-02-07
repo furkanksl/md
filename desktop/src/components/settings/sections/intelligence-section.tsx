@@ -4,8 +4,8 @@ import { clsx } from 'clsx';
 import { Check, CircleCheck, CircleX, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getProvider } from '@/core/infra/ai/provider-factory';
-import { generateText } from 'ai';
-import { CustomModel } from '@/types/ai';
+import { generateText, LanguageModel } from 'ai';
+import { CustomModel, AIConfiguration } from '@/types/ai';
 import { CustomModelManager } from './custom-model-manager';
 
 const PROVIDERS = [
@@ -35,7 +35,7 @@ export const IntelligenceSection = () => {
 
     const handleSave = () => {
         setAIConfiguration(activeProvider, {
-            provider: activeProvider as any,
+            provider: activeProvider as AIConfiguration['provider'],
             apiKey: activeProvider === 'custom' ? 'custom' : apiKey, // specific api keys are in customModels
             model: 'auto',
             customModels: activeProvider === 'custom' ? customModels : undefined
@@ -66,7 +66,7 @@ export const IntelligenceSection = () => {
 
             console.log(`[Settings] Testing connection to ${modelToTest}`);
             const result = await generateText({
-                model: providerFactory(modelToTest) as any,
+                model: providerFactory(modelToTest) as LanguageModel,
                 messages: [{ role: 'user', content: 'Say "1"' }],
             });
 
@@ -76,10 +76,11 @@ export const IntelligenceSection = () => {
             } else {
                 throw new Error("No response received.");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Test failed:", error);
             setTestStatus('error');
-            toast.error("Connection Failed", { description: error.message || "Could not connect to the provider." });
+            const errorMessage = error instanceof Error ? error.message : "Could not connect to the provider.";
+            toast.error("Connection Failed", { description: errorMessage });
         }
     };
 

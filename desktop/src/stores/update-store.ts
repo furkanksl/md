@@ -40,7 +40,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
       posterVisible: true,
       version: "1.0.0-beta",
       body: "### Big Update!\n\n- Added cool new features\n- Fixed annoying bugs\n- Improved performance\n\nEnjoy!",
-      updateManifest: {} as any, // Mock object
+      updateManifest: { version: "1.0.0-beta", body: "Mock update", available: true, date: new Date().toISOString() } as unknown as Update, // Mock object
     });
   },
 
@@ -50,7 +50,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
 
   checkForUpdates: async () => {
     try {
-      const appendLog = async (message: string, data?: unknown) => {
+      const appendLog = async (message: string, data?: Record<string, unknown> | string | number | null) => {
         const line = `[${new Date().toISOString()}] ${message}${data ? ` ${JSON.stringify(data)}` : ""}\n`;
         try {
           await writeTextFile("updater.log", line, {
@@ -94,7 +94,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
             await appendLog("fallback:latest.json fetch failed", { status: res.status });
             return null;
           }
-          const data = await res.json();
+          const data: any = await res.json();
           const latestVersion = data?.version;
           if (!latestVersion) {
             await appendLog("fallback:latest.json missing version");
@@ -120,8 +120,9 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
             body: data?.notes || "A new update is available.",
             url: platformEntry?.url || data?.url || "https://github.com/furkanksl/md/releases/latest",
           };
-        } catch (err: any) {
-          await appendLog("fallback:error", { message: err?.message || "unknown" });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "unknown";
+          await appendLog("fallback:error", { message });
           return null;
         }
       };
@@ -129,9 +130,10 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
       let update: Update | null = null;
       try {
         update = await check();
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
         console.error('Failed to check for updates (native):', e);
-        await appendLog("native:check failed", { error: e?.message || String(e) });
+        await appendLog("native:check failed", { error: message });
       }
 
       if (update && update.available) {
@@ -142,7 +144,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
             `https://api.github.com/repos/furkanksl/md/releases/tags/v${update.version}`
           );
 
-          let releaseData = null;
+          let releaseData: any = null;
           if (withV.ok) {
             releaseData = await withV.json();
           } else {
@@ -159,8 +161,9 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
           if (releaseData && typeof releaseData.body === "string" && releaseData.body.trim() !== "") {
             resolvedBody = releaseData.body;
           }
-        } catch (e: any) {
-          releaseFetchError = `GitHub release fetch error: ${e?.message || "unknown"}`;
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : "unknown";
+          releaseFetchError = `GitHub release fetch error: ${message}`;
         }
         if (!resolvedBody || resolvedBody.trim() === "") {
           resolvedBody = update.body || null;

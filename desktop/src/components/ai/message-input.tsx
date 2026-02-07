@@ -3,6 +3,7 @@ import { useChatStore } from '@/stores/chat-store';
 import { Paperclip, ArrowUp, X, File as FileIcon, Square } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Attachment } from '@/core/domain/entities';
 
 interface MessageInputProps {
     attachments: File[];
@@ -72,7 +73,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
         if (!input.trim() && attachments.length === 0) return;
 
         const attachmentData = await Promise.all(attachments.map(async (f) => {
-            return new Promise((resolve) => {
+            return new Promise<Attachment>((resolve) => {
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     resolve({
@@ -80,7 +81,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                         type: f.type,
                         size: f.size,
                         base64: reader.result as string,
-                        path: (f as any).path
+                        path: (f as any).path as string
                     });
                 };
                 reader.readAsDataURL(f);
