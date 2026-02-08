@@ -2,6 +2,7 @@ import React from "react";
 import { Folder, ChevronRight, ChevronDown } from "lucide-react";
 import { clsx } from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
+import { isImeComposing } from "@/lib/ime";
 
 interface FolderItemProps {
   folder: any;
@@ -61,7 +62,7 @@ export const FolderItem = ({
                 onChange={(e) => setEditValue(e.target.value)}
                 onKeyDown={(e) => {
                   e.stopPropagation();
-                  if (e.nativeEvent.isComposing) return;
+                  if (isImeComposing(e)) return;
                   if (e.key === "Enter") saveEditing(folder.id, true);
                 }}
                 autoFocus

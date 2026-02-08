@@ -4,6 +4,7 @@ import { Paperclip, ArrowUp, X, File as FileIcon, Square } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Attachment } from '@/core/domain/entities';
+import { isImeComposing } from '@/lib/ime';
 
 interface MessageInputProps {
     attachments: File[];
@@ -14,6 +15,8 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
     const { input, setInput, sendMessage, isStreaming, stopGeneration } = useChatStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const isComposingRef = useRef(false);
+    const ignoreNextEnterRef = useRef(false);
     const [previews, setPreviews] = useState<Record<string, string>>({});
     const [isExpanded, setIsExpanded] = useState(false);
     const [hasUsedShiftEnter, setHasUsedShiftEnter] = useState(false);
@@ -105,11 +108,15 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.nativeEvent.isComposing) {
+        if (isImeComposing(e, isComposingRef)) {
             return;
         }
 
         if (e.key === 'Enter') {
+            if (ignoreNextEnterRef.current) {
+                e.preventDefault();
+                return;
+            }
             if (!e.shiftKey) {
                 e.preventDefault();
                 handleSubmit();
@@ -245,6 +252,16 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                     placeholder={attachments.length > 0 ? "Add a caption..." : "Type a message..."}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onCompositionStart={() => {
+                        isComposingRef.current = true;
+                    }}
+                    onCompositionEnd={() => {
+                        isComposingRef.current = false;
+                        ignoreNextEnterRef.current = true;
+                        setTimeout(() => {
+                            ignoreNextEnterRef.current = false;
+                        }, 0);
+                    }}
                     onKeyDown={handleKeyDown}
                     disabled={isStreaming}
                     rows={1}

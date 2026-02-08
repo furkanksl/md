@@ -1,5 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import { clsx } from "clsx";
+import { isImeComposing } from "@/lib/ime";
 
 interface ChatItemProps {
   chat: any;
@@ -54,7 +55,7 @@ export const ChatItem = ({
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={(e) => {
                 e.stopPropagation();
-                if (e.nativeEvent.isComposing) return;
+                if (isImeComposing(e)) return;
                 if (e.key === "Enter") saveEditing(chat.id, false);
               }}
               autoFocus

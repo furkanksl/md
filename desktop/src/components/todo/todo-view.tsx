@@ -18,6 +18,7 @@ import {
   Eraser,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isImeComposing } from "@/lib/ime";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -79,7 +80,7 @@ const TodoItemRow = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.nativeEvent.isComposing) return;
+    if (isImeComposing(e)) return;
     if (e.key === "Enter") {
       handleSave();
     }
@@ -356,7 +357,7 @@ const ChecklistView = () => {
           value={activeList.title}
           onChange={(e) => updateChecklist(activeList.id, { title: e.target.value })}
           onKeyDown={(e) => {
-            if (e.nativeEvent.isComposing) return;
+            if (isImeComposing(e)) return;
             if (e.key === "Enter") {
               e.preventDefault();
               newTaskInputRef.current?.focus();
@@ -466,6 +467,8 @@ const NotesView = () => {
   const [shouldFocusTitle, setShouldFocusTitle] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const noteBodyRef = useRef<HTMLTextAreaElement>(null);
+  const isComposingTitleRef = useRef(false);
+  const ignoreNextTitleEnterRef = useRef(false);
 
   // Auto-create if empty
   useEffect(() => {
@@ -536,9 +539,25 @@ const NotesView = () => {
           ref={titleInputRef}
           value={activeNote.title}
           onChange={(e) => updateNote(activeNote.id, { title: e.target.value })}
+          onCompositionStart={() => {
+            isComposingTitleRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            isComposingTitleRef.current = false;
+            ignoreNextTitleEnterRef.current = true;
+            setTimeout(() => {
+              ignoreNextTitleEnterRef.current = false;
+            }, 0);
+          }}
           onKeyDown={(e) => {
-            if (e.nativeEvent.isComposing) return;
+            if (isImeComposing(e, isComposingTitleRef)) {
+              return;
+            }
             if (e.key === "Enter") {
+              if (ignoreNextTitleEnterRef.current) {
+                e.preventDefault();
+                return;
+              }
               e.preventDefault();
               noteBodyRef.current?.focus();
             }
