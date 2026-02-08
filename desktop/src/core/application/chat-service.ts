@@ -44,6 +44,10 @@ export class ChatService {
     await convRepo.updateTitle(id, title);
   }
 
+  async updateConversationModel(id: string, modelId: string, providerId: string) {
+    await convRepo.updateModel(id, modelId, providerId);
+  }
+
   async moveChatToFolder(chatId: string, folderId: string | null) {
     await convRepo.updateFolder(chatId, folderId);
   }

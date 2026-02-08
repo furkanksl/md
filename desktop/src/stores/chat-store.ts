@@ -28,7 +28,7 @@ interface ChatState {
   
   // Actions
   setInput: (v: string) => void;
-  setSelectedModelId: (v: string) => void;
+  setSelectedModelId: (v: string) => Promise<void>;
   setActiveConversationId: (id: string | null) => Promise<void>;
   
   // Async Actions
@@ -92,7 +92,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
   abortController: null,
 
   setInput: (v) => set({ input: v }),
-  setSelectedModelId: (v) => set({ selectedModelId: v }),
+  
+  setSelectedModelId: async (v) => {
+    set({ selectedModelId: v });
+    const { activeConversationId, conversations } = get();
+    if (activeConversationId) {
+        const currentConv = conversations[activeConversationId];
+        if (currentConv) {
+            const { model } = resolveModel(v);
+            if (model) {
+                const updatedConv = { ...currentConv, modelId: v, providerId: model.provider };
+                set({ conversations: { ...conversations, [activeConversationId]: updatedConv } });
+                await chatService.updateConversationModel(activeConversationId, v, model.provider);
+            }
+        }
+    }
+  },
   
   stopGeneration: () => {
     const { abortController } = get();
