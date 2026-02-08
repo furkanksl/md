@@ -105,6 +105,10 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.nativeEvent.isComposing) {
+            return;
+        }
+
         if (e.key === 'Enter') {
             if (!e.shiftKey) {
                 e.preventDefault();

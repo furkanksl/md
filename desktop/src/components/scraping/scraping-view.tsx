@@ -207,7 +207,10 @@ export const ScrapingView = () => {
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     disabled={isLoading}
-                    onKeyDown={(e) => e.key === 'Enter' && handleScrape()}
+                    onKeyDown={(e) => {
+                        if (e.nativeEvent.isComposing) return;
+                        if (e.key === 'Enter') handleScrape();
+                    }}
                 />
                 <button 
                     onClick={handleScrape}

@@ -79,6 +79,7 @@ const TodoItemRow = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter") {
       handleSave();
     }
@@ -355,6 +356,7 @@ const ChecklistView = () => {
           value={activeList.title}
           onChange={(e) => updateChecklist(activeList.id, { title: e.target.value })}
           onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
             if (e.key === "Enter") {
               e.preventDefault();
               newTaskInputRef.current?.focus();
@@ -535,6 +537,7 @@ const NotesView = () => {
           value={activeNote.title}
           onChange={(e) => updateNote(activeNote.id, { title: e.target.value })}
           onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
             if (e.key === "Enter") {
               e.preventDefault();
               noteBodyRef.current?.focus();
