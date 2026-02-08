@@ -12,11 +12,11 @@ export const DownloadDialog = ({ onClose, source = "Download Dialog" }: Download
 
   return (
       <motion.div
-         className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md px-6"
+         className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-md px-6"
          initial={{ opacity: 0 }}
          animate={{ opacity: 1 }}
          exit={{ opacity: 0 }}
-         onClick={onClose}
+         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
          <motion.div
             className="w-full max-w-md bg-[#FAF9F6] text-[#44403C] rounded-3xl shadow-2xl border border-white/70 p-6 relative"
@@ -24,7 +24,6 @@ export const DownloadDialog = ({ onClose, source = "Download Dialog" }: Download
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.98, opacity: 0, y: 10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            onClick={(event) => event.stopPropagation()}
          >
             <button
                className="absolute top-4 right-4 w-8 h-8 rounded-full border border-[#E7E5E4] bg-white/70 hover:bg-white transition-colors flex items-center justify-center text-[#44403C]/60 hover:text-[#44403C]"
