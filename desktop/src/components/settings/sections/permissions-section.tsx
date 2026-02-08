@@ -46,19 +46,19 @@ export const PermissionsSection = () => {
 
     return (
         <div>
-            <h2 className="text-xl font-light text-stone-800 dark:text-stone-200 mb-4">Permissions</h2>
-            <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-4 border border-stone-100 dark:border-stone-800 shadow-sm">
+            <h2 className="text-xl font-light text-foreground mb-4">Permissions</h2>
+            <div className="bg-card rounded-[1.5rem] p-4 border border-border shadow-sm">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className={clsx(
-                            "w-10 h-10 rounded-xl flex items-center justify-center",
-                            hasPermission ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400" : "bg-stone-100 text-stone-400 dark:bg-stone-800 dark:text-stone-500"
+                            "w-10 h-10 rounded-lg flex items-center justify-center",
+                            hasPermission ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400" : "bg-muted text-muted-foreground"
                         )}>
                             <Shield size={20} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-medium text-stone-800 dark:text-stone-200">Accessibility</span>
-                            <span className="text-xs text-stone-500 dark:text-stone-400">
+                            <span className="text-sm font-medium text-foreground">Accessibility</span>
+                            <span className="text-xs text-muted-foreground">
                                 {hasPermission ? "Granted" : "Required for context"}
                             </span>
                         </div>
@@ -72,7 +72,7 @@ export const PermissionsSection = () => {
                         <button
                             onClick={requestPermission}
                             disabled={isChecking}
-                            className="px-4 py-2 bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 text-xs font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+                            className="px-4 py-2 bg-primary text-primary-foreground text-xs font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
                             {isChecking ? "Checking..." : "Request"}
                         </button>

@@ -27,10 +27,10 @@ export const ChatItem = ({
   return (
     <div
       className={clsx(
-        "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer text-sm group transition-colors",
+        "flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-sm group transition-colors",
         activeConversationId === chat.id
-          ? "bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-100 shadow-sm shadow-stone-200/50 dark:shadow-none"
-          : "text-stone-500 dark:text-stone-400 hover:bg-stone-100/50 dark:hover:bg-stone-800/50 hover:text-stone-700 dark:hover:text-stone-200"
+          ? "bg-accent text-accent-foreground shadow-sm"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
       )}
       onClick={() => {
         if (editingId !== chat.id) {
@@ -49,7 +49,7 @@ export const ChatItem = ({
             onClick={(e) => e.stopPropagation()}
           >
             <input
-              className="w-full bg-transparent border-none p-0 text-sm text-stone-800 dark:text-stone-100 focus:outline-none"
+              className="w-full bg-transparent border-none p-0 text-sm text-foreground focus:outline-none"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={(e) => {

@@ -12,43 +12,43 @@ const ClipboardItem = memo(({ item, onCopy, onDelete, onClick, copiedId }: { ite
     return (
         <div
             onClick={() => onClick(item)}
-            className="bg-white dark:bg-stone-900 p-4 rounded-[1.25rem] shadow-sm border border-stone-50 dark:border-stone-800 hover:shadow-md hover:-translate-y-1 transition-all group h-32 flex flex-col justify-between relative overflow-hidden cursor-pointer"
+            className="bg-card p-4 rounded-lg shadow-sm border border-border hover:shadow-md hover:-translate-y-1 transition-all group h-32 flex flex-col justify-between relative overflow-hidden cursor-pointer"
         >
             <div className="flex justify-end items-start mb-2">
-                <span className="text-[9px] text-stone-300 dark:text-stone-600">
+                <span className="text-[9px] text-muted-foreground/60">
                     {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
             </div>
             
             <div className="flex-1 overflow-hidden min-h-0">
                 {isImage ? (
-                    <div className="w-full h-full rounded-lg overflow-hidden bg-stone-50 dark:bg-stone-800 flex items-center justify-center relative">
+                    <div className="w-full h-full rounded-md overflow-hidden bg-muted flex items-center justify-center relative">
                         <img src={item.content} alt="Clipboard Content" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
                             <ImageIcon size={16} className="text-white drop-shadow-md" />
                         </div>
                     </div>
                 ) : (
-                    <p className="text-stone-700 dark:text-stone-300 text-sm font-medium line-clamp-3 leading-relaxed break-words">
+                    <p className="text-foreground text-sm font-medium line-clamp-3 leading-relaxed break-words">
                         {item.content}
                     </p>
                 )}
             </div>
 
             <div className="flex items-center justify-between mt-auto pt-2">
-                <div className="h-1 w-6 bg-stone-100 dark:bg-stone-800 rounded-full group-hover:bg-stone-200 dark:group-hover:bg-stone-700 transition-colors" />
+                <div className="h-1 w-6 bg-muted rounded-full group-hover:bg-muted-foreground/20 transition-colors" />
                 
                 <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-200">
                     <button 
                         onClick={(e) => { e.stopPropagation(); onCopy(item.id, item.content); }}
-                        className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+                        className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-sm transition-colors"
                         title="Copy"
                     >
                         {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
                     </button>
                     <button 
                         onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
-                        className="p-1 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-sm transition-colors"
                         title="Delete"
                     >
                         <Trash2 size={14} />
@@ -184,7 +184,7 @@ export const ClipboardView = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 50 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="absolute inset-0 z-50 bg-[#FAF9F6] dark:bg-[#1C1917] flex flex-col"
+                className="absolute inset-0 z-50 bg-background flex flex-col"
             >
                 {/* Modal Header */}
                 <div className="h-14 flex items-center justify-between px-4 shrink-0 border-b border-stone-100 dark:border-stone-800">

@@ -181,7 +181,7 @@ export const ChatView = () => {
         <div className="flex items-center gap-3 justify-start overflow-hidden">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-all flex-shrink-0"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-full transition-all flex-shrink-0"
           >
             <History size={16} strokeWidth={2} />
           </button>
@@ -190,10 +190,10 @@ export const ChatView = () => {
         <div className="flex justify-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors text-xs font-medium px-3 py-1.5 rounded-full hover:bg-stone-50 dark:hover:bg-stone-800 outline-none max-w-xl">
+              <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-xs font-medium px-3 py-1.5 rounded-full hover:bg-accent outline-none max-w-xl">
                 <Sparkles
                   size={12}
-                  className="text-stone-400 dark:text-stone-500 flex-shrink-0"
+                  className="text-muted-foreground flex-shrink-0"
                 />
                 <span className="truncate">
                   {currentModel?.name || "Select Model"}
@@ -203,10 +203,10 @@ export const ChatView = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="center"
-              className="w-64 max-h-[32rem] overflow-y-auto scrollbar-none bg-white dark:bg-stone-900 rounded-2xl shadow-xl shadow-stone-200/50 dark:shadow-black/50 py-1 border border-stone-100 dark:border-stone-800 z-50"
+              className="w-64 max-h-[32rem] overflow-y-auto scrollbar-none bg-popover rounded-lg shadow-xl py-1 border border-border z-50"
             >
               {availableModels.length === 0 ? (
-                <div className="px-4 py-2 text-xs text-stone-500 dark:text-stone-400 italic text-center">
+                <div className="px-4 py-2 text-xs text-muted-foreground italic text-center">
                   No providers configured
                 </div>
               ) : (
@@ -221,7 +221,7 @@ export const ChatView = () => {
                 ).map(([provider, models], index) => (
                   <div key={provider}>
                     {index > 0 && (
-                      <div className="h-px bg-stone-100 dark:bg-stone-800 mx-2 my-1" />
+                      <div className="h-px bg-border mx-2 my-1" />
                     )}
                     <div className="px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-wider">
                       {provider}
@@ -231,10 +231,10 @@ export const ChatView = () => {
                         key={m.id}
                         onClick={() => setSelectedModelId(m.id)}
                         className={clsx(
-                          "w-full px-4 py-2 text-xs transition-colors flex items-center justify-between cursor-pointer focus:bg-stone-50 dark:focus:bg-stone-800 focus:text-stone-900 dark:focus:text-stone-100",
+                          "w-full px-4 py-2 text-xs transition-colors flex items-center justify-between cursor-pointer focus:bg-accent focus:text-accent-foreground",
                           selectedModelId === m.id
-                            ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold"
-                            : "text-stone-600 dark:text-stone-400"
+                            ? "bg-accent text-accent-foreground font-bold"
+                            : "text-muted-foreground"
                         )}
                       >
                         <span>{m.name}</span>
@@ -255,7 +255,7 @@ export const ChatView = () => {
         <div className="flex justify-end">
           <button
             onClick={() => createConversation()}
-            className="p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-all"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-full transition-all"
             title="New Chat"
           >
             <SquarePen size={16} strokeWidth={2} />
@@ -268,8 +268,8 @@ export const ChatView = () => {
         {messages.length > 0 ? (
           <MessageList />
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-stone-300 dark:text-stone-700 gap-4">
-            <div className="w-12 h-12 rounded-full bg-stone-50 dark:bg-stone-900 flex items-center justify-center">
+          <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 gap-4">
+            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
               <Sparkles size={20} className="opacity-50" />
             </div>
             <p className="text-xs font-medium">How can I help you today?</p>

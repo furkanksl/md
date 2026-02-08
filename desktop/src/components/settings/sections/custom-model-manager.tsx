@@ -140,25 +140,25 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
             {/* List existing custom models */}
             {customModels.length > 0 && (
                 <div className="space-y-2">
-                    <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">
+                    <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Configured Models
                     </label>
                     <div className="flex flex-col gap-2">
                         {customModels.map(model => (
-                            <div key={model.id} className="flex items-center justify-between p-3 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-100 dark:border-stone-700">
+                            <div key={model.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
                                 <div className="flex flex-col overflow-hidden mr-2">
-                                    <span className="text-xs font-medium text-stone-700 dark:text-stone-200">{model.name}</span>
-                                    <span className="text-[10px] text-stone-400 truncate font-mono">{model.modelId}</span>
+                                    <span className="text-xs font-medium text-foreground">{model.name}</span>
+                                    <span className="text-[10px] text-muted-foreground truncate font-mono">{model.modelId}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <button
                                         onClick={() => handleTestModel(model)}
                                         disabled={!!testingModelId}
                                         className={clsx(
-                                            "p-1.5 rounded-lg transition-colors",
+                                            "p-1.5 rounded-md transition-colors",
                                             testingModelId === model.id
                                                 ? "text-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                                : "text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-accent"
                                         )}
                                         title="Test Connection"
                                     >
@@ -166,14 +166,14 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
                                     </button>
                                     <button
                                         onClick={() => handleEditCustomModel(model)}
-                                        className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-lg transition-colors"
+                                        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                                         title="Edit Model"
                                     >
                                         <Pencil size={14} />
                                     </button>
                                     <button
                                         onClick={() => handleRemoveCustomModel(model.id)}
-                                        className="p-1.5 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                        className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
                                         title="Remove Model"
                                     >
                                         <Trash2 size={14} />
@@ -186,31 +186,31 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
             )}
 
             {/* Add new model form */}
-            <div className="space-y-3 pt-2 border-t border-stone-100 dark:border-stone-800">
+            <div className="space-y-3 pt-2 border-t border-border">
                 <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">
+                    <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         {editingModelId ? 'Edit Model' : 'Add New Model'}
                     </label>
                     {editingModelId && (
                         <button
                             onClick={resetForm}
-                            className="text-[10px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 flex items-center gap-1"
+                            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1"
                         >
                             <X size={10} /> Cancel
                         </button>
                     )}
                 </div>
                 <input
-                    className="w-full bg-stone-50 dark:bg-stone-800 h-9 rounded-xl px-3 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-100 dark:focus:ring-stone-700 transition-all text-xs"
+                    className="w-full bg-input h-9 rounded-lg px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all text-xs"
                     placeholder="Display Name (e.g. Local Mistral)"
                     value={newModelName}
                     onChange={(e) => setNewModelName(e.target.value)}
                 />
                 <div className="grid grid-cols-2 gap-2">
                     <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-medium text-stone-400 uppercase tracking-wide ml-1">Model ID</label>
+                        <label className="text-[9px] font-medium text-muted-foreground uppercase tracking-wide ml-1">Model ID</label>
                         <input
-                            className="w-full bg-stone-50 dark:bg-stone-800 h-9 rounded-xl px-3 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-100 dark:focus:ring-stone-700 transition-all font-mono text-xs"
+                            className="w-full bg-input h-9 rounded-lg px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all font-mono text-xs"
                             placeholder="mistralai/ministral-3-3b"
                             value={newModelId}
                             onChange={(e) => setNewModelId(e.target.value)}
@@ -218,20 +218,20 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
                     </div>
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1.5 ml-1">
-                            <label className="text-[9px] font-medium text-stone-400 uppercase tracking-wide">Base URL</label>
+                            <label className="text-[9px] font-medium text-muted-foreground uppercase tracking-wide">Base URL</label>
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger>
-                                        <Info size={10} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors" />
+                                        <Info size={10} className="text-muted-foreground hover:text-foreground transition-colors" />
                                     </TooltipTrigger>
-                                    <TooltipContent className='dark:bg-stone-50 bg-stone-800 dark:text-stone-600 text-stone-300 border border-stone-100 dark:border-stone-700 shadow-sm shadow-stone-200/50 dark:shadow-black/50 rounded-sm!'>
+                                    <TooltipContent className='bg-popover text-popover-foreground border border-border shadow-lg rounded-sm!'>
                                         <p className="text-xs">Example: http://localhost:1234/v1</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
                         </div>
                         <input
-                            className="w-full bg-stone-50 dark:bg-stone-800 h-9 rounded-xl px-3 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-100 dark:focus:ring-stone-700 transition-all font-mono text-xs"
+                            className="w-full bg-input h-9 rounded-lg px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all font-mono text-xs"
                             placeholder="http://localhost:1234/v1"
                             value={newBaseUrl}
                             onChange={(e) => setNewBaseUrl(e.target.value)}
@@ -240,7 +240,7 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
                 </div>
                 <input
                     type="password"
-                    className="w-full bg-stone-50 dark:bg-stone-800 h-9 rounded-xl px-3 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-100 dark:focus:ring-stone-700 transition-all font-mono text-xs"
+                    className="w-full bg-input h-9 rounded-lg px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all font-mono text-xs"
                     placeholder="API Key (Optional)"
                     value={newModelApiKey}
                     onChange={(e) => setNewModelApiKey(e.target.value)}
@@ -249,10 +249,10 @@ export const CustomModelManager = ({ customModels, onUpdate }: CustomModelManage
                     onClick={handleAddOrUpdateCustomModel}
                     disabled={!newModelName || !newModelId || !newBaseUrl}
                     className={clsx(
-                        "w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-colors disabled:opacity-50",
+                        "w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50",
                         editingModelId
-                            ? "bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 hover:opacity-90"
-                            : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700"
+                            ? "bg-primary text-primary-foreground hover:opacity-90"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
                     )}
                 >
                     {editingModelId ? <Check size={14} /> : <Plus size={14} />}

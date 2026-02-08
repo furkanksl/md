@@ -153,11 +153,11 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                                     className="group relative"
                                 >
                                     {/* Thumbnail Container */}
-                                    <div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 overflow-hidden flex items-center justify-center relative shadow-sm group/thumb">
+                                    <div className="w-16 h-16 rounded-md bg-muted border border-border overflow-hidden flex items-center justify-center relative shadow-sm group/thumb">
                                         {previewUrl ? (
                                             <img src={previewUrl} alt={f.name} className="w-full h-full object-cover transition-transform group-hover/thumb:scale-105" />
                                         ) : (
-                                            <FileIcon size={24} className="text-stone-400 dark:text-stone-500" />
+                                            <FileIcon size={24} className="text-muted-foreground" />
                                         )}
 
                                         {/* Hover Remove Overlay */}
@@ -172,24 +172,24 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                                     {/* Hover Large Preview */}
                                     {previewUrl && (
                                         <div className="absolute bottom-full left-0 mb-3 hidden group-hover:block z-50 origin-bottom-left animate-in fade-in zoom-in-95 duration-200">
-                                            <div className="bg-white dark:bg-stone-900 p-2 rounded-2xl shadow-xl shadow-stone-300/50 dark:shadow-black/50 border border-stone-100 dark:border-stone-800">
-                                                <img src={previewUrl} alt="Large Preview" className="max-w-[200px] max-h-[200px] rounded-xl object-contain" />
-                                                <div className="mt-2 text-[10px] font-medium text-stone-500 dark:text-stone-400 truncate max-w-[200px] px-1">
+                                            <div className="bg-popover p-2 rounded-md shadow-xl border border-border">
+                                                <img src={previewUrl} alt="Large Preview" className="max-w-[200px] max-h-[200px] rounded-md object-contain" />
+                                                <div className="mt-2 text-[10px] font-medium text-muted-foreground truncate max-w-[200px] px-1">
                                                     {f.name}
                                                 </div>
                                             </div>
                                             {/* Arrow */}
-                                            <div className="absolute -bottom-1 left-6 w-3 h-3 bg-white dark:bg-stone-900 rotate-45 border-b border-r border-stone-100 dark:border-stone-800 shadow-[2px_2px_2px_-1px_rgba(0,0,0,0.05)]" />
+                                            <div className="absolute -bottom-1 left-6 w-3 h-3 bg-popover rotate-45 border-b border-r border-border shadow-[2px_2px_2px_-1px_rgba(0,0,0,0.05)]" />
                                         </div>
                                     )}
 
                                     {/* Tooltip for non-images */}
                                     {!previewUrl && (
                                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 whitespace-nowrap">
-                                            <div className="bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 text-xs px-3 py-1.5 rounded-lg shadow-lg">
+                                            <div className="bg-popover-foreground text-popover text-xs px-3 py-1.5 rounded-sm shadow-lg">
                                                 {f.name}
                                             </div>
-                                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-stone-800 dark:bg-stone-100 rotate-45" />
+                                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-popover-foreground rotate-45" />
                                         </div>
                                     )}
                                 </motion.div>
@@ -205,7 +205,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="text-[10px] text-stone-400 dark:text-stone-500 mb-1.5 ml-4 font-medium"
+                        className="text-[10px] text-muted-foreground mb-1.5 ml-4 font-medium"
                     >
                         Use <span className="font-bold">Shift + Enter</span> for new line
                     </motion.div>
@@ -214,7 +214,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
 
             <form
                 className={clsx(
-                    "bg-white dark:bg-stone-900 rounded-[1.5rem] p-1 px-2 shadow-lg shadow-stone-200/40 dark:shadow-none border border-stone-100 dark:border-stone-800 flex gap-1 transition-all duration-200 ease-in-out focus-within:shadow-xl focus-within:shadow-stone-200/60 dark:focus-within:shadow-none min-h-[40px]",
+                    "bg-card rounded-lg p-1 px-2 shadow-lg border border-border flex gap-1 transition-all duration-200 ease-in-out focus-within:shadow-xl min-h-[40px]",
                     isExpanded ? "items-end" : "items-center"
                 )}
             >                <button
@@ -224,8 +224,8 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                     "p-1.5 rounded-full transition-colors",
                     isExpanded && "mb-0.5",
                     attachments.length >= 3
-                        ? "text-stone-300 dark:text-stone-600 cursor-not-allowed"
-                        : "text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
+                        ? "text-muted-foreground cursor-not-allowed"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
                 disabled={attachments.length >= 3 || isStreaming}
             >
@@ -241,7 +241,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
 
                 <textarea
                     ref={textareaRef}
-                    className="flex-1 bg-transparent border-none focus:outline-none text-stone-700 dark:text-stone-200 placeholder:text-stone-300 dark:placeholder:text-stone-600 text-sm resize-none py-2.5 max-h-[120px] scrollbar-none"
+                    className="flex-1 bg-transparent border-none focus:outline-none text-foreground placeholder:text-muted-foreground text-sm resize-none py-2.5 max-h-[120px] scrollbar-none"
                     placeholder={attachments.length > 0 ? "Add a caption..." : "Type a message..."}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -258,8 +258,8 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                         "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shrink-0",
                         isExpanded && "mb-0.5",
                         ((input.trim() || attachments.length > 0) || isStreaming)
-                            ? "bg-stone-800 text-white shadow-md hover:scale-105 dark:bg-stone-100 dark:text-stone-900"
-                            : "bg-stone-100 text-stone-300 cursor-not-allowed dark:bg-stone-800 dark:text-stone-600"
+                            ? "bg-primary text-primary-foreground shadow-md hover:scale-105"
+                            : "bg-muted text-muted-foreground cursor-not-allowed"
                     )}
                 >
                     {isStreaming ? (

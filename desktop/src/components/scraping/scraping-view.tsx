@@ -124,20 +124,20 @@ export const ScrapingView = () => {
     <div className="h-full px-4 py-3 flex flex-col relative overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-center mb-4 shrink-0">
-            <h2 className="text-xl font-light text-stone-800 dark:text-stone-200">Web Research</h2>
+            <h2 className="text-xl font-light text-foreground">Web Research</h2>
             <div className="flex items-center gap-2">
                 {/* Model Selector */}
                 {availableModels.length > 0 && selectedModel && (
                     <Popover.Root>
                         <Popover.Trigger asChild>
-                            <button className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-xl text-xs font-medium text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
+                            <button className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
                                 <Cpu size={14} />
                                 <span>{availableModels.find(m => m.id === selectedModel)?.name}</span>
-                                <ChevronDown size={14} className="text-stone-400" />
+                                <ChevronDown size={14} className="text-muted-foreground" />
                             </button>
                         </Popover.Trigger>
                         <Popover.Portal>
-                            <Popover.Content className="z-50 min-w-[200px] bg-white dark:bg-stone-900 rounded-xl border border-stone-100 dark:border-stone-800 shadow-xl p-1 animate-in fade-in zoom-in-95 duration-200" sideOffset={5}>
+                            <Popover.Content className="z-50 min-w-[200px] bg-popover rounded-lg border border-border shadow-xl p-1 animate-in fade-in zoom-in-95 duration-200" sideOffset={5}>
                                 <div className="max-h-[300px] overflow-y-auto scrollbar-none">
                                     {(Object.entries(groupedModels ?? {}) as [string, { id: string; name: string; provider: string }[]][]).map(([provider, models]) => {
                                         // Ensure models is defined before proceeding
@@ -146,7 +146,7 @@ export const ScrapingView = () => {
 
                                         return (
                                             <div key={provider} className="mb-2 last:mb-0">
-                                                <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                                                <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                                     {PROVIDER_LABELS[provider] || provider}
                                                 </div>
                                                 {modelList.map(model => (
@@ -154,14 +154,14 @@ export const ScrapingView = () => {
                                                         key={model.id}
                                                         onClick={() => setSelectedModel(model.id)}
                                                         className={clsx(
-                                                            "w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors flex items-center justify-between",
+                                                            "w-full text-left px-2 py-1.5 rounded-md text-xs transition-colors flex items-center justify-between",
                                                             selectedModel === model.id
-                                                                ? "bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200"
-                                                                : "text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800"
+                                                                ? "bg-accent text-accent-foreground"
+                                                                : "text-muted-foreground hover:bg-muted"
                                                         )}
                                                     >
                                                         {model.name}
-                                                        {selectedModel === model.id && <div className="w-1.5 h-1.5 rounded-full bg-stone-800 dark:bg-stone-200" />}
+                                                        {selectedModel === model.id && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                                                     </button>
                                                 ))}
                                             </div>
@@ -176,10 +176,10 @@ export const ScrapingView = () => {
         </div>
 
         {/* Input Area */}
-        <div className="bg-white dark:bg-stone-900 p-2 rounded-[1.5rem] shadow-lg shadow-stone-200/50 dark:shadow-none border border-stone-100 dark:border-stone-800 flex flex-col gap-1.5 shrink-0 mb-4 relative overflow-hidden">
+        <div className="bg-card p-2 rounded-md shadow-lg border border-border flex flex-col gap-1.5 shrink-0 mb-4 relative overflow-hidden">
             {isLoading && (
                 <motion.div 
-                    className="absolute bottom-0 left-0 h-1 bg-stone-800 dark:bg-stone-100 z-10"
+                    className="absolute bottom-0 left-0 h-1 bg-primary z-10"
                     initial={{ width: 0 }}
                     animate={{ width: "100%" }}
                     transition={{ duration: 2, ease: "linear" }}
@@ -187,9 +187,9 @@ export const ScrapingView = () => {
             )}
             
             <div className="flex items-center px-3 pt-1">
-                <Globe size={16} className="text-stone-400 mr-2" />
+                <Globe size={16} className="text-muted-foreground mr-2" />
                 <input 
-                    className="flex-1 h-8 bg-transparent text-stone-700 dark:text-stone-300 placeholder:text-stone-300 dark:placeholder:text-stone-600 focus:outline-none font-mono text-xs"
+                    className="flex-1 h-8 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none font-mono text-xs"
                     placeholder="https://example.com"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
@@ -197,12 +197,12 @@ export const ScrapingView = () => {
                 />
             </div>
 
-            <div className="h-px bg-stone-100 dark:bg-stone-800 mx-3" />
+            <div className="h-px bg-border mx-3" />
 
             <div className="flex items-center px-3 pb-1">
-                <Bot size={16} className="text-stone-400 mr-2" />
+                <Bot size={16} className="text-muted-foreground mr-2" />
                 <input 
-                    className="flex-1 h-8 bg-transparent text-stone-700 dark:text-stone-300 placeholder:text-stone-300 dark:placeholder:text-stone-600 focus:outline-none text-xs"
+                    className="flex-1 h-8 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none text-xs"
                     placeholder="What do you want to find?"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
@@ -215,7 +215,7 @@ export const ScrapingView = () => {
                 <button 
                     onClick={handleScrape}
                     disabled={isLoading || !url}
-                    className="w-8 h-8 bg-stone-800 dark:bg-stone-100 rounded-full flex items-center justify-center text-white dark:text-stone-900 disabled:bg-stone-100 dark:disabled:bg-stone-800 disabled:text-stone-300 dark:disabled:text-stone-600 transition-colors ml-2"
+                    className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground disabled:bg-muted disabled:text-muted-foreground transition-colors ml-2"
                 >
                     {isLoading ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
                 </button>
@@ -227,7 +227,7 @@ export const ScrapingView = () => {
             {/* History List */}
             <div className={clsx("flex-1 overflow-y-auto scrollbar-none space-y-2 transition-all flex flex-col px-1 -mx-1", selectedResult ? "hidden md:block md:w-1/3" : "w-full")}>
                 {history.length === 0 && (
-                    <div className="text-center py-12 text-stone-400 flex flex-col items-center gap-3 opacity-50">
+                    <div className="text-center py-12 text-muted-foreground flex flex-col items-center gap-3 opacity-50">
                         <FileText size={40} strokeWidth={1} />
                         <p className="text-sm">No research tasks yet.</p>
                     </div>
@@ -237,16 +237,16 @@ export const ScrapingView = () => {
                     <div
                         key={item.id}
                         className={clsx(
-                            "p-3 rounded-2xl border cursor-pointer transition-all hover:shadow-md group relative flex flex-col justify-between h-24",
+                            "p-3 rounded-md border cursor-pointer transition-all hover:shadow-md group relative flex flex-col justify-between h-24",
                             selectedResult === item.result 
-                                ? "bg-stone-800 dark:bg-stone-100 text-stone-50 dark:text-stone-900 border-stone-800 dark:border-stone-100 shadow-lg" 
-                                : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 border-stone-100 dark:border-stone-800 hover:border-stone-200 dark:hover:border-stone-700"
+                                ? "bg-primary text-primary-foreground border-primary shadow-lg" 
+                                : "bg-card text-foreground border-border hover:border-muted-foreground/30"
                         )}
                         onClick={() => setSelectedResult(item.result)}
                     >
                         <div>
                             <div className="flex justify-between items-start mb-1.5">
-                                <span className={clsx("text-[10px] font-bold uppercase tracking-widest truncate max-w-[150px]", selectedResult === item.result ? "text-stone-400 dark:text-stone-500" : "text-stone-300 dark:text-stone-600")}>
+                                <span className={clsx("text-[10px] font-bold uppercase tracking-widest truncate max-w-[150px]", selectedResult === item.result ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                     {new URL(item.url).hostname}
                                 </span>
                             </div>
@@ -254,7 +254,7 @@ export const ScrapingView = () => {
                         </div>
                         
                         <div className="flex justify-end mt-auto">
-                            <span className={clsx("text-[9px]", selectedResult === item.result ? "text-stone-500 dark:text-stone-400" : "text-stone-300 dark:text-stone-600")}>
+                            <span className={clsx("text-[9px]", selectedResult === item.result ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                 {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
@@ -262,8 +262,8 @@ export const ScrapingView = () => {
                         <button 
                             onClick={(e) => { e.stopPropagation(); deleteTask(item.id); if(selectedResult === item.result) setSelectedResult(null); }}
                             className={clsx(
-                                "absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg",
-                                selectedResult === item.result ? "hover:bg-stone-700 dark:hover:bg-stone-200 text-stone-400 dark:text-stone-500" : "hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 dark:text-stone-600 hover:text-red-400"
+                                "absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md",
+                                selectedResult === item.result ? "hover:bg-primary-foreground/20 text-primary-foreground/70" : "hover:bg-muted text-muted-foreground hover:text-destructive"
                             )}
                         >
                             <Trash2 size={12} />
@@ -275,7 +275,7 @@ export const ScrapingView = () => {
                     <div className="pt-2 flex justify-center mt-auto pb-2">
                         <button 
                             onClick={clearHistory}
-                            className="text-stone-400 hover:text-red-400 text-[10px] uppercase tracking-wider font-medium transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800"
+                            className="text-muted-foreground hover:text-destructive text-[10px] uppercase tracking-wider font-medium transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-muted"
                         >
                             <Trash2 size={12} />
                             Clear All History
@@ -292,24 +292,24 @@ export const ScrapingView = () => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ duration: 0.2 }}
-                        className="flex-[2] bg-white dark:bg-stone-900 rounded-3xl border border-stone-100 dark:border-stone-800 shadow-sm overflow-hidden flex flex-col absolute inset-0 md:static z-20"
+                        className="flex-[2] bg-card rounded-md border border-border shadow-sm overflow-hidden flex flex-col absolute inset-0 md:static z-20"
                     >
-                        <div className="p-3 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-stone-50/50 dark:bg-stone-800/50 shrink-0">
-                            <h3 className="font-bold text-stone-700 dark:text-stone-300 text-xs uppercase tracking-wide">Analysis Result</h3>
-                            <button onClick={() => setSelectedResult(null)} className="p-1.5 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full md:hidden">
-                                <ArrowRight size={16} className="rotate-180 text-stone-400" />
+                        <div className="p-3 border-b border-border flex justify-between items-center bg-muted/30 shrink-0">
+                            <h3 className="font-bold text-foreground text-xs uppercase tracking-wide">Analysis Result</h3>
+                            <button onClick={() => setSelectedResult(null)} className="p-1.5 hover:bg-muted rounded-full md:hidden">
+                                <ArrowRight size={16} className="rotate-180 text-muted-foreground" />
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4">
                             <div className="prose prose-stone dark:prose-invert prose-xs max-w-none font-mono text-xs leading-relaxed break-words
-                                prose-p:text-stone-600 dark:prose-p:text-stone-400 prose-p:my-2
-                                prose-headings:font-bold prose-headings:text-stone-800 dark:prose-headings:text-stone-200 prose-headings:my-3 prose-headings:tracking-tight
-                                prose-strong:font-bold prose-strong:text-stone-800 dark:prose-strong:text-stone-200
+                                prose-p:text-muted-foreground prose-p:my-2
+                                prose-headings:font-bold prose-headings:text-foreground prose-headings:my-3 prose-headings:tracking-tight
+                                prose-strong:font-bold prose-strong:text-foreground
                                 prose-ul:my-2 prose-ul:list-disc prose-ul:pl-4
                                 prose-ol:my-2 prose-ol:list-decimal prose-ol:pl-4
                                 prose-li:my-0.5
-                                prose-blockquote:border-l-2 prose-blockquote:border-stone-200 dark:prose-blockquote:border-stone-700 prose-blockquote:pl-3 prose-blockquote:italic
-                                    prose-code:bg-stone-100 dark:prose-code:bg-stone-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none"
+                                prose-blockquote:border-l-2 prose-blockquote:border-border prose-blockquote:pl-3 prose-blockquote:italic
+                                    prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none"
                             >
                                 <Markdown 
                                     remarkPlugins={[remarkGfm, remarkBreaks]}
@@ -317,7 +317,7 @@ export const ScrapingView = () => {
                                         ul: ({...props}) => <ul className="list-disc pl-4 my-2 space-y-2" {...props} />,
                                         ol: ({...props}) => <ol className="list-decimal pl-7 my-2 space-y-2" {...props} />,
                                         li: ({...props}) => <li className="pl-1" {...props} />,
-                                        strong: ({...props}) => <strong className="font-bold text-stone-800 dark:text-stone-200 mt-4 inline-block" {...props} />
+                                        strong: ({...props}) => <strong className="font-bold text-foreground mt-4 inline-block" {...props} />
                                     }}
                                 >
                                     {selectedResult}

@@ -120,8 +120,7 @@ export const MessageList = () => {
     >
       {activeChat && messages.length > 0 && (
         <div className="sticky top-0 z-20 w-full flex justify-center items-center">
-          <div className="flex items-center justify-center h-full bg-[#FAF9F6]/30 dark:bg-[#1C1917]/30 backdrop-blur-md px-3 py-1 rounded-full border border-stone-100 dark:border-stone-800/40 shadow-sm">
-            <span className="text-[10px] font-medium text-stone-400 dark:text-stone-300 tracking-widest ">
+                      <div className="flex items-center justify-center h-full bg-background/30 backdrop-blur-md px-3 py-1 rounded-full border border-border/40 shadow-sm">            <span className="text-[10px] font-medium text-stone-400 dark:text-stone-300 tracking-widest ">
               {activeChat.title}
             </span>
           </div>

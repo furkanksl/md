@@ -27,7 +27,7 @@ export const UpdatePoster = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={dismissUpdate}
-                        className="absolute inset-0 bg-stone-200/50 dark:bg-black/50 backdrop-blur-sm"
+                        className="absolute inset-0 bg-background/50 backdrop-blur-sm"
                     />
 
                     {/* Modal */}
@@ -36,7 +36,7 @@ export const UpdatePoster = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-                        className="relative w-full max-w-sm bg-white dark:bg-[#1C1917] rounded-[2rem] shadow-2xl shadow-stone-200/50 dark:shadow-black/50 border border-stone-200 dark:border-stone-800 overflow-hidden"
+                        className="relative w-full max-w-sm bg-card rounded-lg shadow-xl border border-border overflow-hidden"
                     >
                         <div className="p-4">
                             {/* Header Badge */}
@@ -48,46 +48,46 @@ export const UpdatePoster = () => {
 
                                 <button
                                     onClick={dismissUpdate}
-                                    className="p-2 -mr-2 text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 transition-colors rounded-full hover:bg-stone-50 dark:hover:bg-stone-800"
+                                    className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
                                 >
                                     <X size={16} />
                                 </button>
                             </div>
 
                             <div className="mb-6">
-                                <h2 className="text-xl font-semibold text-stone-800 dark:text-stone-100 tracking-tight mb-1">
+                                <h2 className="text-xl font-semibold text-foreground tracking-tight mb-1">
                                     Version {version} is here
                                 </h2>
-                                <p className="text-sm text-stone-500 dark:text-stone-400">
+                                <p className="text-sm text-muted-foreground">
                                     A fresh update with improvements and fixes.
                                 </p>
                             </div>
 
                             {isDownloading ? (
-                                <div className="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
-                                    <div className="flex items-center justify-between text-xs font-medium text-stone-600 dark:text-stone-300 mb-3">
+                                <div className="bg-muted/50 rounded-lg p-4 border border-border">
+                                    <div className="flex items-center justify-between text-xs font-medium text-foreground mb-3">
                                         <span>Downloading...</span>
                                         <span>{Math.round(downloadProgress || 0)}%</span>
                                     </div>
-                                    <div className="h-1.5 w-full bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden">
+                                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${downloadProgress || 0}%` }}
-                                            className="h-full bg-stone-800 dark:bg-stone-100"
+                                            className="h-full bg-primary"
                                         />
                                     </div>
                                 </div>
                             ) : (
                                 <>
                                     {/* Release Notes Area */}
-                                    <div className="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 mb-6 border border-stone-100 dark:border-stone-800 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-stone-200 dark:scrollbar-thumb-stone-800">
-                                        <div className="prose prose-stone dark:prose-invert prose-sm text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                                    <div className="bg-muted/30 rounded-lg p-4 mb-6 border border-border max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted">
+                                        <div className="prose prose-stone dark:prose-invert prose-sm text-xs text-muted-foreground leading-relaxed">
                                             <ReactMarkdown>{body || "Includes bug fixes and performance improvements."}</ReactMarkdown>
                                         </div>
                                     </div>
 
                                     {error && (
-                                        <div className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-xl mb-4">
+                                        <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-lg mb-4">
                                             <AlertCircle size={14} />
                                             <span>{error}</span>
                                         </div>
@@ -97,14 +97,14 @@ export const UpdatePoster = () => {
                                     <div className="flex gap-3">
                                         <button
                                             onClick={dismissUpdate}
-                                            className="flex-1 py-3 px-4 rounded-full text-xs font-medium text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+                                            className="flex-1 py-3 px-4 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                         >
                                             Not now
                                         </button>
                                         {manualDownloadUrl ? (
                                             <button
                                                 onClick={() => open(manualDownloadUrl)}
-                                                className="flex-[2] py-3 px-4 bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 rounded-full text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-stone-200/50 dark:shadow-none"
+                                                className="flex-[2] py-3 px-4 bg-primary text-primary-foreground rounded-full text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-primary/20"
                                             >
                                                 <ExternalLink size={14} />
                                                 Download Update
@@ -112,7 +112,7 @@ export const UpdatePoster = () => {
                                         ) : (
                                             <button
                                                 onClick={installUpdate}
-                                                className="flex-[2] py-3 px-4 bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 rounded-full text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-stone-200/50 dark:shadow-none"
+                                                className="flex-[2] py-3 px-4 bg-primary text-primary-foreground rounded-full text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-primary/20"
                                             >
                                                 <Download size={14} />
                                                 Install Update

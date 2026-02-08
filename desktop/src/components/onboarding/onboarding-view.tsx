@@ -80,7 +80,7 @@ export const OnboardingView = () => {
                 <button
                     onClick={() => setDrawerPosition('left')}
                     className={clsx(
-                        "flex items-center justify-center gap-2 p-3 rounded-xl border transition-all h-12",
+                        "flex items-center justify-center gap-2 p-3 rounded-lg border transition-all h-12",
                         drawerPosition === 'left'
                             ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
                             : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
@@ -92,7 +92,7 @@ export const OnboardingView = () => {
                 <button
                     onClick={() => setDrawerPosition('right')}
                     className={clsx(
-                        "flex items-center justify-center gap-2 p-3 rounded-xl border transition-all h-12",
+                        "flex items-center justify-center gap-2 p-3 rounded-lg border transition-all h-12",
                         drawerPosition === 'right'
                             ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
                             : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
@@ -108,7 +108,7 @@ export const OnboardingView = () => {
                     <button
                         onClick={() => setDrawerPosition('top-left')}
                         className={clsx(
-                            "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                            "flex flex-col items-center justify-center gap-1 p-2 rounded-lg border transition-all h-16",
                             drawerPosition === 'top-left'
                                 ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
                                 : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
@@ -120,7 +120,7 @@ export const OnboardingView = () => {
                     <button
                         onClick={() => setDrawerPosition('bottom-left')}
                         className={clsx(
-                            "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                            "flex flex-col items-center justify-center gap-1 p-2 rounded-lg border transition-all h-16",
                             drawerPosition === 'bottom-left'
                                 ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
                                 : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
@@ -134,7 +134,7 @@ export const OnboardingView = () => {
                     <button
                         onClick={() => setDrawerPosition('top-right')}
                         className={clsx(
-                            "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                            "flex flex-col items-center justify-center gap-1 p-2 rounded-lg border transition-all h-16",
                             drawerPosition === 'top-right'
                                 ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
                                 : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
@@ -146,7 +146,7 @@ export const OnboardingView = () => {
                     <button
                         onClick={() => setDrawerPosition('bottom-right')}
                         className={clsx(
-                            "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                            "flex flex-col items-center justify-center gap-1 p-2 rounded-lg border transition-all h-16",
                             drawerPosition === 'bottom-right'
                                 ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
                                 : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
@@ -161,7 +161,7 @@ export const OnboardingView = () => {
             <button
                 onClick={() => setDrawerPosition('hot-corners')}
                 className={clsx(
-                    "flex items-center justify-center gap-2 p-3 rounded-xl border transition-all h-12 w-full",
+                    "flex items-center justify-center gap-2 p-3 rounded-lg border transition-all h-12 w-full",
                     drawerPosition === 'hot-corners'
                         ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
                         : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
@@ -187,7 +187,7 @@ export const OnboardingView = () => {
             )}>
                 <div className="flex items-center gap-3">
                     <div className={clsx(
-                        "w-10 h-10 rounded-xl flex items-center justify-center",
+                        "w-10 h-10 rounded-lg flex items-center justify-center",
                         hasPermission ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400" : "bg-white text-stone-400 dark:bg-stone-700 dark:text-stone-500"
                     )}>
                         <Shield size={20} />
@@ -208,7 +208,7 @@ export const OnboardingView = () => {
                     <button
                         onClick={requestPermission}
                         disabled={isChecking}
-                        className="px-3 py-1.5 bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 text-xs font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                        className="px-3 py-1.5 bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 text-xs font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
                         {isChecking ? "Checking..." : "Enable"}
                     </button>
@@ -240,8 +240,7 @@ export const OnboardingView = () => {
   if (!currentStep) return null;
 
   return (
-    <div className="h-full w-full flex flex-col bg-[#FAF9F6] dark:bg-[#1C1917] p-8">
-        <div className="flex-1 flex flex-col items-center justify-center max-w-sm mx-auto w-full">
+                <div className="h-full w-full flex flex-col bg-background p-8">        <div className="flex-1 flex flex-col items-center justify-center max-w-sm mx-auto w-full">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentStep.id}
@@ -285,7 +284,7 @@ export const OnboardingView = () => {
                         handleFinish();
                     }
                 }}
-                className="group flex items-center gap-2 px-5 py-2.5 bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 rounded-xl font-medium text-sm hover:opacity-90 transition-all active:scale-95"
+                className="group flex items-center gap-2 px-5 py-2.5 bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 rounded-lg font-medium text-sm hover:opacity-90 transition-all active:scale-95"
             >
                 {step === steps.length - 1 ? "Get Started" : "Next"}
                 <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />

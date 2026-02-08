@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 
 export const MainLayout = () => {
-  const { activeView, setActiveView, theme, setTheme } = useUIStore();
+  const { activeView, setActiveView, theme, setTheme, themeName } = useUIStore();
   const { hasCompletedOnboarding } = useSettingsStore();
   const { startMonitoring } = useClipboardStore();
   const { updateAvailable, showPoster } = useUpdateStore();
@@ -56,7 +56,8 @@ export const MainLayout = () => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
-  }, [theme]);
+    root.setAttribute("data-theme", themeName);
+  }, [theme, themeName]);
 
   useEffect(() => {
     // Ensure window is set up
@@ -102,7 +103,7 @@ export const MainLayout = () => {
   ] as const;
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#FAF9F6] dark:bg-[#1C1917] overflow-hidden font-sans selection:bg-stone-200 dark:selection:bg-stone-700 backdrop-blur-sm rounded-lg border border-stone-200 dark:border-stone-800">
+    <div className="flex flex-col h-screen w-screen bg-background overflow-hidden font-sans selection:bg-accent selection:text-accent-foreground backdrop-blur-sm rounded-[2rem] border border-border">
       {/* Drag Region */}
       <div
         className="fixed top-0 left-0 w-full h-8 z-40"
@@ -110,15 +111,15 @@ export const MainLayout = () => {
       />
 
       {/* Main Card */}
-      <div className="flex-1 flex flex-col rounded-[2rem] overflow-hidden relative border-none h-full ">
+      <div className="flex-1 flex flex-col rounded-[3rem] overflow-hidden relative border-none h-full ">
         {/* Minimal Header */}
         <header
-          className="h-12 shrink-0 flex items-center justify-between px-3 pl-7 z-50"
+          className="h-12 shrink-0 flex items-center justify-between pr-2 pl-6 z-50"
           data-tauri-drag-region
         >
           <div className="relative">
             <h1
-              className="text-lg font-medium tracking-tight text-stone-800 dark:text-stone-200 cursor-pointer font-sans pointer-events-auto hover:underline"
+              className="text-lg font-medium tracking-tight text-foreground cursor-pointer font-sans pointer-events-auto hover:underline"
               onClick={() => setActiveView("about")}
             >
               md
@@ -148,8 +149,8 @@ export const MainLayout = () => {
                   className={clsx(
                     "w-8 h-8 flex items-center justify-center rounded-full transition-colors relative z-50",
                     isActive
-                      ? "text-stone-800 dark:text-stone-100 bg-stone-100 dark:bg-stone-800"
-                      : "text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
+                      ? "text-accent-foreground bg-accent"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   )}
                   title={item.label}
                 >
@@ -158,7 +159,7 @@ export const MainLayout = () => {
               );
             })}
 
-            <div className="w-px h-4 bg-stone-200 dark:bg-stone-800" />
+            <div className="w-px h-4 bg-border" />
 
             {/* Minimal theme toggle */}
             <button
@@ -166,7 +167,7 @@ export const MainLayout = () => {
               aria-label={
                 theme === "light" ? "Switch to dark mode" : "Switch to light mode"
               }
-              className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 p-0"
+              className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-accent p-0"
             >
               <motion.div
                 key={theme}
@@ -174,7 +175,7 @@ export const MainLayout = () => {
                 animate={{ rotate: 0, opacity: 1, scale: 1 }}
                 exit={{ rotate: 10, opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.22 }}
-                className="flex items-center justify-center w-5 h-5 text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
+                className="flex items-center justify-center w-5 h-5 text-muted-foreground hover:text-foreground hover:bg-accent"
               >
                 {theme === "light" ? (
                   <Moon size={16} strokeWidth={1.5} className="block" />
@@ -227,7 +228,7 @@ export const MainLayout = () => {
         {/* Floating Nav Pill - Only show if onboarding completed */}
         {hasCompletedOnboarding && (
           <div className="h-20 flex items-center justify-center shrink-0">
-            <nav className="flex items-center gap-1.5 bg-white dark:bg-stone-900 p-1.5 rounded-full shadow-lg shadow-stone-200/50 dark:shadow-none border border-stone-100 dark:border-stone-800">
+            <nav className="flex items-center gap-1.5 bg-card p-1.5 rounded-full shadow-lg border border-border">
               {bottomNavItems.map((item) => {
                 const isActive = activeView === item.id;
                 const Icon = item.icon;
@@ -238,15 +239,15 @@ export const MainLayout = () => {
                     className={clsx(
                       "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 relative overflow-hidden group",
                       isActive
-                        ? "text-stone-800 dark:text-stone-100"
-                        : "text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800"
+                        ? "text-accent-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
                     )}
                     title={item.label}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="nav-bg"
-                        className="absolute inset-0 bg-stone-100 dark:bg-stone-800 rounded-full"
+                        className="absolute inset-0 bg-accent rounded-full"
                         transition={{
                           type: "spring",
                           bounce: 0.2,

@@ -7,20 +7,20 @@ export const BehaviorSection = () => {
 
     return (
         <div>
-            <h2 className="text-xl font-light text-stone-800 dark:text-stone-200 mb-4">Behavior</h2>
+            <h2 className="text-xl font-light text-foreground mb-4">Behavior</h2>
             <div className="space-y-3">
-                <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-4 border border-stone-100 dark:border-stone-800 shadow-sm">
+                <div className="bg-card rounded-md p-4 border border-border shadow-sm">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className={clsx(
-                                "w-10 h-10 rounded-xl flex items-center justify-center",
-                                autoHide ? "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300" : "bg-stone-50 text-stone-400 dark:bg-stone-800/50 dark:text-stone-500"
+                                "w-10 h-10 rounded-md flex items-center justify-center",
+                                autoHide ? "bg-secondary text-secondary-foreground" : "bg-muted/50 text-muted-foreground"
                             )}>
                                 <EyeOff size={20} />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-sm font-medium text-stone-800 dark:text-stone-200">Auto-Hide</span>
-                                <span className="text-xs text-stone-500 dark:text-stone-400">
+                                <span className="text-sm font-medium text-foreground">Auto-Hide</span>
+                                <span className="text-xs text-muted-foreground">
                                     Hide drawer when clicking outside
                                 </span>
                             </div>
@@ -30,26 +30,26 @@ export const BehaviorSection = () => {
                             onClick={() => setAutoHide(!autoHide)}
                             className={clsx(
                                 "w-12 h-7 rounded-full p-1 transition-colors duration-300 ease-in-out relative",
-                                autoHide ? "bg-stone-800 dark:bg-stone-100" : "bg-stone-200 dark:bg-stone-800"
+                                autoHide ? "bg-primary" : "bg-input"
                             )}
                         >
                             <div className={clsx(
-                                "w-5 h-5 rounded-full bg-white dark:bg-stone-900 shadow-sm transition-transform duration-300 ease-in-out",
+                                "w-5 h-5 rounded-full bg-background shadow-sm transition-transform duration-300 ease-in-out",
                                 autoHide ? "translate-x-5" : "translate-x-0"
                             )} />
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-4 border border-stone-100 dark:border-stone-800 shadow-sm">
+                <div className="bg-card rounded-md p-4 border border-border shadow-sm">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-md bg-secondary text-secondary-foreground flex items-center justify-center">
                                 {drawerPosition === 'left' ? <PanelLeft size={20} /> : drawerPosition === 'right' ? <PanelRight size={20} /> : <MousePointer2 size={20} />}
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-sm font-medium text-stone-800 dark:text-stone-200">Drawer Position</span>
-                                <span className="text-xs text-stone-500 dark:text-stone-400">
+                                <span className="text-sm font-medium text-foreground">Drawer Position</span>
+                                <span className="text-xs text-muted-foreground">
                                     Choose where the drawer appears
                                 </span>
                             </div>
@@ -59,10 +59,10 @@ export const BehaviorSection = () => {
                             <button
                                 onClick={() => setDrawerPosition('left')}
                                 className={clsx(
-                                    "flex items-center justify-center gap-2 p-3 rounded-xl border transition-all h-10",
+                                    "flex items-center justify-center gap-2 p-3 rounded-md border transition-all h-10",
                                     drawerPosition === 'left'
-                                        ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
-                                        : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                                        ? "bg-primary text-primary-foreground border-transparent"
+                                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
                                 )}
                             >
                                 <PanelLeft size={16} />
@@ -71,10 +71,10 @@ export const BehaviorSection = () => {
                             <button
                                 onClick={() => setDrawerPosition('right')}
                                 className={clsx(
-                                    "flex items-center justify-center gap-2 p-3 rounded-xl border transition-all h-10",
+                                    "flex items-center justify-center gap-2 p-3 rounded-md border transition-all h-10",
                                     drawerPosition === 'right'
-                                        ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
-                                        : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                                        ? "bg-primary text-primary-foreground border-transparent"
+                                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
                                 )}
                             >
                                 <PanelRight size={16} />
@@ -87,10 +87,10 @@ export const BehaviorSection = () => {
                                 <button
                                     onClick={() => setDrawerPosition('top-left')}
                                     className={clsx(
-                                        "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                                        "flex flex-col items-center justify-center gap-1 p-2 rounded-md border transition-all h-16",
                                         drawerPosition === 'top-left'
-                                            ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
-                                            : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                                            ? "bg-primary text-primary-foreground border-transparent"
+                                            : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
                                     )}
                                 >
                                     <div className="w-6 h-6 border-l-2 border-t-2 border-current rounded-tl-md" />
@@ -99,10 +99,10 @@ export const BehaviorSection = () => {
                                 <button
                                     onClick={() => setDrawerPosition('bottom-left')}
                                     className={clsx(
-                                        "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                                        "flex flex-col items-center justify-center gap-1 p-2 rounded-md border transition-all h-16",
                                         drawerPosition === 'bottom-left'
-                                            ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
-                                            : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                                            ? "bg-primary text-primary-foreground border-transparent"
+                                            : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
                                     )}
                                 >
                                     <div className="w-6 h-6 border-l-2 border-b-2 border-current rounded-bl-md" />
@@ -113,10 +113,10 @@ export const BehaviorSection = () => {
                                 <button
                                     onClick={() => setDrawerPosition('top-right')}
                                     className={clsx(
-                                        "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                                        "flex flex-col items-center justify-center gap-1 p-2 rounded-md border transition-all h-16",
                                         drawerPosition === 'top-right'
-                                            ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
-                                            : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                                            ? "bg-primary text-primary-foreground border-transparent"
+                                            : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
                                     )}
                                 >
                                     <div className="w-6 h-6 border-r-2 border-t-2 border-current rounded-tr-md" />
@@ -125,10 +125,10 @@ export const BehaviorSection = () => {
                                 <button
                                     onClick={() => setDrawerPosition('bottom-right')}
                                     className={clsx(
-                                        "flex flex-col items-center justify-center gap-1 p-2 rounded-xl border transition-all h-16",
+                                        "flex flex-col items-center justify-center gap-1 p-2 rounded-md border transition-all h-16",
                                         drawerPosition === 'bottom-right'
-                                            ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
-                                            : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                                            ? "bg-primary text-primary-foreground border-transparent"
+                                            : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
                                     )}
                                 >
                                     <div className="w-6 h-6 border-r-2 border-b-2 border-current rounded-br-md" />
@@ -140,10 +140,10 @@ export const BehaviorSection = () => {
                         <button
                             onClick={() => setDrawerPosition('hot-corners')}
                             className={clsx(
-                                "flex items-center justify-center gap-2 p-3 rounded-xl border transition-all h-10 w-full",
+                                "flex items-center justify-center gap-2 p-3 rounded-md border transition-all h-10 w-full",
                                 drawerPosition === 'hot-corners'
-                                    ? "bg-stone-800 text-white border-transparent dark:bg-stone-100 dark:text-stone-900"
-                                    : "bg-stone-50 text-stone-500 border-transparent hover:bg-stone-100 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:bg-stone-800"
+                                    ? "bg-primary text-primary-foreground border-transparent"
+                                    : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
                             )}
                         >
                             <MousePointer2 size={16} />

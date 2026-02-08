@@ -5,6 +5,7 @@ import { useUIStore } from '@/stores/ui-store';
 import { BehaviorSection } from './sections/behavior-section';
 import { PermissionsSection } from './sections/permissions-section';
 import { IntelligenceSection } from './sections/intelligence-section';
+import { ThemeSection } from './sections/theme-section';
 
 export const SettingsView = () => {
     const { drawerPosition } = useSettingsStore();
@@ -22,6 +23,7 @@ export const SettingsView = () => {
 
     return (
         <div className="h-full px-4 py-3 overflow-y-auto scrollbar-none space-y-6">
+            <ThemeSection />
             <BehaviorSection />
             <IntelligenceSection />
             <PermissionsSection />
@@ -30,7 +32,7 @@ export const SettingsView = () => {
             <div className="flex justify-center pb-4">
                 <button
                     onClick={() => setActiveView("about")}
-                    className="text-[10px] text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-400 transition-colors hover:underline"
+                    className="text-[10px] text-muted-foreground hover:text-foreground transition-colors hover:underline"
                 >
                     About My Drawer
                 </button>

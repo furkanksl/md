@@ -148,13 +148,13 @@ export const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
         animate={{ x: isOpen ? 0 : "-100%" }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
-          "absolute top-0 -left-2 bottom-0 w-72 bg-[#FAF9F6] dark:bg-[#1C1917] border-r border-stone-200 dark:border-stone-800 flex flex-col z-40 shadow-2xl shadow-stone-200/50 dark:shadow-black/50",
+          "absolute top-0 -left-2 bottom-0 w-72 bg-sidebar border-r border-sidebar-border flex flex-col z-40 shadow-2xl shadow-stone-200/50 dark:shadow-black/50",
           {
             "border-r-0 shadow-none": !isOpen,
           }
         )}
       >
-        <div className="p-4 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
+        <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
           <span className="text-xs font-bold uppercase tracking-widest text-stone-400">
             Library
           </span>

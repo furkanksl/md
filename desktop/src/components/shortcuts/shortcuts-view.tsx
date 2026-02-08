@@ -30,7 +30,7 @@ const AppIcon = ({ path, className }: { path: string, className?: string }) => {
     }
 
     return (
-        <div className={`${className} bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-400 dark:text-stone-500`}>
+        <div className={`${className} bg-muted flex items-center justify-center text-muted-foreground`}>
             <AppWindow size={20} />
         </div>
     );
@@ -125,15 +125,15 @@ export const ShortcutsView = () => {
     <div className="h-full px-4 py-3 flex flex-col relative overflow-hidden">
       <div className="flex justify-between items-center mb-4 shrink-0">
         <div className="flex items-center gap-3">
-            <h2 className="text-xl font-light text-stone-800 dark:text-stone-200">My Apps</h2>
-            <div className="flex bg-stone-100 dark:bg-stone-800 rounded-lg p-0.5">
+            <h2 className="text-xl font-light text-foreground">My Apps</h2>
+            <div className="flex bg-muted rounded-md p-0.5">
                 <button
                     onClick={() => setViewMode('grid')}
                     className={clsx(
                         "p-1.5 rounded-md transition-all",
                         viewMode === 'grid' 
-                            ? "bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm" 
-                            : "text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+                            ? "bg-background text-foreground shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground"
                     )}
                 >
                     <LayoutGrid size={14} />
@@ -143,8 +143,8 @@ export const ShortcutsView = () => {
                     className={clsx(
                         "p-1.5 rounded-md transition-all",
                         viewMode === 'list' 
-                            ? "bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm" 
-                            : "text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+                            ? "bg-background text-foreground shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground"
                     )}
                 >
                     <List size={14} />
@@ -153,7 +153,7 @@ export const ShortcutsView = () => {
         </div>
         <button 
           onClick={scanApplications}
-          className="flex items-center gap-1.5 bg-stone-800 dark:bg-stone-100 text-white dark:text-stone-900 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-stone-700 dark:hover:bg-stone-200 transition-colors shadow-lg shadow-stone-200/50 dark:shadow-none"
+          className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-medium hover:opacity-90 transition-colors shadow-lg shadow-primary/20"
         >
           <Plus size={14} />
           <span>Add App</span>
@@ -162,7 +162,7 @@ export const ShortcutsView = () => {
 
       <div className="flex-1 overflow-y-auto pb-4 px-1 -mx-1 scrollbar-none min-h-0">
         {apps.length === 0 ? (
-          <div className="text-center py-12 text-stone-400 flex flex-col items-center gap-4 opacity-50">
+          <div className="text-center py-12 text-muted-foreground flex flex-col items-center gap-4 opacity-50">
             <Layers size={40} strokeWidth={1} />
             <p className="text-sm">No apps pinned yet.</p>
           </div>
@@ -179,8 +179,8 @@ export const ShortcutsView = () => {
                 className={clsx(
                     "group relative transition-all cursor-pointer",
                     viewMode === 'list' 
-                        ? "bg-white dark:bg-stone-900 p-3 rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm hover:shadow-md hover:scale-[1.01] flex items-center justify-between"
-                        : "aspect-square flex items-center justify-center rounded-2xl hover:bg-stone-100 dark:hover:bg-stone-800/50"
+                        ? "bg-card p-3 rounded-md border border-border shadow-sm hover:shadow-md hover:scale-[1.01] flex items-center justify-between"
+                        : "aspect-square flex items-center justify-center rounded-md hover:bg-muted"
                 )}
                 title={app.name}
                 >
@@ -189,11 +189,11 @@ export const ShortcutsView = () => {
                         path={app.path} 
                         className={clsx(
                             "object-contain shrink-0 transition-transform group-hover:scale-110",
-                            viewMode === 'list' ? "w-10 h-10 rounded-xl" : "w-12 h-12 rounded-2xl drop-shadow-sm"
+                            viewMode === 'list' ? "w-10 h-10 rounded-lg" : "w-12 h-12 rounded-md drop-shadow-sm"
                         )} 
                     />
                     {viewMode === 'list' && (
-                        <span className="font-medium text-sm text-stone-700 dark:text-stone-300 truncate">{app.name}</span>
+                        <span className="font-medium text-sm text-foreground truncate">{app.name}</span>
                     )}
                 </div>
                 
@@ -207,7 +207,7 @@ export const ShortcutsView = () => {
                     {viewMode === 'grid' ? (
                         <button 
                             onClick={(e) => { e.stopPropagation(); removeApp(app.id); }}
-                            className="p-1 bg-white dark:bg-stone-800 rounded-full shadow-md text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border border-stone-100 dark:border-stone-700 transition-colors"
+                            className="p-1 bg-card rounded-full shadow-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 border border-border transition-colors"
                         >
                             <Trash2 size={12} />
                         </button>
@@ -215,11 +215,11 @@ export const ShortcutsView = () => {
                         <>
                             <button 
                             onClick={(e) => { e.stopPropagation(); removeApp(app.id); }}
-                            className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-stone-400 hover:text-red-500 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-md transition-colors"
                             >
                             <Trash2 size={14} />
                             </button>
-                            <div className="p-1.5 bg-stone-50 dark:bg-stone-800 rounded-lg text-stone-400 group-hover:text-stone-800 dark:group-hover:text-stone-200">
+                            <div className="p-1.5 bg-muted rounded-md text-muted-foreground group-hover:text-foreground">
                             <Play size={14} fill="currentColor" />
                             </div>
                         </>
@@ -239,20 +239,20 @@ export const ShortcutsView = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-stone-50/95 dark:bg-stone-950/95 backdrop-blur-sm z-50 flex flex-col p-4 overflow-hidden"
+            className="absolute inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col p-4 overflow-hidden"
           >
             <div className="flex items-center gap-2 mb-4 shrink-0">
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 hover:bg-stone-200 dark:hover:bg-stone-800 rounded-full transition-colors"
+                className="p-1.5 hover:bg-muted rounded-full transition-colors"
               >
-                <X size={18} className="text-stone-600 dark:text-stone-400" />
+                <X size={18} className="text-muted-foreground" />
               </button>
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                 <input 
                   autoFocus
-                  className="w-full bg-white dark:bg-stone-900 h-9 rounded-xl pl-9 pr-3 text-sm focus:outline-none border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 placeholder:text-stone-400"
+                  className="w-full bg-input h-9 rounded-lg pl-9 pr-3 text-sm focus:outline-none border border-border text-foreground placeholder:text-muted-foreground"
                   placeholder="Search /Applications..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -263,7 +263,7 @@ export const ShortcutsView = () => {
             <div className="flex-1 overflow-y-auto scrollbar-none min-h-0">
                 <div className="space-y-1 pb-4">
                     {isLoadingApps ? (
-                        <div className="flex flex-col items-center justify-center h-40 gap-2 text-stone-400">
+                        <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
                         <Loader2 size={20} className="animate-spin" />
                         <span className="text-xs">Scanning Applications...</span>
                         </div>
@@ -273,13 +273,13 @@ export const ShortcutsView = () => {
                                                         <button
                                                             key={app.path}
                                                             onClick={() => handleAddApp(app)}
-                                                            className="w-full flex items-center gap-3 p-2.5 hover:bg-white dark:hover:bg-stone-900 hover:shadow-sm rounded-xl transition-all text-left group border border-transparent hover:border-stone-100 dark:hover:border-stone-800"
+                                                            className="w-full flex items-center gap-3 p-2.5 hover:bg-card hover:shadow-sm rounded-lg transition-all text-left group border border-transparent hover:border-border"
                                                         >
-                                                            <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-400 shrink-0">
+                                                            <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-muted-foreground shrink-0">
                                                                 <AppWindow size={16} />
                                                             </div>
-                                                            <span className="text-xs font-medium text-stone-700 dark:text-stone-300 flex-1 truncate">{app.name}</span>
-                                                            <Plus size={14} className="text-stone-300 group-hover:text-stone-600 dark:group-hover:text-stone-400" />
+                                                            <span className="text-xs font-medium text-foreground flex-1 truncate">{app.name}</span>
+                                                            <Plus size={14} className="text-muted-foreground/50 group-hover:text-foreground" />
                                                         </button>                            ))}
                             {/* Sentinel for Infinite Scroll */}
                             <div ref={loadMoreRef} className="h-4" />

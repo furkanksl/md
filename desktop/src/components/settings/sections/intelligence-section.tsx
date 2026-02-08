@@ -128,7 +128,7 @@ export const IntelligenceSection = () => {
 
     return (
         <div>
-            <h2 className="text-xl font-light text-stone-800 dark:text-stone-200 mb-4">Intelligence</h2>
+            <h2 className="text-xl font-light text-foreground mb-4">Intelligence</h2>
 
             <div className="grid grid-cols-2 gap-3 mb-6">
                 {PROVIDERS.map((p) => {
@@ -138,10 +138,10 @@ export const IntelligenceSection = () => {
                             key={p.id}
                             onClick={() => setActiveProvider(p.id)}
                             className={clsx(
-                                "h-12 rounded-2xl text-xs font-medium transition-all duration-300 relative overflow-hidden border",
+                                "h-12 rounded-lg text-xs font-medium transition-all duration-300 relative overflow-hidden border",
                                 isActive
-                                    ? "bg-stone-800 text-white shadow-lg shadow-stone-300/50 border-transparent dark:bg-stone-100 dark:text-stone-900"
-                                    : "bg-white text-stone-500 hover:bg-stone-50 border-stone-100 dark:bg-stone-900 dark:text-stone-400 dark:border-stone-800 dark:hover:bg-stone-800"
+                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 border-transparent"
+                                    : "bg-card text-muted-foreground hover:bg-muted border-border"
                             )}
                         >
                             {isActive && (
@@ -155,44 +155,44 @@ export const IntelligenceSection = () => {
                 })}
             </div>
 
-            <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-6 border border-stone-100 dark:border-stone-800 shadow-sm flex flex-col gap-4">
+            <div className="bg-card rounded-[1.5rem] p-6 border border-border shadow-sm flex flex-col gap-4">
                 {activeProvider !== 'custom' ? (
                     <>
                         <div>
-                            <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 ml-1">
+                            <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 ml-1">
                                 API Access Key
                             </label>
                             <div className="relative">
                                 <input
                                     type="password"
                                     className={clsx(
-                                        "w-full bg-stone-50 dark:bg-stone-800 h-10 rounded-xl px-4 pr-10 text-stone-600 dark:text-stone-300 focus:outline-none focus:ring-2 transition-all font-mono text-xs",
-                                        testStatus === 'error' ? "focus:ring-red-200 dark:focus:ring-red-900/50" : "focus:ring-stone-100 dark:focus:ring-stone-700"
+                                        "w-full bg-input h-10 rounded-lg px-4 pr-10 text-foreground focus:outline-none focus:ring-2 transition-all font-mono text-xs",
+                                        testStatus === 'error' ? "focus:ring-red-200 dark:focus:ring-red-900/50" : "focus:ring-ring"
                                     )}
                                     placeholder="sk-..."
                                     value={apiKey}
                                     onChange={(e) => { setApiKey(e.target.value); setSaveState('idle'); }}
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                    {testStatus === 'testing' && <Loader2 size={14} className="animate-spin text-stone-400" />}
+                                    {testStatus === 'testing' && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
                                     {testStatus === 'success' && <CircleCheck size={14} className="text-green-500" />}
                                     {testStatus === 'error' && <CircleX size={14} className="text-red-500" />}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-stone-800">
-                            <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">
+                        <div className="space-y-2 pt-2 border-t border-border">
+                            <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                                 Enabled Models
                             </label>
                             <div className="flex flex-col gap-1 max-h-48 overflow-y-auto scrollbar-none">
                                 {MODELS.filter(m => m.provider === activeProvider).map(model => (
-                                    <label key={model.id} className="flex items-center gap-3 p-2 hover:bg-stone-50 dark:hover:bg-stone-800 rounded-lg cursor-pointer transition-colors">
+                                    <label key={model.id} className="flex items-center gap-3 p-2 hover:bg-muted rounded-md cursor-pointer transition-colors">
                                         <div className={clsx(
                                             "w-4 h-4 rounded border flex items-center justify-center transition-colors",
                                             localEnabledModels.includes(model.id)
-                                                ? "bg-stone-800 border-stone-800 text-white dark:bg-stone-100 dark:border-stone-100 dark:text-stone-900"
-                                                : "border-stone-300 dark:border-stone-600 bg-transparent"
+                                                ? "bg-primary border-primary text-primary-foreground"
+                                                : "border-input bg-transparent"
                                         )}>
                                             {localEnabledModels.includes(model.id) && <Check size={10} strokeWidth={3} />}
                                         </div>
@@ -203,7 +203,7 @@ export const IntelligenceSection = () => {
                                             onChange={() => toggleLocalModel(model.id)}
                                         />
                                         <div className="flex flex-col">
-                                            <div className="text-xs font-medium text-stone-700 dark:text-stone-200 flex items-center justify-center gap-1">
+                                            <div className="text-xs font-medium text-foreground flex items-center justify-center gap-1">
                                                 {model.name}
                                                 {model.capabilities.webSearch && (
                                                     <span className="p-1 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-[4px] flex items-center justify-center" title="Web Search">
@@ -221,7 +221,7 @@ export const IntelligenceSection = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-[10px] text-stone-400 font-mono">{model.id}</span>
+                                            <span className="text-[10px] text-muted-foreground font-mono">{model.id}</span>
                                         </div>
                                     </label>
                                 ))}
@@ -241,7 +241,7 @@ export const IntelligenceSection = () => {
                             onClick={handleTestConnection}
                             disabled={testStatus === 'testing' || !apiKey}
                             className={clsx(
-                                "px-4 py-2 bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400 rounded-xl text-xs font-medium hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[90px]",
+                                "px-4 py-2 bg-muted text-muted-foreground rounded-lg text-xs font-medium hover:bg-muted/80 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[90px]",
                                 testStatus === 'error' && "bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30",
                                 testStatus === 'success' && "bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
                             )}
@@ -297,12 +297,12 @@ export const IntelligenceSection = () => {
                         onClick={handleSave}
                         disabled={!hasChanges && saveState !== 'saved'}
                         className={clsx(
-                            "px-6 py-2 rounded-xl text-xs font-medium transition-all duration-200 shadow-lg shadow-stone-200/50 dark:shadow-none flex items-center justify-center",
+                            "px-6 py-2 rounded-lg text-xs font-medium transition-all duration-200 shadow-lg shadow-stone-200/50 dark:shadow-none flex items-center justify-center",
                             saveState === 'saved'
                                 ? "bg-green-600 text-white hover:bg-green-700"
                                 : hasChanges
-                                    ? "bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 hover:opacity-90"
-                                    : "bg-stone-200 text-stone-400 dark:bg-stone-800 dark:text-stone-600 cursor-not-allowed shadow-none"
+                                    ? "bg-primary text-primary-foreground hover:opacity-90"
+                                    : "bg-muted/50 text-muted-foreground cursor-not-allowed shadow-none"
                         )}
                     >
                         <AnimatePresence mode="wait" initial={false}>
