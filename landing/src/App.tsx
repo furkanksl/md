@@ -42,8 +42,8 @@ function App() {
       <section className="min-h-[50vh] w-full flex flex-col justify-center relative bg-[#FAF9F6] py-20 md:py-0">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-12 w-full">
           <div className="text-center mb-12 space-y-6 flex flex-col items-center">
-            <h2 className="text-2xl font-bold">Ready to streamline your workflow?</h2>
-            <p className="text-[#44403C]/60">Download My Drawer today.</p>
+            <h2 className="text-xl sm:text-2xl font-bold">It's completely free and open source.</h2>
+            <p className="text-[#44403C]/60">Give us a star on GitHub to support us or an upvote on Product Hunt.</p>
             <a href="https://www.producthunt.com/products/my-drawer?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-my-drawer" target="_blank" rel="noopener noreferrer" className="hover:opacity-90 transition-opacity">
               <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1074628&theme=light&t=1770347625097" alt="My Drawer - Intelligent sidebar for MacOS | FREE & OS | Product Hunt" style={{ width: '250px', height: '54px' }} width="250" height="54" />
             </a>

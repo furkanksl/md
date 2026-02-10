@@ -171,7 +171,7 @@ export const DesktopMock = () => {
                                     className="absolute top-1/2 left-2 -translate-y-1/2 flex flex-col items-start gap-1 pointer-events-none z-10"
                                 >
                                     <div className="w-14 h-14 flex items-center justify-center opacity-100 transform scale-x-[-1] drop-shadow-sm">
-                                        <img src="/assets/common/hand_drawn_curved_arrow_pointing.png" className="w-full h-full object-contain" alt="Hover Arrow" />
+                                        <img src="/assets/common/hand_drawn_curved_arrow_pointing.webp" className="w-full h-full object-contain" alt="Hover Arrow" />
                                     </div>
                                     <span className="ml-8 text-xs text-stone-600 tracking-wide font-light drop-shadow-sm text-right">Hover to open</span>
                                 </motion.div>
