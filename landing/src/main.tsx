@@ -4,7 +4,7 @@ import App from './App.tsx'
 import './index.css'
 
 // Force dark mode for now to match the desktop app's "Zen Dark" vibe as the default for the landing page
-document.documentElement.classList.add('dark');
+// document.documentElement.classList.add('dark');
 
 // Inject Umami Analytics only in production
 if (import.meta.env.PROD) {
