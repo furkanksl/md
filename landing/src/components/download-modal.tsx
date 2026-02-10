@@ -46,7 +46,7 @@ export const DownloadModal = ({ isOpen, onClose }: DownloadModalProps) => {
                         className="group flex items-center justify-between p-4 rounded-2xl bg-white border border-[#E7E5E4] hover:border-[#738F82] hover:shadow-md transition-all cursor-pointer relative overflow-hidden"
                      >
                         <div className="flex items-center gap-4 relative z-10">
-                           <img src="/assets/common/soft_3d_apple_silicon_chip_icon_.png" className="w-[70px] h-[70px] object-contain drop-shadow-sm" alt="Apple Silicon" />
+                           <img src="/assets/common/soft_3d_apple_silicon_chip_icon_.webp" className="w-[70px] h-[70px] object-contain drop-shadow-sm" alt="Apple Silicon" />
                            <div>
                               <div className="font-bold text-[#44403C]">Apple Silicon</div>
                               <div className="text-xs text-[#44403C]/50">M chips</div>
@@ -60,7 +60,7 @@ export const DownloadModal = ({ isOpen, onClose }: DownloadModalProps) => {
                         className="group flex items-center justify-between p-4 rounded-2xl bg-white border border-[#E7E5E4] hover:border-[#44403C] hover:shadow-md transition-all cursor-pointer relative overflow-hidden"
                      >
                         <div className="flex items-center gap-4 relative z-10">
-                           <img src="/assets/common/soft_3d_intel_processor_chip_ico.png" className="w-[70px] h-[70px] object-contain drop-shadow-sm" alt="Intel" />
+                           <img src="/assets/common/soft_3d_intel_processor_chip_ico.webp" className="w-[70px] h-[70px] object-contain drop-shadow-sm" alt="Intel" />
                            <div>
                               <div className="font-bold text-[#44403C]">Intel</div>
                               <div className="text-xs text-[#44403C]/50">Older Mac models</div>

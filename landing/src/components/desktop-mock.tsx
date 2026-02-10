@@ -90,14 +90,14 @@ export const DesktopMock = () => {
                             className="absolute inset-0 bg-[#FAF9F6] cursor-default"
                             onClick={() => setIsSidebarOpen(false)}
                         >
-                            <img src="/assets/common/wallpaper.png" className="w-full h-full object-cover opacity-90" alt="Wallpaper" />
+                            <img src="/assets/common/wallpaper.webp" className="w-full h-full object-cover opacity-90" alt="Wallpaper" />
                         </div>
 
                         {/* Menu Bar */}
                         <div className="absolute top-0 left-0 right-0 h-7 bg-white/40 backdrop-blur-xl border-b border-black/5 flex items-center justify-between pl-2 pr-4 z-10 pointer-events-none">
                             <div className="flex gap-1.5 items-center">
                                 {/* Replaced Lucide Apple with Generated Asset */}
-                                <img src="/assets/common/filled_black_apple_logo_icon_fla.png" className=" h-7 object-fill opacity-90" alt="Apple Menu" />
+                                <img src="/assets/common/filled_black_apple_logo_icon_fla.webp" className=" h-7 object-fill opacity-90" alt="Apple Menu" />
                                 <div className="flex flex-row gap-3">
                                     <span className="text-[11px] font-bold text-stone-900 tracking-tight">Finder</span>
                                     <span className="text-[11px] font-medium text-stone-600/90">File</span>
@@ -183,7 +183,7 @@ export const DesktopMock = () => {
 
                 {/* iMac Chin Area with Logo (Height Increased) */}
                 <div className="h-[72px] w-full flex items-center justify-center shrink-0">
-                    <img src="/assets/common/soft_3d_apple_logo_icon_matte_cl.png" className="w-10 h-10 mt-3 object-contain opacity-50 mix-blend-multiply" alt="Apple Logo" />
+                    <img src="/assets/common/soft_3d_apple_logo_icon_matte_cl.webp" className="w-10 h-10 mt-3 object-contain opacity-50 mix-blend-multiply" alt="Apple Logo" />
                 </div>
             </div>
 

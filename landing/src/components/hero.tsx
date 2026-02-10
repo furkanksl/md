@@ -49,7 +49,7 @@ export const Hero = ({ onOpenDownload }: { onOpenDownload: () => void }) => {
             initial="initial"
             animate={["animate", "float"]}
          >
-            <img src="/assets/common/soft_3d_cloud_shape_pastel_sage_.png" className="w-full h-full object-contain drop-shadow-xl" alt="Cloud" />
+            <img src="/assets/common/soft_3d_cloud_shape_pastel_sage_.webp" className="w-full h-full object-contain drop-shadow-xl" alt="Cloud" />
          </motion.div>
 
          <motion.div
@@ -58,7 +58,7 @@ export const Hero = ({ onOpenDownload }: { onOpenDownload: () => void }) => {
             initial="initial"
             animate={["animate", "float"]}
          >
-            <img src="/assets/common/soft_3d_cloud_shape_pastel_sage_.png" className="w-full h-full object-contain drop-shadow-xl transform scale-x-[-1]" alt="Cloud" />
+            <img src="/assets/common/soft_3d_cloud_shape_pastel_sage_.webp" className="w-full h-full object-contain drop-shadow-xl transform scale-x-[-1]" alt="Cloud" />
          </motion.div>
 
 

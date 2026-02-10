@@ -44,11 +44,10 @@ export const BentoGrid = () => {
                         Never lose a link or snippet again. Searchable, persistent history that supports images and rich text.
                      </p>
                   </div>
-                  {/* Visual Element: Paper Stack */}
-                  <div className="absolute -bottom-4 -right-4 w-64 h-64 opacity-40 pointer-events-none">
-                     <img src="/assets/common/soft_3d_stack_of_papers_floating.png" className="w-full h-full object-contain drop-shadow-2xl transform rotate-[-10deg] scale-90" alt="Paper Stack" />
-                  </div>
-               </motion.div>
+                               {/* Visual Element: Paper Stack */}
+                               <div className="absolute -bottom-4 -right-4 w-64 h-64 opacity-40 pointer-events-none">
+                                  <img src="/assets/common/soft_3d_stack_of_papers_floating.webp" className="w-full h-full object-contain drop-shadow-2xl transform rotate-[-10deg] scale-90" alt="Paper Stack" />
+                               </div>               </motion.div>
 
                {/* Small Card 3: Focus Tasks (Row 2, 1 Col) */}
                <motion.div
@@ -67,11 +66,10 @@ export const BentoGrid = () => {
                         Minimalist checklists and scratchpads that auto-clear to keep you focused.
                      </p>
                   </div>
-                  {/* Visual Element: Notebook */}
-                  <div className="absolute -right-4 -bottom-10 w-40 h-40 opacity-80 pointer-events-none">
-                     <img src="/assets/common/soft_3d_notebook_with_checklist_.png" className="w-full h-full object-contain drop-shadow-lg scale-90" alt="Notebook" />
-                  </div>
-               </motion.div>
+                               {/* Visual Element: Notebook */}
+                               <div className="absolute -right-4 -bottom-10 w-40 h-40 opacity-80 pointer-events-none">
+                                  <img src="/assets/common/soft_3d_notebook_with_checklist_.webp" className="w-full h-full object-contain drop-shadow-lg scale-90" alt="Notebook" />
+                               </div>               </motion.div>
 
                {/* Small Card 4: Privacy (Row 2, 1 Col) */}
                <motion.div
