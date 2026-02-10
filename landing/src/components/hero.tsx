@@ -1,8 +1,5 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Star } from 'lucide-react';
-import { useState } from 'react';
-import { DownloadModal } from './download-modal';
-import { Header } from './header';
 import { MobileHeroMockup } from './mobile-hero-mockup';
 import { useLatestRelease } from '@/hooks/use-latest-release';
 
