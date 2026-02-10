@@ -22,7 +22,7 @@ export const BentoGrid = () => {
                      </p>
                   </div>
                   {/* Visual Element: 3D Brain */}
-                  <div className="absolute -right-8 sm:right-[-5%] top-8  sm:-bottom-1/2 -translate-y-1/2 w-1/2 h-full opacity-90 pointer-events-none">
+                  <div className="absolute -right-8 sm:right-[-5%] top-8  sm:top-1/2 -translate-y-1/2 w-1/2 h-full opacity-90 pointer-events-none">
                      <img src="/assets/common/soft_3d_brain_with_subtle_circui.webp" className="w-full h-full sm:scale-75 scale-75 object-contain object-bottom drop-shadow-xl" alt="AI Brain" />
                   </div>
                </motion.div>

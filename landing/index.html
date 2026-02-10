@@ -5,14 +5,16 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/logo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FAF9F6" />
   
   <!-- Primary Meta Tags -->
   <title>My Drawer - The Missing AI Layer for macOS</title>
   <meta name="title" content="My Drawer - The Missing AI Layer for macOS" />
   <meta name="description" content="An intelligent sidebar that blends into your macOS desktop. Chat with AI, track your clipboard, and organize windows without breaking your flow. 100% Local & Private." />
-  <meta name="keywords" content="macos, ai, sidebar, clipboard manager, window manager, productivity, local ai, openai, anthropic, rust, tauri, chatgpt" />
+  <meta name="keywords" content="macos, ai, sidebar, clipboard manager, window manager, productivity, local ai, openai, anthropic, rust, tauri, chatgpt, mac app" />
   <meta name="author" content="Furkan Koseoglu" />
   <link rel="author" href="https://furkanksl.com" />
+  <link rel="canonical" href="https://github.com/furkanksl/md" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
@@ -20,15 +22,43 @@
   <meta property="og:title" content="My Drawer - The Missing AI Layer for macOS" />
   <meta property="og:description" content="An intelligent sidebar that blends into your macOS desktop. Chat with AI, track your clipboard, and organize windows without breaking your flow. 100% Local & Private." />
   <meta property="og:image" content="/logo.png" />
+  <meta property="og:image:alt" content="My Drawer App Icon" />
+  <meta property="og:site_name" content="My Drawer" />
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
   <meta property="twitter:url" content="https://github.com/furkanksl/md" />
   <meta property="twitter:title" content="My Drawer - The Missing AI Layer for macOS" />
   <meta property="twitter:description" content="An intelligent sidebar that blends into your macOS desktop. Chat with AI, track your clipboard, and organize windows without breaking your flow. 100% Local & Private." />
-  <meta property="twitter:image" content="/logo.png" />
+  <meta property="twitter:image" content="/og-image.webp" />
+  <meta property="twitter:image:alt" content="My Drawer App Icon" />
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "My Drawer",
+      "operatingSystem": "macOS",
+      "applicationCategory": "ProductivityApplication",
+      "image": "https://github.com/furkanksl/md/raw/main/landing/public/logo.png",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "An intelligent sidebar that blends into your macOS desktop. Chat with AI, track your clipboard, and organize windows.",
+      "author": {
+          "@type": "Person",
+          "name": "Furkan Koseoglu",
+          "url": "https://furkanksl.com"
+      },
+      "downloadUrl": "https://github.com/furkanksl/md/releases",
+      "featureList": "AI Chat, Clipboard History, Window Management, Local Privacy"
+    }
+  </script>
 </head>
 
 <body class="bg-background text-foreground antialiased selection:bg-primary/20">
