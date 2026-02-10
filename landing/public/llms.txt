@@ -1,0 +1,23 @@
+# My Drawer
+
+> The missing AI layer of macOS. An intelligent sidebar that blends into your desktop to help you chat with AI, track your clipboard, and organize windows without breaking your flow.
+
+## Project Summary
+My Drawer (md) is a native macOS application designed to integrate AI workflows directly into the operating system's UI. It functions as a collapsible sidebar that provides instant access to LLMs, clipboard history, and productivity tools, ensuring 100% local privacy and a seamless user experience.
+
+## Key Features
+- **Context-Aware AI**: Chat with top models (Claude 3.5 Sonnet, GPT-4o) or local LLMs (Mistral, Llama) with drag-and-drop context.
+- **Clipboard History**: A persistent, searchable history of your copy-paste actions, supporting images and rich text.
+- **Window Management**: Organize your workspace with "Window Flow" layouts and snapshots.
+- **Privacy First**: Built with a local-first architecture. Your keys, your data.
+- **Zero Clutter**: Auto-hides when not in use, appearing only when you need it.
+
+## Technical Details
+- **Stack**: Rust (Tauri v2), React, TypeScript, Tailwind CSS.
+- **Design System**: "Warm Minimalist" / "Zen" aesthetic (Charcoal #44403C, Off-White #FAF9F6, Sage Green #738F82).
+- **License**: Open Source (MIT).
+
+## Resources
+- [GitHub Repository](https://github.com/furkanksl/md)
+- [Download Releases](https://github.com/furkanksl/md/releases)
+- [Developer](https://furkanksl.com)
