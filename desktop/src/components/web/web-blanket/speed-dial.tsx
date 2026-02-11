@@ -68,7 +68,7 @@ function SortableItem({ fav, onNavigate, onEdit, onDelete }: SortableItemProps) 
               className="w-6 h-6 object-contain"
             />
           </div>
-          <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground truncate w-full pointer-events-none">
+          <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground truncate w-full pointer-events-none text-center">
             {fav.title}
           </span>
         </div>
@@ -154,49 +154,51 @@ export function SpeedDial() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full p-6 text-center animate-in fade-in zoom-in duration-300">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground/80 mb-2">
-          New Tab
-        </h1>
-        {/* <p className="text-sm text-muted-foreground">
-          Search or choose a shortcut
-        </p> */}
-      </div>
+    <div className="h-full w-full relative overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={favorites.map(f => f.id)}
-          strategy={rectSortingStrategy}
-        >
-          <div className="grid grid-cols-3 gap-4 w-full max-w-sm">
-            {favorites.map((fav) => (
-              <SortableItem
-                key={fav.id}
-                fav={fav}
-                onNavigate={handleNavigate}
-                onEdit={openEditModal}
-                onDelete={removeFavorite}
-              />
-            ))}
-
-            {/* Add Button */}
-            <button
-              onClick={openAddModal}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-accent/50 transition-all cursor-pointer border border-dashed border-border/50 hover:border-primary/50 text-muted-foreground hover:text-primary"
-            >
-              <div className="w-12 h-12 rounded-full bg-accent/50 flex items-center justify-center mb-1">
-                <Plus size={20} strokeWidth={1.5} />
-              </div>
-              <span className="text-xs font-medium">Add Shortcut</span>
-            </button>
+      <div className="flex-1 overflow-y-auto scrollbar-none w-full">
+        <div className="min-h-full flex flex-col items-center justify-center p-6">
+          <div className="mb-8 shrink-0">
+            {/* <h1 className="text-2xl font-bold tracking-tight text-foreground/80 mb-2">
+              New Tab
+            </h1> */}
           </div>
-        </SortableContext>
-      </DndContext>
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={favorites.map(f => f.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-3 gap-4 w-full max-w-sm shrink-0 pb-10">
+                {favorites.map((fav) => (
+                  <SortableItem
+                    key={fav.id}
+                    fav={fav}
+                    onNavigate={handleNavigate}
+                    onEdit={openEditModal}
+                    onDelete={removeFavorite}
+                  />
+                ))}
+
+                {/* Add Button */}
+                <button
+                  onClick={openAddModal}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-accent/50 transition-all cursor-pointer border border-dashed border-border/50 hover:border-primary/50 text-muted-foreground hover:text-primary"
+                >
+                  <div className="w-12 h-12 rounded-full bg-accent/50 flex items-center justify-center mb-1">
+                    <Plus size={20} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-xs font-medium">Add Shortcut</span>
+                </button>
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      </div>
 
       {/* Modal Overlay */}
       {isModalOpen && (
