@@ -15,8 +15,8 @@ export function UrlBar() {
   // Focus input when requested (e.g. new empty tab)
   useEffect(() => {
     if (shouldFocusUrlBar && inputRef.current) {
-        inputRef.current.focus();
-        setShouldFocusUrlBar(false);
+      inputRef.current.focus();
+      setShouldFocusUrlBar(false);
     }
   }, [shouldFocusUrlBar, setShouldFocusUrlBar]);
 
@@ -25,8 +25,8 @@ export function UrlBar() {
     if (!hasFocus && activeTab) {
       setInputVal(activeTab.url || "");
     } else if (!activeTab && !hasFocus) {
-        // Clear input if no active tab (and not focused)
-        setInputVal("");
+      // Clear input if no active tab (and not focused)
+      setInputVal("");
     }
   }, [activeTab?.url, activeTab, hasFocus]);
 
@@ -78,7 +78,7 @@ export function UrlBar() {
       </form>
 
       {/* UA Toggle */}
-      {activeTabId && (
+      {/* {activeTabId && (
           <button 
             onClick={() => toggleUserAgent(activeTabId)}
             className="p-1.5 ml-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
@@ -86,7 +86,7 @@ export function UrlBar() {
           >
             {isDesktop ? <Monitor size={14} /> : <Smartphone size={14} />}
           </button>
-      )}
+      )} */}
     </div>
   );
 }

@@ -159,9 +159,9 @@ export function SpeedDial() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground/80 mb-2">
           New Tab
         </h1>
-        <p className="text-sm text-muted-foreground">
+        {/* <p className="text-sm text-muted-foreground">
           Search or choose a shortcut
-        </p>
+        </p> */}
       </div>
 
       <DndContext

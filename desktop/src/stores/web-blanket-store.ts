@@ -100,7 +100,6 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
         favorites: favorites || [],
         tabs: tabs || [],
         activeTabId: activeTabId || null,
-        mode: (enabled && (tabs?.length ?? 0) > 0) ? "browse" : "research"
       });
       
       // Restore native session if enabled

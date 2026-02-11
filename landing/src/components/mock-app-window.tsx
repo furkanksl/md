@@ -534,15 +534,15 @@ const MockWebView = () => {
                         </div>
                     </div>
 
-                        {/* Main Content Area - Speed Dial Mock */}
+                    {/* Main Content Area - Speed Dial Mock */}
                     <div className="flex-1 w-full bg-transparent relative min-h-0 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300">
                         <div className="mb-6">
                             <h1 className="text-xl font-bold tracking-tight text-foreground/80 mb-2">
                                 New Tab
                             </h1>
-                            <p className="text-xs text-muted-foreground">
+                            {/* <p className="text-xs text-muted-foreground">
                                 Search or choose a shortcut
-                            </p>
+                            </p> */}
                         </div>
 
                         <div className="grid grid-cols-3 gap-3 w-full max-w-sm">
@@ -597,7 +597,7 @@ const MockWebView = () => {
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col min-h-0 py-2">
-                     <div className="bg-card p-2 rounded-md shadow-lg border border-border flex flex-col gap-1.5 shrink-0 mb-4 relative overflow-hidden">
+                    <div className="bg-card p-2 rounded-md shadow-lg border border-border flex flex-col gap-1.5 shrink-0 mb-4 relative overflow-hidden">
                         <div className="flex items-center px-3 pt-1">
                             <Globe size={14} className="text-muted-foreground mr-2" />
                             <div className="flex-1 h-8 flex items-center text-muted-foreground/50 font-mono text-[10px]">
@@ -615,10 +615,10 @@ const MockWebView = () => {
                             </button>
                         </div>
                     </div>
-                    
+
                     <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/30 gap-3">
-                         <FileText size={40} strokeWidth={1} />
-                         <p className="text-xs">No research tasks yet.</p>
+                        <FileText size={40} strokeWidth={1} />
+                        <p className="text-xs">No research tasks yet.</p>
                     </div>
                 </div>
             )}

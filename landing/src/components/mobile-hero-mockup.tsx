@@ -418,7 +418,7 @@ export const MobileHeroMockup = () => {
                            <div className="flex-1 flex flex-col items-center justify-center pb-20 px-4">
                               <div className="mb-4 text-center">
                                  <h2 className="text-lg font-bold text-[#44403C]/80 tracking-tight">New Tab</h2>
-                                 <p className="text-[9px] text-[#44403C]/40">Search or choose a shortcut</p>
+                                 {/* <p className="text-[9px] text-[#44403C]/40">Search or choose a shortcut</p> */}
                               </div>
 
                               <div className="grid grid-cols-3 gap-2 w-full max-w-[200px]">
