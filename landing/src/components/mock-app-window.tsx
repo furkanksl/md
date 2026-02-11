@@ -35,11 +35,18 @@ import {
     Layout,
     ArrowRight,
     Monitor,
+    Smartphone,
+    X,
     Cpu,
-    FileText,
     Paintbrush,
     Check,
     CheckCircle,
+    Microscope,
+    ArrowLeft,
+    RotateCcw,
+    Type,
+    ExternalLink,
+    FileText,
 } from "lucide-react";
 import { useState } from "react";
 import { clsx } from "clsx";
@@ -66,7 +73,7 @@ export const MockAppWindow = ({
         { id: "clipboard", label: "Collect", icon: Archive },
         { id: "shortcuts", label: "Apps", icon: Layers },
         { id: "layouts", label: "Flow", icon: Maximize },
-        { id: "scraping", label: "Web", icon: Globe },
+        { id: "web", label: "Web", icon: Globe },
     ] as const;
 
     const handleTabChange = (id: string) => {
@@ -89,7 +96,7 @@ export const MockAppWindow = ({
                 <div className="fixed top-0 left-0 w-full h-8 z-40" />
 
                 {/* Main Card */}
-                <div className="flex-1 flex flex-col rounded-[1rem] overflow-hidden relative border-none h-full bg-white dark:bg-stone-950">
+                <div className="flex-1 flex flex-col rounded-[3rem] overflow-hidden relative border-none h-full bg-white dark:bg-stone-950">
                     {/* Minimal Header */}
                     <header className="h-12 shrink-0 flex items-center justify-between pr-2 pl-6 z-50">
                         <div className="relative">
@@ -150,7 +157,7 @@ export const MockAppWindow = ({
                                 {activeTab === "clipboard" && <MockClipboardView />}
                                 {activeTab === "shortcuts" && <MockShortcutsView />}
                                 {activeTab === "layouts" && <MockLayoutsView />}
-                                {activeTab === "scraping" && <MockScrapingView />}
+                                {activeTab === "web" && <MockWebView />}
                                 {activeTab === "settings" && <MockSettingsView />}
                             </motion.div>
                         </AnimatePresence>
@@ -454,37 +461,167 @@ const MockLayoutsView = () => {
     );
 };
 
-const MockScrapingView = () => {
+const MockWebView = () => {
+    const [mode, setMode] = useState<"browse" | "research">("browse");
+
     return (
-        <div className="h-full px-4 py-3 flex flex-col relative overflow-hidden">
-            <div className="flex justify-between items-center mb-4 shrink-0">
-                <h2 className="text-xl font-light text-stone-900 dark:text-stone-100">Web Research</h2>
-                <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-lg text-xs font-medium text-stone-500 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
-                        <Cpu size={14} /><span>OpenAI</span><ChevronDown size={14} className="text-stone-400" />
+        <div className="flex flex-col h-full w-full relative overflow-hidden">
+            {/* Header / Mode Switcher */}
+            <div className="flex justify-between items-center shrink-0 mb-2">
+                <div className="flex p-1 bg-muted/50 rounded-lg">
+                    <button
+                        onClick={() => setMode("browse")}
+                        className={clsx(
+                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-medium transition-all",
+                            mode === "browse"
+                                ? "bg-background shadow-sm text-foreground"
+                                : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        <LayoutGrid size={12} />
+                        Browse
+                    </button>
+                    <button
+                        onClick={() => setMode("research")}
+                        className={clsx(
+                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-medium transition-all",
+                            mode === "research"
+                                ? "bg-background shadow-sm text-foreground"
+                                : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        <Microscope size={12} />
+                        Research
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-1">
+                    <button className="p-1.5 hover:bg-muted rounded-md opacity-30 transition-colors">
+                        <ArrowLeft size={12} />
+                    </button>
+                    <button className="p-1.5 hover:bg-muted rounded-md opacity-30 transition-colors">
+                        <ArrowRight size={12} />
+                    </button>
+                    <button className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                        <RotateCcw size={12} />
+                    </button>
+
+                    <div className="w-px h-4 bg-border mx-1" />
+
+                    <button className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                        <Type size={12} />
+                    </button>
+                    <button className="p-1.5 hover:bg-muted rounded-md opacity-30 transition-colors">
+                        <ExternalLink size={12} />
                     </button>
                 </div>
             </div>
-            <div className="bg-white dark:bg-stone-900 p-2 rounded-md shadow-lg border border-stone-200 dark:border-stone-800 flex flex-col gap-1.5 shrink-0 mb-4 relative overflow-hidden">
-                <div className="flex items-center px-3 pt-1">
-                    <Globe size={16} className="text-stone-400 mr-2" />
-                    <div className="flex-1 h-8 flex items-center text-xs font-mono text-stone-400">https://example.com</div>
-                </div>
-                <div className="h-px bg-stone-100 dark:bg-stone-800 mx-3" />
-                <div className="flex items-center px-3 pb-1">
-                    <Bot size={16} className="text-stone-400 mr-2" />
-                    <div className="flex-1 h-8 flex items-center text-xs text-stone-400">What do you want to find?</div>
-                    <button className="w-8 h-8 bg-stone-900 dark:bg-stone-100 rounded-full flex items-center justify-center text-white dark:text-stone-900 ml-2"><ArrowRight size={14} /></button>
-                </div>
-            </div>
-            <div className="flex-1 overflow-hidden flex gap-3 min-h-0">
-                <div className="flex-1 overflow-y-auto scrollbar-none space-y-2 transition-all flex flex-col px-1 -mx-1 w-full">
-                    <div className="text-center py-12 text-stone-400 flex flex-col items-center gap-3 opacity-50">
-                        <FileText size={40} strokeWidth={1} />
-                        <p className="text-sm">No research tasks yet.</p>
+
+            {mode === "browse" ? (
+                <div className="flex flex-col flex-1 min-h-0">
+                    {/* Top Bar: Persistent URL Bar */}
+                    <div className="shrink-0 z-50 py-2 bg-background/40 backdrop-blur-md border-b border-border/10 px-0">
+                        <div className="flex items-center p-1 bg-background/95 backdrop-blur-md rounded-xl border border-border/50 transition-all duration-200">
+                            <div className="flex-1 relative">
+                                <div className="w-full h-8 px-3 flex items-center text-sm bg-accent/50 rounded-lg border border-transparent text-muted-foreground/50">
+                                    Search or enter website name
+                                </div>
+                            </div>
+                            {/* UA Toggle */}
+                            <button className="p-1.5 ml-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                                <Smartphone size={14} />
+                            </button>
+                        </div>
+                    </div>
+
+                        {/* Main Content Area - Speed Dial Mock */}
+                    <div className="flex-1 w-full bg-transparent relative min-h-0 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300">
+                        <div className="mb-6">
+                            <h1 className="text-xl font-bold tracking-tight text-foreground/80 mb-2">
+                                New Tab
+                            </h1>
+                            <p className="text-xs text-muted-foreground">
+                                Search or choose a shortcut
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3 w-full max-w-sm">
+                            {[
+                                { title: "YouTube", url: "https://youtube.com" },
+                                { title: "GitHub", url: "https://github.com" },
+                                { title: "Gmail", url: "https://gmail.com" },
+                                { title: "Twitter", url: "https://twitter.com" },
+                                { title: "Notion", url: "https://notion.so" },
+                                { title: "Linear", url: "https://linear.app" },
+                            ].map((fav) => (
+                                <div
+                                    key={fav.title}
+                                    className="group relative flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-accent/50 transition-colors cursor-pointer border border-transparent hover:border-border/50"
+                                >
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-1 group-hover:scale-110 transition-transform overflow-hidden">
+                                        <img
+                                            src={`https://www.google.com/s2/favicons?domain=${fav.url}&sz=128`}
+                                            alt={fav.title}
+                                            className="w-5 h-5 object-contain"
+                                        />
+                                    </div>
+                                    <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground truncate w-full">
+                                        {fav.title}
+                                    </span>
+                                </div>
+                            ))}
+
+                            {/* Add Button */}
+                            <div className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-accent/50 transition-all cursor-pointer border border-dashed border-border/50 hover:border-primary/50 text-muted-foreground hover:text-primary">
+                                <div className="w-10 h-10 rounded-full bg-accent/50 flex items-center justify-center mb-1">
+                                    <Plus size={16} strokeWidth={1.5} />
+                                </div>
+                                <span className="text-[10px] font-medium">Add</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom Bar: Tabs Strip Mock */}
+                    <div className="shrink-0 z-50 flex w-full mt-0.5 overflow-x-auto items-center py-1 gap-1 bg-background/50 backdrop-blur-sm border-b border-border/10 px-0">
+                        <div className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors max-w-[120px] shrink-0 border border-primary/20 bg-primary/10 text-primary">
+                            <div className="w-3 h-3 rounded-full bg-current/20 shrink-0" />
+                            <span className="truncate flex-1">New Tab</span>
+                            <button className="opacity-60 hover:opacity-100 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 shrink-0">
+                                <X size={10} />
+                            </button>
+                        </div>
+                        <button className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors shrink-0">
+                            <Plus size={14} />
+                        </button>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="flex-1 flex flex-col min-h-0 py-2">
+                     <div className="bg-card p-2 rounded-md shadow-lg border border-border flex flex-col gap-1.5 shrink-0 mb-4 relative overflow-hidden">
+                        <div className="flex items-center px-3 pt-1">
+                            <Globe size={14} className="text-muted-foreground mr-2" />
+                            <div className="flex-1 h-8 flex items-center text-muted-foreground/50 font-mono text-[10px]">
+                                https://example.com
+                            </div>
+                        </div>
+                        <div className="h-px bg-border mx-3" />
+                        <div className="flex items-center px-3 pb-1">
+                            <Bot size={14} className="text-muted-foreground mr-2" />
+                            <div className="flex-1 h-8 flex items-center text-muted-foreground/50 text-[10px]">
+                                What do you want to find?
+                            </div>
+                            <button className="w-7 h-7 bg-primary rounded-full flex items-center justify-center text-primary-foreground ml-2">
+                                <ArrowRight size={12} />
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/30 gap-3">
+                         <FileText size={40} strokeWidth={1} />
+                         <p className="text-xs">No research tasks yet.</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

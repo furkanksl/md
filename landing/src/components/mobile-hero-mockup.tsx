@@ -17,8 +17,6 @@ import {
    Check,
    CheckCircle,
    ListTodo,
-   Cpu,
-   Bot,
    Layout,
    Columns2,
    Grid2X2,
@@ -26,7 +24,13 @@ import {
    Shield,
    ArrowRight,
    Plus,
-   Play
+   Play,
+   Smartphone,
+   X,
+   Microscope,
+   LayoutGrid,
+   RotateCcw,
+   Type,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -370,7 +374,7 @@ export const MobileHeroMockup = () => {
                         </motion.div>
                      )}
 
-                     {/* SCENE: WEB RESEARCH */}
+                     {/* SCENE: WEB BROWSER */}
                      {activeTab === 'web' && (
                         <motion.div
                            key="web"
@@ -380,40 +384,87 @@ export const MobileHeroMockup = () => {
                            exit="exit"
                            className="absolute inset-0 flex flex-col bg-[#FAF9F6]"
                         >
-                           <div className="px-5 py-3 flex justify-between items-center mb-2">
-                              <h2 className="text-lg font-light text-[#44403C]">Research</h2>
-                              <button className="flex items-center gap-1.5 px-2 py-1 bg-white border border-[#E7E5E4] rounded-lg text-[10px] font-medium text-[#44403C]/60">
-                                 <Cpu size={10} strokeWidth={1.5} />
-                                 <span>Mistral</span>
-                                 <ChevronDown size={10} className="opacity-50" strokeWidth={1.5} />
-                              </button>
-                           </div>
-
-                           <div className="px-3 pb-20 space-y-3">
-                              <div className="bg-white p-2 rounded-[1.25rem] shadow-sm border border-[#E7E5E4]">
-                                 <div className="flex items-center px-2 py-1 border-b border-[#E7E5E4]/50 mb-1">
-                                    <Globe size={12} className="text-[#44403C]/40 mr-2" strokeWidth={1.5} />
-                                    <div className="text-[10px] text-[#44403C]/40">https://example.com...</div>
+                           {/* Mode Switcher Header */}
+                           <div className="px-3 pt-3 pb-1 flex justify-between items-center shrink-0">
+                              <div className="flex p-0.5 bg-[#E7E5E4]/50 rounded-lg">
+                                 <div className="px-2 py-1 bg-white shadow-sm rounded-md text-[8px] font-bold uppercase tracking-wider text-[#44403C] flex items-center gap-1.5">
+                                    <LayoutGrid size={10} />
+                                    Browse
                                  </div>
-                                 <div className="flex items-center px-2 py-1">
-                                    <Bot size={12} className="text-[#44403C]/40 mr-2" strokeWidth={1.5} />
-                                    <div className="text-[10px] text-[#44403C]/60 flex-1">Summarize this page...</div>
-                                    <div className="w-6 h-6 bg-[#44403C] rounded-full flex items-center justify-center text-white">
-                                       <ArrowRight size={10} strokeWidth={1.5} />
-                                    </div>
+                                 <div className="px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-[#44403C]/40 flex items-center gap-1.5">
+                                    <Microscope size={10} />
+                                    Research
                                  </div>
                               </div>
+                              <div className="flex items-center gap-1.5 pr-1">
+                                 <RotateCcw size={11} className="text-[#44403C]/40" />
+                                 <Type size={11} className="text-[#44403C]/40" />
+                              </div>
+                           </div>
 
-                              <div className="p-3 bg-white rounded-2xl border border-[#E7E5E4] shadow-sm">
-                                 <div className="flex justify-between items-start mb-2">
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-[#44403C]/40">Analysis Result</span>
-                                    <span className="text-[9px] text-[#44403C]/30">Just now</span>
+                           {/* URL Bar Area */}
+                           <div className="px-3 py-2 shrink-0">
+                              <div className="bg-white/80 backdrop-blur-md border border-[#E7E5E4] rounded-[1rem] p-1 shadow-sm flex items-center gap-2">
+                                 <div className="flex-1 h-7 bg-[#F2EFE9]/50 rounded-lg flex items-center px-3 text-[10px] text-[#44403C]/30 font-mono truncate">
+                                    Search or enter website name
                                  </div>
-                                 <div className="space-y-2">
-                                    <div className="h-2 w-3/4 bg-[#F2EFE9] rounded-full animate-pulse" />
-                                    <div className="h-2 w-full bg-[#F2EFE9] rounded-full animate-pulse delay-75" />
-                                    <div className="h-2 w-5/6 bg-[#F2EFE9] rounded-full animate-pulse delay-150" />
+                                 <div className="p-1.5 rounded-md text-[#44403C]/40">
+                                    <Smartphone size={12} strokeWidth={1.5} />
                                  </div>
+                              </div>
+                           </div>
+
+                           {/* Speed Dial Content */}
+                           <div className="flex-1 flex flex-col items-center justify-center pb-20 px-4">
+                              <div className="mb-4 text-center">
+                                 <h2 className="text-lg font-bold text-[#44403C]/80 tracking-tight">New Tab</h2>
+                                 <p className="text-[9px] text-[#44403C]/40">Search or choose a shortcut</p>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-2 w-full max-w-[200px]">
+                                 {[
+                                    { name: "YouTube", url: "https://youtube.com" },
+                                    { name: "GitHub", url: "https://github.com" },
+                                    { name: "Gmail", url: "https://gmail.com" },
+                                    { name: "Twitter", url: "https://twitter.com" },
+                                    { name: "Notion", url: "https://notion.so" },
+                                    { name: "Linear", url: "https://linear.app" },
+                                 ].map((fav) => (
+                                    <div key={fav.name} className="flex flex-col items-center gap-1.5 p-1.5 rounded-xl hover:bg-white transition-colors cursor-pointer group">
+                                       <div className="w-8 h-8 rounded-full bg-[#738F82]/10 flex items-center justify-center text-[#738F82] group-hover:scale-110 transition-transform overflow-hidden">
+                                          <img
+                                             src={`https://www.google.com/s2/favicons?domain=${fav.url}&sz=128`}
+                                             alt={fav.name}
+                                             className="w-4 h-4 object-contain"
+                                          />
+                                       </div>
+                                       <span className="text-[8px] font-medium text-[#44403C]/60 group-hover:text-[#44403C] truncate w-full text-center">{fav.name}</span>
+                                    </div>
+                                 ))}
+
+                                 {/* Add Button */}
+                                 <div className="flex flex-col items-center gap-1.5 p-1.5 rounded-xl hover:bg-white transition-colors cursor-pointer border border-dashed border-[#E7E5E4] text-[#44403C]/40">
+                                    <div className="w-8 h-8 rounded-full bg-[#F2EFE9]/50 flex items-center justify-center">
+                                       <Plus size={12} strokeWidth={1.5} />
+                                    </div>
+                                    <span className="text-[8px] font-medium">Add</span>
+                                 </div>
+                              </div>
+                           </div>
+
+                           {/* Bottom Tabs Mock */}
+                           <div className="shrink-0 z-50 flex w-full overflow-x-auto items-center py-1.5 gap-1.5 bg-white/50 backdrop-blur-sm border-b border-[#E7E5E4]/20 px-3 pb-24 rounded-b-[2rem]">
+                              <div className="flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-medium bg-[#738F82]/10 text-[#738F82] border border-[#738F82]/20 shrink-0">
+                                 <div className="w-2 h-2 rounded-full bg-current/20 shrink-0" />
+                                 <span className="truncate max-w-[60px]">New Tab</span>
+                                 <X size={10} className="opacity-60" />
+                              </div>
+                              <div className="flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-medium text-[#44403C]/40 hover:bg-[#F2EFE9] shrink-0">
+                                 <div className="w-2 h-2 rounded-full bg-[#44403C]/10 shrink-0" />
+                                 <span className="truncate max-w-[60px]">Docs</span>
+                              </div>
+                              <div className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F2EFE9] text-[#44403C]/40 transition-colors shrink-0">
+                                 <Plus size={12} />
                               </div>
                            </div>
                         </motion.div>

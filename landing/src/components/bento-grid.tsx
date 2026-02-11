@@ -106,9 +106,9 @@ export const BentoGrid = () => {
                   className="md:col-span-3 bg-[#F2EFE9] rounded-[2rem] p-8 sm:p-12 sm:px-12 border border-[#E7E5E4] flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden h-full"
                >
                   <div className="relative max-w-lg z-20">
-                     <h3 className="text-xl sm:text-3xl font-bold mb-6 text-[#44403C]">A Complete Research Toolkit</h3>
+                     <h3 className="text-xl sm:text-3xl font-bold mb-6 text-[#44403C]">Native Web & Research</h3>
                      <p className="text-[#44403C]/70 sm:text-lg text-sm leading-relaxed mb-0 sm:mb-8">
-                        Scrape web pages, summarize documents, and manage your tasks without leaving your current context. MyDrawer is the productivity OS you didn't know you needed.
+                        A full-featured native browser living in your drawer. Toggle mobile/desktop views, manage favorites with Speed Dial, and scrape content for AI analysis—all in one place.
                      </p>
                   </div>
                   {/* Visual Element: Magnifying Glass */}
