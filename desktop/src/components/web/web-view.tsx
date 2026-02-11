@@ -3,7 +3,7 @@ import { useScrapingStore } from '@/stores/scraping-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useWebBlanketStore } from '@/stores/web-blanket-store';
 import { WebBlanketView } from './web-blanket/web-blanket-view';
-import { ArrowRight, Loader2, Globe, Trash2, FileText, Bot, ChevronDown, Cpu, LayoutGrid, Microscope, ArrowLeft, RotateCcw, X, ZoomIn, Plus, Minus, ExternalLink } from 'lucide-react';
+import { ArrowRight, Loader2, Globe, Trash2, FileText, Bot, ChevronDown, Cpu, LayoutGrid, Microscope, ArrowLeft, ZoomIn, Plus, Minus, ExternalLink, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { MODELS } from '@/core/domain/models';
@@ -134,7 +134,7 @@ export const WebView = () => {
     }, [availableModels]);
 
     return (
-        <div className={cn("h-full px-4 pt-3 flex flex-col relative overflow-hidden", {
+        <div className={cn("h-full px-4 pt-1 flex flex-col relative overflow-hidden", {
             "px-0 pt-0": isFullScreen,
         })}>
             {/* Header / Mode Switcher */}
@@ -175,8 +175,8 @@ export const WebView = () => {
                             <button onClick={goForward} disabled={!activeTab?.canGoForward} className="p-1.5 hover:bg-muted rounded-md disabled:opacity-30 transition-colors">
                                 <ArrowRight size={14} />
                             </button>
-                            <button onClick={activeTab?.loading ? stop : reload} className="p-1.5 hover:bg-muted rounded-md transition-colors">
-                                {activeTab?.loading ? <X size={14} /> : <RotateCcw size={14} />}
+                            <button onClick={activeTab?.loading ? stop : reload} className="p-1.5 hover:bg-muted rounded-md transition-colors flex items-center justify-center">
+                                <RotateCcw size={14} className={cn(activeTab?.loading && "animate-[spin_0.4s_linear_infinite_reverse]")} />
                             </button>
 
                             <div className="w-px h-4 bg-border mx-1" />
