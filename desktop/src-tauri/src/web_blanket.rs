@@ -26,6 +26,22 @@ const WHATSAPP_SCRIPT: &str = r#"
          style.innerHTML = `
             * { border-inline-start-width: 0px !important; }
             
+            /* Custom Scrollbar */
+            ::-webkit-scrollbar {
+                width: 6px !important;
+                height: 6px !important;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent !important;
+            }
+            ::-webkit-scrollbar-thumb {
+                background-color: rgba(128, 128, 128, 0.4) !important;
+                border-radius: 3px !important;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(128, 128, 128, 0.6) !important;
+            }
+            
             /* Hide sidebar wrapper when closed */
             body.gemini-sidebar-closed :has(> #side) {
                 display: none !important;
@@ -35,6 +51,15 @@ const WHATSAPP_SCRIPT: &str = r#"
             body.gemini-sidebar-closed :has(> #main) {
                 max-width: calc(100vw - 64px) !important;
             }
+
+            /* Icon Toggling */
+            /* Default (Sidebar Open): Show X (Close) */
+            .gemini-icon-close { display: block !important; }
+            .gemini-icon-menu { display: none !important; }
+
+            /* Sidebar Closed: Show Menu */
+            body.gemini-sidebar-closed .gemini-icon-close { display: none !important; }
+            body.gemini-sidebar-closed .gemini-icon-menu { display: block !important; }
          `;
          document.head.appendChild(style);
     }
@@ -51,7 +76,14 @@ const WHATSAPP_SCRIPT: &str = r#"
 
         const btn = document.createElement('div');
         btn.id = BTN_ID;
-        btn.innerHTML = '<div role="button" title="Toggle Sidebar" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg></div>';
+        
+        // X Icon (Close Sidebar)
+        const closeIcon = '<svg class="gemini-icon-close" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>';
+        
+        // Menu Icon (Open Sidebar)
+        const menuIcon = '<svg class="gemini-icon-menu" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg>';
+
+        btn.innerHTML = `<div role="button" title="Toggle Sidebar" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">${closeIcon}${menuIcon}</div>`;
         
         btn.style.cssText = 'height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; transition: background-color 0.2s; margin: 0 auto; margin-bottom: 8px; color: var(--icon, #54656f); z-index: 1000;';
         
