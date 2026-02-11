@@ -3,7 +3,7 @@ import { useScrapingStore } from '@/stores/scraping-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useWebBlanketStore } from '@/stores/web-blanket-store';
 import { WebBlanketView } from './web-blanket/web-blanket-view';
-import { ArrowRight, Loader2, Globe, Trash2, FileText, Bot, ChevronDown, Cpu, LayoutGrid, Microscope, ArrowLeft, RotateCcw, X, Type, Plus, Minus, ExternalLink } from 'lucide-react';
+import { ArrowRight, Loader2, Globe, Trash2, FileText, Bot, ChevronDown, Cpu, LayoutGrid, Microscope, ArrowLeft, RotateCcw, X, ZoomIn, Plus, Minus, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { MODELS } from '@/core/domain/models';
@@ -181,24 +181,40 @@ export const WebView = () => {
 
                             <div className="w-px h-4 bg-border mx-1" />
 
-                            {/* Zoom */}
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <button className="p-1.5 hover:bg-muted rounded-md transition-colors">
-                                        <Type size={14} />
-                                    </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-2" side="bottom" align="end" sideOffset={5}>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={zoomOut} className="p-2 hover:bg-accent rounded-md transition-colors"><Minus size={16} /></button>
-                                        <span className="text-xs font-medium text-muted-foreground px-1 min-w-[3ch] text-center">
-                                            {Math.round((activeTab?.zoom || 1) * 100)}%
-                                        </span>
-                                        <button onClick={zoomIn} className="p-2 hover:bg-accent rounded-md transition-colors"><Plus size={16} /></button>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-
+                                                    {/* Zoom */}
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <button className="p-1.5 hover:bg-muted rounded-md transition-colors" title="Zoom">
+                                                                <ZoomIn size={14} />
+                                                            </button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent 
+                                                            className="w-auto p-1 bg-background/80 backdrop-blur-md border border-border/50 shadow-lg rounded-full" 
+                                                            side="bottom" 
+                                                            align="end" 
+                                                            sideOffset={8}
+                                                        >
+                                                            <div className="flex items-center gap-1">
+                                                                <button 
+                                                                    onClick={zoomOut} 
+                                                                    className="w-7 h-7 flex items-center justify-center hover:bg-accent hover:text-accent-foreground rounded-full transition-colors"
+                                                                    title="Zoom Out"
+                                                                >
+                                                                    <Minus size={14} />
+                                                                </button>
+                                                                <span className="text-[10px] font-mono font-medium text-muted-foreground min-w-[3.5ch] text-center select-none tabular-nums">
+                                                                    {Math.round((activeTab?.zoom || 1) * 100)}%
+                                                                </span>
+                                                                <button 
+                                                                    onClick={zoomIn} 
+                                                                    className="w-7 h-7 flex items-center justify-center hover:bg-accent hover:text-accent-foreground rounded-full transition-colors"
+                                                                    title="Zoom In"
+                                                                >
+                                                                    <Plus size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </PopoverContent>
+                                                    </Popover>
                             <button onClick={() => activeTab?.url && open(activeTab.url)} disabled={!activeTab?.url} className="p-1.5 hover:bg-muted rounded-md disabled:opacity-30 transition-colors">
                                 <ExternalLink size={14} />
                             </button>
