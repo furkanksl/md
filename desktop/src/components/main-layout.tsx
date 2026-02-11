@@ -11,7 +11,7 @@ import { ChatView } from "./ai/chat-view";
 import { ClipboardView } from "./clipboard/clipboard-view";
 import { ShortcutsView } from "./shortcuts/shortcuts-view";
 import { LayoutsView } from "./layouts/layouts-view";
-import { ScrapingView } from "./scraping/scraping-view";
+import { WebView } from "./web/web-view";
 import { SettingsView } from "./settings/settings-view";
 import { TodoView } from "./todo/todo-view";
 import { OnboardingView } from "./onboarding/onboarding-view";
@@ -95,7 +95,7 @@ export const MainLayout = () => {
     { id: "clipboard", label: "Collect", icon: Archive },
     { id: "shortcuts", label: "Apps", icon: Layers },
     { id: "layouts", label: "Flow", icon: Maximize },
-    { id: "scraping", label: "Web", icon: Globe },
+    { id: "web", label: "Web", icon: Globe },
   ] as const;
 
   const headerNavItems = [
@@ -217,7 +217,7 @@ export const MainLayout = () => {
                 {activeView === "clipboard" && <ClipboardView />}
                 {activeView === "shortcuts" && <ShortcutsView />}
                 {activeView === "layouts" && <LayoutsView />}
-                {activeView === "scraping" && <ScrapingView />}
+                {activeView === "web" && <WebView />}
                 {activeView === "settings" && <SettingsView />}
                 {activeView === "about" && <AboutView />}
               </motion.div>
@@ -236,7 +236,7 @@ export const MainLayout = () => {
                   <button
                     key={item.id}
                     onClick={() => {
-                      if (activeView === "scraping" && item.id !== "scraping") {
+                      if (activeView === "web" && item.id !== "web") {
                         invoke("web_blanket_hide").catch(() => {});
                       }
                       setActiveView(item.id as any);

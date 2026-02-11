@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useScrapingStore } from '@/stores/scraping-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useWebBlanketStore } from '@/stores/web-blanket-store';
-import { WebBlanketView } from '../web-blanket/web-blanket-view';
+import { WebBlanketView } from './web-blanket/web-blanket-view';
 import { ArrowRight, Loader2, Globe, Trash2, FileText, Bot, ChevronDown, Cpu, LayoutGrid, Microscope, ArrowLeft, RotateCcw, X, Type, Plus, Minus, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -28,7 +28,7 @@ const PROVIDER_LABELS: Record<string, string> = {
     custom: "Custom",
 };
 
-export const ScrapingView = () => {
+export const WebView = () => {
     const { history, loadHistory, addScrapingTask, deleteTask, clearHistory } = useScrapingStore();
     const { aiConfigurations } = useSettingsStore();
     const { mode, setMode, init: initWebBlanket, tabs, activeTabId, goBack, goForward, reload, stop, zoomIn, zoomOut } = useWebBlanketStore();
@@ -138,18 +138,6 @@ export const ScrapingView = () => {
             <div className="flex justify-between items-center shrink-0">
                 <div className="flex p-1 bg-muted/50 rounded-lg">
                     <button
-                        onClick={() => setMode("research")}
-                        className={clsx(
-                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-                            mode === "research"
-                                ? "bg-background shadow-sm text-foreground"
-                                : "text-muted-foreground hover:text-foreground"
-                        )}
-                    >
-                        <Microscope size={14} />
-                        Research
-                    </button>
-                    <button
                         onClick={() => setMode("browse")}
                         className={clsx(
                             "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
@@ -160,6 +148,18 @@ export const ScrapingView = () => {
                     >
                         <LayoutGrid size={14} />
                         Browse
+                    </button>
+                    <button
+                        onClick={() => setMode("research")}
+                        className={clsx(
+                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                            mode === "research"
+                                ? "bg-background shadow-sm text-foreground"
+                                : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        <Microscope size={14} />
+                        Research
                     </button>
                 </div>
 
