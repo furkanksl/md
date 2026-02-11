@@ -178,25 +178,46 @@ export function UrlBar() {
         </Popover>
       </div>
 
-      {/* Expand Toggle */}
-      {activeTabId && <button
-        onClick={() => setFullScreen(true)}
-        className="p-1.5 ml-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-        title="Enter Full Screen"
-      >
-        <Maximize2 size={14} />
-      </button>}
-
-      {/* UA Toggle */}
-      {activeTabId && (
-        <button
-          onClick={() => toggleUserAgent(activeTabId)}
-          className="p-1.5 ml-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-          title={isDesktop ? "Switch to Mobile View" : "Switch to Desktop View"}
+      {/* Animated Actions (slide in from left) */}
+      <div className={cn("flex items-center transition-all duration-300 ease-out", {
+        "w-0": !activeTabId,
+        "w-auto": activeTabId
+      })}>
+        {/* Expand Toggle */}
+        <div
+          className={cn(
+            "transition-transform duration-300 ease-out",
+            activeTabId
+              ? "translate-x-0 opacity-100"
+              : "translate-x-8 opacity-0 pointer-events-none"
+          )}
         >
-          {isDesktop ? <Monitor size={14} /> : <Smartphone size={14} />}
-        </button>
-      )}
+          <button
+            onClick={() => setFullScreen(true)}
+            className="p-1.5 ml-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            title="Enter Full Screen"
+          >
+            <Maximize2 size={14} />
+          </button>
+        </div>
+        {/* UA Toggle */}
+        <div
+          className={cn(
+            "transition-transform duration-300 ease-out",
+            activeTabId
+              ? "translate-x-0 opacity-100"
+              : "translate-x-8 opacity-0 pointer-events-none"
+          )}
+        >
+          <button
+            onClick={() => toggleUserAgent(activeTabId || "")}
+            className="p-1.5 ml-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            title={isDesktop ? "Switch to Mobile View" : "Switch to Desktop View"}
+          >
+            {isDesktop ? <Monitor size={14} /> : <Smartphone size={14} />}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
