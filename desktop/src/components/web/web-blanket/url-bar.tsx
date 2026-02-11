@@ -47,6 +47,7 @@ export function UrlBar() {
       observer.observe(inputRef.current);
       return () => observer.disconnect();
     }
+    return () => {};
   }, []);
 
   // Search suggestions
