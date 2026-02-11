@@ -51,21 +51,25 @@ export function UrlBar() {
 
   // Search suggestions
   useEffect(() => {
+    let timeout: NodeJS.Timeout | undefined;
+
     if (hasFocus && inputVal.trim().length > 1) {
-      const timeout = setTimeout(() => {
+      timeout = setTimeout(() => {
         searchHistory(inputVal).then(data => {
           setSuggestions(data);
           setIsSuggestionsOpen(true);
           setSelectedIndex(-1); // Reset selection on new search
         });
       }, 150);
-      return () => clearTimeout(timeout);
     } else {
       setSuggestions([]);
       setIsSuggestionsOpen(false);
       setSelectedIndex(-1);
-      return () => {};
     }
+
+    return () => {
+        if (timeout) clearTimeout(timeout);
+    };
   }, [inputVal, hasFocus]);
 
   const navigateTo = (url: string) => {
