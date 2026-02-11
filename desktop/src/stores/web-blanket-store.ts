@@ -4,6 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import { SettingsRepository } from "@/core/infra/repositories";
 import { normalizeUrl } from "@/lib/url";
 import { v4 as uuidv4 } from "uuid";
+import { historyService, HistoryFilter, WebHistoryEntry } from "@/core/application/services/history-service";
 
 const settingsRepo = new SettingsRepository();
 
@@ -28,6 +29,7 @@ export type WebBlanketTab = {
   canGoForward?: boolean;
   zoom?: number;
   userAgent?: "mobile" | "desktop";
+  lastHistoryUrl?: string; // Track last URL added to history
 };
 
 interface WebBlanketState {
@@ -72,6 +74,10 @@ interface WebBlanketState {
   updateFavorite: (id: string, title: string, url: string) => Promise<void>;
   removeFavorite: (id: string) => Promise<void>;
   reorderFavorites: (favorites: WebBlanketFavorite[]) => Promise<void>;
+
+  // History
+  getHistory: (filter: HistoryFilter) => Promise<WebHistoryEntry[]>;
+  clearHistory: () => Promise<void>;
 }
 
 const createDefaultFavorites = (): WebBlanketFavorite[] => [
@@ -349,9 +355,6 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   syncTabState: async (tabId) => {
       try {
           const state = await invoke<any>("web_blanket_get_tab_state", { tabId });
-          // Map rust fields (snake_case from default serialize?) 
-          // Actually, I didn't use #[serde(rename_all = "camelCase")] in Rust.
-          // So they are: url, title, loading, can_go_back, can_go_forward.
           
           const updates: Partial<WebBlanketTab> = {
               title: state.title || "New Tab",
@@ -361,14 +364,24 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
               zoom: state.current_zoom
           };
           
-          // Only update URL if native side has a valid one. 
-          // This prevents overwriting the store's target URL with "" during initial load,
-          // which would cause the UI to hide the webview (empty state).
           if (state.url && state.url.trim() !== "") {
               updates.url = state.url;
           }
           
-          get().updateTab(tabId, updates);
+          const { tabs, updateTab } = get();
+          updateTab(tabId, updates);
+
+          // History Logic
+          const currentTab = tabs.find(t => t.id === tabId);
+          // Only add to history if:
+          // 1. Not loading
+          // 2. URL is valid and not about:blank
+          // 3. URL is different from last added history URL
+          if (!state.loading && state.url && state.url !== "about:blank" && currentTab && currentTab.lastHistoryUrl !== state.url) {
+              updateTab(tabId, { lastHistoryUrl: state.url });
+              historyService.addEntry(state.url, state.title || state.url);
+          }
+
       } catch (e) {
           // Tab might not exist native side or other error
       }
@@ -457,5 +470,13 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
               await invoke("web_blanket_set_user_agent", { tabId, mode: newUserAgent });
           } catch (e) { console.error(e); }
       }
+  },
+
+  getHistory: async (filter) => {
+      return await historyService.getHistory(filter);
+  },
+
+  clearHistory: async () => {
+      await historyService.clearHistory();
   }
 }));

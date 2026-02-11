@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useWebBlanketStore } from "@/stores/web-blanket-store";
 import { cn } from "@/lib/utils";
 import { Smartphone, Monitor, Maximize2 } from "lucide-react";
+import { HistoryPopover } from "./history-popover";
 
 export function UrlBar() {
   const { activeTabId, tabs, navigate, createTab, shouldFocusUrlBar, setShouldFocusUrlBar, toggleUserAgent, setFullScreen } = useWebBlanketStore();
@@ -56,8 +57,10 @@ export function UrlBar() {
       "flex items-center p-1 bg-background/95 backdrop-blur-md rounded-xl border border-border/50",
       "transition-all duration-200"
     )}>
+      <HistoryPopover />
+      
       {/* URL Input */}
-      <form onSubmit={handleSubmit} className="flex-1 relative">
+      <form onSubmit={handleSubmit} className="flex-1 relative ml-1">
         <input
           ref={inputRef}
           type="text"
