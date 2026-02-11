@@ -227,8 +227,8 @@ export const MainLayout = () => {
 
         {/* Floating Nav Pill - Only show if onboarding completed */}
         {hasCompletedOnboarding && (
-          <div className="h-20 flex items-center justify-center shrink-0">
-            <nav className="flex items-center gap-1.5 bg-card p-1.5 rounded-full shadow-lg border border-border">
+          <div className="h-16 flex items-center justify-center shrink-0">
+            <nav className="flex items-center gap-x-1.5 bg-card p-1.5 rounded-full shadow-lg border border-border">
               {bottomNavItems.map((item) => {
                 const isActive = activeView === item.id;
                 const Icon = item.icon;

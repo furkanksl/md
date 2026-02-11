@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSettingsStore } from '@/stores/settings-store';
 import { clsx } from 'clsx';
-import { Check, CircleCheck, CircleX, Loader2, Globe, Image as ImageIcon, Wrench } from 'lucide-react';
+import { Check, CheckCircle, XCircle, Loader2, Globe, Image as ImageIcon, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { getProvider } from '@/core/infra/ai/provider-factory';
 import { generateText, LanguageModel } from 'ai';
@@ -175,8 +175,8 @@ export const IntelligenceSection = () => {
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                     {testStatus === 'testing' && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
-                                    {testStatus === 'success' && <CircleCheck size={14} className="text-green-500" />}
-                                    {testStatus === 'error' && <CircleX size={14} className="text-red-500" />}
+                                    {testStatus === 'success' && <CheckCircle size={14} className="text-green-500" />}
+                                    {testStatus === 'error' && <XCircle size={14} className="text-red-500" />}
                                 </div>
                             </div>
                         </div>
@@ -277,7 +277,7 @@ export const IntelligenceSection = () => {
                                         exit={{ opacity: 0, y: -5 }}
                                         className="flex items-center gap-2"
                                     >
-                                        <CircleX size={12} />
+                                        <XCircle size={12} />
                                         <span>Failed</span>
                                     </motion.div>
                                 ) : (

@@ -221,7 +221,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
 
             <form
                 className={clsx(
-                    "bg-card rounded-lg p-1 px-2 shadow-lg border border-border flex gap-1 transition-all duration-200 ease-in-out focus-within:shadow-xl min-h-[40px]",
+                    "bg-card rounded-lg p-1 px-2 shadow-md border border-border flex gap-1 transition-all duration-200 ease-in-out min-h-[40px]",
                     isExpanded ? "items-end" : "items-center"
                 )}
             >                <button

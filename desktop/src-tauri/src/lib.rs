@@ -1,4 +1,5 @@
 pub mod layout_manager;
+pub mod web_blanket;
 
 use base64::prelude::*;
 use core_foundation::base::TCFType;
@@ -471,6 +472,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .setup(|app| {
+            app.manage(web_blanket::WebBlanketState::new());
             let window = app.get_webview_window("main").unwrap();
 
             #[cfg(target_os = "macos")]
@@ -753,7 +755,22 @@ pub fn run() {
             fetch_webpage,
             set_ignore_mouse_events,
             hide_drawer,
-            set_drawer_config
+            set_drawer_config,
+            web_blanket::web_blanket_show,
+            web_blanket::web_blanket_hide,
+            web_blanket::web_blanket_set_bounds,
+            web_blanket::web_blanket_tab_create,
+            web_blanket::web_blanket_tab_activate,
+            web_blanket::web_blanket_tab_close,
+            web_blanket::web_blanket_navigate,
+            web_blanket::web_blanket_go_back,
+            web_blanket::web_blanket_go_forward,
+            web_blanket::web_blanket_reload,
+            web_blanket::web_blanket_stop_loading,
+            web_blanket::web_blanket_get_tab_state,
+            web_blanket::web_blanket_zoom_in,
+            web_blanket::web_blanket_zoom_out,
+            web_blanket::web_blanket_set_theme
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

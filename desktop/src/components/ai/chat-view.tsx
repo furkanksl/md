@@ -278,7 +278,7 @@ export const ChatView = () => {
       </div>
 
       {/* Input */}
-      <div className="py-4 px-3 w-full max-w-3xl mx-auto">
+      <div className="p-2 w-full max-w-3xl mx-auto">
         <MessageInput
           attachments={attachments}
           setAttachments={setAttachments}
