@@ -73,6 +73,17 @@ interface WebBlanketState {
   reorderFavorites: (favorites: WebBlanketFavorite[]) => Promise<void>;
 }
 
+const createDefaultFavorites = (): WebBlanketFavorite[] => [
+  { id: uuidv4(), title: "Google", url: "https://google.com", createdAt: Date.now(), updatedAt: Date.now() },
+  { id: uuidv4(), title: "YouTube", url: "https://youtube.com", createdAt: Date.now(), updatedAt: Date.now() },
+  { id: uuidv4(), title: "GitHub", url: "https://github.com/furkanksl/md", createdAt: Date.now(), updatedAt: Date.now() },
+  { id: uuidv4(), title: "X", url: "https://x.com", createdAt: Date.now(), updatedAt: Date.now() },
+  { id: uuidv4(), title: "Instagram", url: "https://instagram.com", createdAt: Date.now(), updatedAt: Date.now() },
+  { id: uuidv4(), title: "WhatsApp", url: "https://web.whatsapp.com", createdAt: Date.now(), updatedAt: Date.now() },
+  { id: uuidv4(), title: "Telegram", url: "https://web.telegram.org", createdAt: Date.now(), updatedAt: Date.now() },
+  { id: uuidv4(), title: "My Drawer", url: "https://mydrawer.furkanksl.com", createdAt: Date.now(), updatedAt: Date.now() },
+];
+
 export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   mode: "browse",
   enabled: false,
@@ -100,9 +111,15 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
         settingsRepo.get<string>("web_blanket_active_tab_id"),
       ]);
 
+      let initialFavorites = favorites;
+      if (!initialFavorites) {
+          initialFavorites = createDefaultFavorites();
+          await settingsRepo.set("web_blanket_favorites", initialFavorites);
+      }
+
       set({
         enabled: enabled ?? false,
-        favorites: favorites || [],
+        favorites: initialFavorites || [],
         tabs: tabs || [],
         activeTabId: activeTabId || null,
       });
