@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { SettingsRepository } from "@/core/infra/repositories";
 import { normalizeUrl } from "@/lib/url";
 import { v4 as uuidv4 } from "uuid";
@@ -99,6 +100,41 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
 
   init: async () => {
     try {
+      // Listen for new window events from Rust
+      listen<{ url: string }>("web-blanket-new-window", (event) => {
+          console.log("New window requested:", event.payload.url);
+          get().createTab(event.payload.url);
+      }).catch(e => console.error("Failed to setup new window listener", e));
+
+      // Listen for menu shortcuts
+      listen("web-blanket-new-tab", () => {
+          get().createTab();
+      }).catch(e => console.error("Failed to setup new tab listener", e));
+
+      listen("web-blanket-close-tab", () => {
+          const { activeTabId, closeTab } = get();
+          if (activeTabId) {
+              closeTab(activeTabId);
+          }
+      }).catch(e => console.error("Failed to setup close tab listener", e));
+
+      listen("web-blanket-focus-url", () => {
+          get().setShouldFocusUrlBar(true);
+      }).catch(e => console.error("Failed to setup focus url listener", e));
+
+      listen<{ index: number | "last" }>("web-blanket-switch-tab", (event) => {
+          const { tabs, activateTab } = get();
+          if (tabs.length === 0) return;
+
+          if (event.payload.index === "last") {
+              const lastTab = tabs[tabs.length - 1];
+              if (lastTab) activateTab(lastTab.id);
+          } else {
+              const tab = tabs[event.payload.index];
+              if (tab) activateTab(tab.id);
+          }
+      }).catch(e => console.error("Failed to setup switch tab listener", e));
+
       const [
         enabled,
         favorites,

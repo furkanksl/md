@@ -10,7 +10,7 @@ use layout_manager::{get_open_windows, restore_windows, WindowInfo};
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::time::Duration;
 use tauri::{Emitter, Manager, PhysicalPosition, image::Image, AppHandle};
-use tauri::menu::{Menu, MenuItem, MenuEvent};
+use tauri::menu::{Menu, MenuItem, MenuEvent, Submenu, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri_plugin_sql::{Migration, MigrationKind};
 use arboard::Clipboard;
@@ -18,6 +18,7 @@ use sqlx::sqlite::SqlitePoolOptions;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 use image::ImageEncoder;
+use serde_json::json;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
@@ -471,12 +472,94 @@ pub fn run() {
     ];
 
     tauri::Builder::default()
+        .on_menu_event(|app, event| {
+             match event.id().as_ref() {
+                 "new_tab" => { let _ = app.emit("web-blanket-new-tab", ()); }
+                 "close_tab" => { let _ = app.emit("web-blanket-close-tab", ()); }
+                 "focus_url" => { let _ = app.emit("web-blanket-focus-url", ()); }
+                 "switch_tab_1" => { let _ = app.emit("web-blanket-switch-tab", serde_json::json!({ "index": 0 })); }
+                 "switch_tab_2" => { let _ = app.emit("web-blanket-switch-tab", serde_json::json!({ "index": 1 })); }
+                 "switch_tab_3" => { let _ = app.emit("web-blanket-switch-tab", serde_json::json!({ "index": 2 })); }
+                 "switch_tab_4" => { let _ = app.emit("web-blanket-switch-tab", serde_json::json!({ "index": 3 })); }
+                 "switch_tab_5" => { let _ = app.emit("web-blanket-switch-tab", serde_json::json!({ "index": 4 })); }
+                 "switch_tab_6" => { let _ = app.emit("web-blanket-switch-tab", serde_json::json!({ "index": 5 })); }
+                 "switch_tab_7" => { let _ = app.emit("web-blanket-switch-tab", serde_json::json!({ "index": 6 })); }
+                 "switch_tab_8" => { let _ = app.emit("web-blanket-switch-tab", serde_json::json!({ "index": 7 })); }
+                 "switch_tab_last" => { let _ = app.emit("web-blanket-switch-tab", serde_json::json!({ "index": "last" })); }
+                 _ => {}
+             }
+        })
         .setup(|app| {
             app.manage(web_blanket::WebBlanketState::new());
             let window = app.get_webview_window("main").unwrap();
 
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            // --- Menu Setup ---
+            let app_menu = Submenu::with_items(app, "App", true, &[
+                &PredefinedMenuItem::about(app, None, None)?,
+                &PredefinedMenuItem::separator(app)?,
+                &PredefinedMenuItem::services(app, None)?,
+                &PredefinedMenuItem::separator(app)?,
+                &PredefinedMenuItem::hide(app, None)?,
+                &PredefinedMenuItem::hide_others(app, None)?,
+                &PredefinedMenuItem::show_all(app, None)?,
+                &PredefinedMenuItem::separator(app)?,
+                &PredefinedMenuItem::quit(app, None)?,
+            ])?;
+
+            let new_tab_i = MenuItem::with_id(app, "new_tab", "New Tab", true, Some("CmdOrCtrl+T"))?;
+            let close_tab_i = MenuItem::with_id(app, "close_tab", "Close Tab", true, Some("CmdOrCtrl+W"))?;
+
+            let file_menu = Submenu::with_items(app, "File", true, &[
+                &new_tab_i,
+                &close_tab_i,
+            ])?;
+
+            let edit_menu = Submenu::with_items(app, "Edit", true, &[
+                &PredefinedMenuItem::undo(app, None)?,
+                &PredefinedMenuItem::redo(app, None)?,
+                &PredefinedMenuItem::separator(app)?,
+                &PredefinedMenuItem::cut(app, None)?,
+                &PredefinedMenuItem::copy(app, None)?,
+                &PredefinedMenuItem::paste(app, None)?,
+                &PredefinedMenuItem::select_all(app, None)?,
+            ])?;
+
+            let focus_url_i = MenuItem::with_id(app, "focus_url", "Focus Address Bar", true, Some("CmdOrCtrl+L"))?;
+
+            let view_menu = Submenu::with_items(app, "View", true, &[
+                &focus_url_i,
+                &PredefinedMenuItem::fullscreen(app, None)?,
+            ])?;
+
+            let window_menu = Submenu::with_items(app, "Window", true, &[
+                &PredefinedMenuItem::minimize(app, None)?,
+                &PredefinedMenuItem::separator(app)?,
+                &MenuItem::with_id(app, "switch_tab_1", "Switch to Tab 1", true, Some("CmdOrCtrl+1"))?,
+                &MenuItem::with_id(app, "switch_tab_2", "Switch to Tab 2", true, Some("CmdOrCtrl+2"))?,
+                &MenuItem::with_id(app, "switch_tab_3", "Switch to Tab 3", true, Some("CmdOrCtrl+3"))?,
+                &MenuItem::with_id(app, "switch_tab_4", "Switch to Tab 4", true, Some("CmdOrCtrl+4"))?,
+                &MenuItem::with_id(app, "switch_tab_5", "Switch to Tab 5", true, Some("CmdOrCtrl+5"))?,
+                &MenuItem::with_id(app, "switch_tab_6", "Switch to Tab 6", true, Some("CmdOrCtrl+6"))?,
+                &MenuItem::with_id(app, "switch_tab_7", "Switch to Tab 7", true, Some("CmdOrCtrl+7"))?,
+                &MenuItem::with_id(app, "switch_tab_8", "Switch to Tab 8", true, Some("CmdOrCtrl+8"))?,
+                &MenuItem::with_id(app, "switch_tab_last", "Switch to Last Tab", true, Some("CmdOrCtrl+9"))?,
+                &PredefinedMenuItem::separator(app)?,
+                &PredefinedMenuItem::close_window(app, None)?,
+            ])?;
+
+            let menu = Menu::with_items(app, &[
+                &app_menu,
+                &file_menu,
+                &edit_menu,
+                &view_menu,
+                &window_menu,
+            ])?;
+            
+            app.set_menu(menu)?;
+            // ------------------
 
             let tray_menu = Menu::with_items(app, &[
                 &MenuItem::with_id(app, "show", "Show My Drawer", true, None::<&str>)?,

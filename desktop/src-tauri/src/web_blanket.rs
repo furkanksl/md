@@ -1,7 +1,10 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
+use std::sync::{Arc, Mutex, Once};
+use std::ffi::c_void;
+use tauri::{AppHandle, Manager, Runtime, WebviewWindow, Emitter};
 
+#[cfg(target_os = "macos")]
+use objc::declare::ClassDecl;
 #[cfg(target_os = "macos")]
 use cocoa::base::{id, nil};
 #[cfg(target_os = "macos")]
@@ -181,6 +184,79 @@ impl From<BoundsPayload> for Bounds {
 }
 
 // -----------------------------------------------------------------------------
+// UI Delegate
+// -----------------------------------------------------------------------------
+#[cfg(target_os = "macos")]
+static DELEGATE_CLASS: Once = Once::new();
+
+#[cfg(target_os = "macos")]
+fn get_delegate_class() -> &'static objc::runtime::Class {
+    DELEGATE_CLASS.call_once(|| {
+        let mut decl = ClassDecl::new("WebBlanketUIDelegate", class!(NSObject)).unwrap();
+        
+        decl.add_ivar::<*mut c_void>("window_ptr");
+
+        extern "C" fn dealloc(this: &Object, _sel: Sel) {
+            unsafe {
+                let ptr: *mut c_void = *this.get_ivar("window_ptr");
+                if !ptr.is_null() {
+                    let _ = Box::from_raw(ptr as *mut WebviewWindow);
+                }
+                let _: () = msg_send![super(this, class!(NSObject)), dealloc];
+            }
+        }
+
+        extern "C" fn create_webview(
+            this: &Object, 
+            _sel: Sel, 
+            _webview: id, 
+            _config: id, 
+            navigation_action: id, 
+            _window_features: id
+        ) -> id {
+            unsafe {
+                let request: id = msg_send![navigation_action, request];
+                let url: id = msg_send![request, URL];
+                if url != nil {
+                     let abs_str: id = msg_send![url, absoluteString];
+                     if abs_str != nil {
+                         let url_string = nsstring_to_string(abs_str);
+                         
+                         let window_ptr: *mut c_void = *this.get_ivar("window_ptr");
+                         if !window_ptr.is_null() {
+                             let window = &*(window_ptr as *mut WebviewWindow);
+                             let _ = window.emit("web-blanket-new-window",  serde_json::json!({ "url": url_string }));
+                         }
+                     }
+                }
+            }
+            nil
+        }
+        
+        unsafe {
+            decl.add_method(sel!(dealloc), dealloc as extern "C" fn(&Object, Sel));
+            decl.add_method(
+                sel!(webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:),
+                create_webview as extern "C" fn(&Object, Sel, id, id, id, id) -> id
+            );
+        }
+
+        decl.register();
+    });
+    class!(WebBlanketUIDelegate)
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    fn objc_setAssociatedObject(object: id, key: *const c_void, value: id, policy: std::ffi::c_ulong);
+}
+#[cfg(target_os = "macos")]
+const OBJC_ASSOCIATION_RETAIN_NONATOMIC: std::ffi::c_ulong = 1;
+#[cfg(target_os = "macos")]
+static ASSOCIATED_DELEGATE_KEY: u8 = 0;
+
+
+// -----------------------------------------------------------------------------
 // Commands
 // -----------------------------------------------------------------------------
 
@@ -317,6 +393,21 @@ pub fn web_blanket_tab_create(
 
             // Set default zoom to 80%
             let _: () = msg_send![webview, setPageZoom: 0.8];
+
+            // Setup Delegate
+            let delegate_cls = get_delegate_class();
+            let delegate: id = msg_send![delegate_cls, new];
+            
+            let window_clone = window.clone();
+            let window_ptr = Box::into_raw(Box::new(window_clone));
+            (*delegate).set_ivar("window_ptr", window_ptr as *mut c_void);
+
+            let _: () = msg_send![webview, setUIDelegate: delegate];
+            
+            // Keep delegate alive
+            objc_setAssociatedObject(webview, &ASSOCIATED_DELEGATE_KEY as *const u8 as *const c_void, delegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            
+            let _: () = msg_send![delegate, release]; // Associated object retains it, so we release our local ref from 'new'
 
             // Store in map
             inner.tabs.insert(tab_id.clone(), SafeId(webview));
