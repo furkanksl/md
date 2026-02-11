@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useWebBlanketStore } from "@/stores/web-blanket-store";
 import { cn } from "@/lib/utils";
-import { Smartphone, Monitor, Maximize2, Globe } from "lucide-react";
+import { Smartphone, Monitor, Maximize2 } from "lucide-react";
 import { HistoryPopover } from "./history-popover";
 import { WebHistoryEntry } from "@/core/application/services/history-service";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
@@ -16,7 +16,7 @@ export function UrlBar() {
   const [hasFocus, setHasFocus] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [width, setWidth] = useState(0);
+  const [_, setWidth] = useState(0);
 
   // Focus input when requested
   useEffect(() => {
@@ -39,9 +39,11 @@ export function UrlBar() {
   useEffect(() => {
     if (inputRef.current) {
       setWidth(inputRef.current.offsetWidth);
+
       const observer = new ResizeObserver(entries => {
         if (entries[0]) setWidth(entries[0].contentRect.width);
       });
+
       observer.observe(inputRef.current);
       return () => observer.disconnect();
     }
@@ -62,7 +64,7 @@ export function UrlBar() {
       setSuggestions([]);
       setIsSuggestionsOpen(false);
       setSelectedIndex(-1);
-      return undefined;
+      return () => {};
     }
   }, [inputVal, hasFocus]);
 
