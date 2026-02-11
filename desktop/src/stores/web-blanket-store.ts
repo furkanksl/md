@@ -169,6 +169,11 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
     }
 
     const id = uuidv4();
+    let userAgent: "mobile" | "desktop" = "mobile";
+    if (url.includes("web.whatsapp.com")) {
+        userAgent = "desktop";
+    }
+
     const newTab: WebBlanketTab = {
       id,
       url,
@@ -176,6 +181,7 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
       createdAt: Date.now(),
       lastActiveAt: Date.now(),
       loading: false,
+      userAgent,
     };
     
     const { tabs } = get();
@@ -188,6 +194,10 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
     try {
       await invoke("web_blanket_tab_create", { tabId: id, url: url || null });
       await invoke("web_blanket_tab_activate", { tabId: id });
+      
+      if (userAgent === "desktop") {
+         await invoke("web_blanket_set_user_agent", { tabId: id, mode: "desktop" });
+      }
     } catch (e) {
        console.warn("Native tab create failed:", e);
     }
@@ -259,6 +269,13 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   navigate: async (tabId, urlInput) => {
     const { ok, url } = normalizeUrl(urlInput);
     if (!ok) return;
+
+    if (url.includes("web.whatsapp.com")) {
+        get().updateTab(tabId, { userAgent: "desktop" });
+        try {
+            await invoke("web_blanket_set_user_agent", { tabId, mode: "desktop" });
+        } catch(e) { console.error("Failed to set UA for WhatsApp:", e); }
+    }
 
     // Optimistic update
     get().updateTab(tabId, { url, loading: true });

@@ -11,6 +11,64 @@ use objc::{class, msg_send, sel, sel_impl};
 #[cfg(target_os = "macos")]
 use objc::runtime::{Object, Sel};
 
+const DESKTOP_USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15";
+const MOBILE_USER_AGENT: &str = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
+
+const WHATSAPP_SCRIPT: &str = r#"
+(function() {
+    if (!window.location.host.includes('whatsapp.com')) return;
+    const BTN_ID = 'gemini-wa-toggle';
+    
+    // Inject Styles
+    if (!document.getElementById('gemini-wa-style')) {
+         const style = document.createElement('style');
+         style.id = 'gemini-wa-style';
+         style.innerHTML = `
+            * { border-inline-start-width: 0px !important; }
+            
+            /* Hide sidebar wrapper when closed */
+            body.gemini-sidebar-closed :has(> #side) {
+                display: none !important;
+            }
+            
+            /* Fix main width when sidebar is closed */
+            body.gemini-sidebar-closed :has(> #main) {
+                max-width: calc(100vw - 64px) !important;
+            }
+         `;
+         document.head.appendChild(style);
+    }
+
+    setInterval(() => {
+        if (document.getElementById(BTN_ID)) return;
+        
+        const firstNavItem = document.querySelector('[data-navbar-item]');
+        if (!firstNavItem) return;
+        
+        // Target: parent -> parent -> parent
+        const targetContainer = firstNavItem.parentElement?.parentElement?.parentElement;
+        if (!targetContainer) return;
+
+        const btn = document.createElement('div');
+        btn.id = BTN_ID;
+        btn.innerHTML = '<div role="button" title="Toggle Sidebar" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg></div>';
+        
+        btn.style.cssText = 'height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; transition: background-color 0.2s; margin: 0 auto; margin-bottom: 8px; color: var(--icon, #54656f); z-index: 1000;';
+        
+        btn.onmouseenter = () => btn.style.backgroundColor = 'var(--background-default-hover, rgba(0,0,0,0.05))';
+        btn.onmouseleave = () => btn.style.backgroundColor = 'transparent';
+
+        btn.onclick = () => {
+            document.body.classList.toggle('gemini-sidebar-closed');
+            window.dispatchEvent(new Event('resize'));
+        };
+        
+        targetContainer.insertBefore(btn, targetContainer.firstChild);
+
+    }, 1000);
+})();
+"#;
+
 // Wrapper for Objective-C pointers to be Send + Sync
 #[derive(Clone, Copy, Debug)]
 struct SafeId(pub *mut Object);
@@ -183,10 +241,26 @@ pub fn web_blanket_tab_create(
         // Create WKWebView
         unsafe {
             let config: id = msg_send![class!(WKWebViewConfiguration), new];
+
+            // Inject WhatsApp Script
+            let script_source = NSString::alloc(nil).init_str(WHATSAPP_SCRIPT);
+            let user_content_controller: id = msg_send![config, userContentController];
+            let user_script: id = msg_send![class!(WKUserScript), alloc];
+            let _: () = msg_send![user_script, initWithSource:script_source injectionTime:1isize forMainFrameOnly:false];
+            let _: () = msg_send![user_content_controller, addUserScript: user_script];
+            let _: () = msg_send![user_script, release];
+            let _: () = msg_send![script_source, release];
             
             // Enforce Mobile Content Mode
             let prefs: id = msg_send![config, defaultWebpagePreferences];
             let _: () = msg_send![prefs, setPreferredContentMode: 1isize];
+
+            // Enable Web Inspector
+            let preferences: id = msg_send![config, preferences];
+            let key = NSString::alloc(nil).init_str("developerExtrasEnabled");
+            let val: id = msg_send![class!(NSNumber), numberWithBool: true];
+            let _: () = msg_send![preferences, setValue:val forKey:key];
+            let _: () = msg_send![key, release];
 
             let webview: id = msg_send![class!(WKWebView), alloc];
             let webview: id = msg_send![webview, initWithFrame: NSRect::new(NSPoint::new(0., 0.), NSSize::new(0., 0.)) configuration: config];
@@ -205,7 +279,7 @@ pub fn web_blanket_tab_create(
             let _: () = msg_send![webview, setFrame: container_bounds];
 
             // Set Mobile User Agent
-            let user_agent = NSString::alloc(nil).init_str("Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1");
+            let user_agent = NSString::alloc(nil).init_str(MOBILE_USER_AGENT);
             let _: () = msg_send![webview, setCustomUserAgent: user_agent];
             let _: () = msg_send![user_agent, release];
 
@@ -469,15 +543,15 @@ pub fn web_blanket_set_user_agent(
                 let prefs: id = msg_send![config, defaultWebpagePreferences];
                 let _: () = msg_send![prefs, setPreferredContentMode: content_mode];
                 
-                if mode == "desktop" {
-                    // Clear custom UA to use default (Desktop)
-                    let _: () = msg_send![wv, setCustomUserAgent: nil];
+                let ua_string = if mode == "desktop" {
+                    DESKTOP_USER_AGENT
                 } else {
-                    // Set Mobile UA
-                    let user_agent = NSString::alloc(nil).init_str("Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1");
-                    let _: () = msg_send![wv, setCustomUserAgent: user_agent];
-                    let _: () = msg_send![user_agent, release];
-                }
+                    MOBILE_USER_AGENT
+                };
+                
+                let user_agent = NSString::alloc(nil).init_str(ua_string);
+                let _: () = msg_send![wv, setCustomUserAgent: user_agent];
+                let _: () = msg_send![user_agent, release];
                 
                 // Reload to apply
                 let _: () = msg_send![wv, reload];
