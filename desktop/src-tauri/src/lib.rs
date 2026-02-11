@@ -770,7 +770,8 @@ pub fn run() {
             web_blanket::web_blanket_get_tab_state,
             web_blanket::web_blanket_zoom_in,
             web_blanket::web_blanket_zoom_out,
-            web_blanket::web_blanket_set_theme
+            web_blanket::web_blanket_set_theme,
+            web_blanket::web_blanket_set_user_agent
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -26,6 +26,7 @@ export type WebBlanketTab = {
   canGoBack?: boolean;
   canGoForward?: boolean;
   zoom?: number;
+  userAgent?: "mobile" | "desktop";
 };
 
 interface WebBlanketState {
@@ -61,6 +62,7 @@ interface WebBlanketState {
   stop: () => Promise<void>;
   zoomIn: () => Promise<void>;
   zoomOut: () => Promise<void>;
+  toggleUserAgent: (tabId: string) => Promise<void>;
 
   // Favorites
   addFavorite: (title: string, url: string) => Promise<void>;
@@ -369,5 +371,17 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   reorderFavorites: async (newFavorites) => {
       set({ favorites: newFavorites });
       await settingsRepo.set("web_blanket_favorites", newFavorites);
+  },
+
+  toggleUserAgent: async (tabId) => {
+      const { tabs } = get();
+      const tab = tabs.find(t => t.id === tabId);
+      if (tab) {
+          const newUserAgent = tab.userAgent === "desktop" ? "mobile" : "desktop";
+          get().updateTab(tabId, { userAgent: newUserAgent });
+          try {
+              await invoke("web_blanket_set_user_agent", { tabId, mode: newUserAgent });
+          } catch (e) { console.error(e); }
+      }
   }
 }));

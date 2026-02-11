@@ -235,7 +235,12 @@ export const MainLayout = () => {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setActiveView(item.id as any)}
+                    onClick={() => {
+                      if (activeView === "scraping" && item.id !== "scraping") {
+                        invoke("web_blanket_hide").catch(() => {});
+                      }
+                      setActiveView(item.id as any);
+                    }}
                     className={clsx(
                       "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 relative overflow-hidden group",
                       isActive

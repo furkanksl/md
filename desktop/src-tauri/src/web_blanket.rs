@@ -169,6 +169,11 @@ pub fn web_blanket_tab_create(
     #[cfg(target_os = "macos")]
     {
         let mut inner = state.inner.lock().map_err(|e| e.to_string())?;
+        
+        if inner.tabs.contains_key(&tab_id) {
+            return Ok(());
+        }
+
         ensure_container(&window, &mut inner)?;
 
         let container = inner.container_view
@@ -433,6 +438,49 @@ pub fn web_blanket_set_theme(
                 }
 
                 let _: () = msg_send![name_str, release];
+            }
+        }
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    Err("Not supported on this OS".into())
+}
+
+#[tauri::command]
+pub fn web_blanket_set_user_agent(
+    _window: WebviewWindow,
+    state: tauri::State<WebBlanketState>,
+    tab_id: String,
+    mode: String,
+) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let inner = state.inner.lock().map_err(|e| e.to_string())?;
+        
+        if let Some(webview) = inner.tabs.get(&tab_id) {
+            unsafe {
+                let wv = webview.as_id();
+                
+                // 1 = Mobile, 2 = Desktop
+                let content_mode: isize = if mode == "desktop" { 2 } else { 1 };
+                
+                // Get configuration -> preferences
+                let config: id = msg_send![wv, configuration];
+                let prefs: id = msg_send![config, defaultWebpagePreferences];
+                let _: () = msg_send![prefs, setPreferredContentMode: content_mode];
+                
+                if mode == "desktop" {
+                    // Clear custom UA to use default (Desktop)
+                    let _: () = msg_send![wv, setCustomUserAgent: nil];
+                } else {
+                    // Set Mobile UA
+                    let user_agent = NSString::alloc(nil).init_str("Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1");
+                    let _: () = msg_send![wv, setCustomUserAgent: user_agent];
+                    let _: () = msg_send![user_agent, release];
+                }
+                
+                // Reload to apply
+                let _: () = msg_send![wv, reload];
             }
         }
         Ok(())
