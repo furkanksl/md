@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useWebBlanketStore } from "@/stores/web-blanket-store";
 import { WebHistoryEntry, HistoryFilter } from "@/core/application/services/history-service";
-import { History, Trash2, Clock, Globe } from "lucide-react";
+import { History, Trash2, Globe } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -14,16 +14,15 @@ const FILTERS: { id: HistoryFilter; label: string }[] = [
 ];
 
 export function HistoryPopover() {
-  const { getHistory, clearHistory, navigate, activeTabId, createTab } = useWebBlanketStore();
+  const { getHistory, clearHistory, navigate, activeTabId, createTab, isHistoryOpen, setIsHistoryOpen } = useWebBlanketStore();
   const [history, setHistory] = useState<WebHistoryEntry[]>([]);
   const [activeFilter, setActiveFilter] = useState<HistoryFilter>("today");
-  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isHistoryOpen) {
       loadHistory();
     }
-  }, [isOpen, activeFilter]);
+  }, [isHistoryOpen, activeFilter]);
 
   const loadHistory = async () => {
     const data = await getHistory(activeFilter);
@@ -41,11 +40,11 @@ export function HistoryPopover() {
     } else {
       createTab(url);
     }
-    setIsOpen(false);
+    setIsHistoryOpen(false);
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isHistoryOpen} onOpenChange={() => setIsHistoryOpen(!isHistoryOpen)}>
       <PopoverTrigger asChild>
         <button
           className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"

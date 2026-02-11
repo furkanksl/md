@@ -849,7 +849,8 @@ fn ensure_container(
         // Hide by default, only show when explicitly requested
         let _: () = msg_send![container, setHidden: true];
 
-        let _: () = msg_send![content_view, addSubview: container];
+        // Add to content view, positioned below everything else (at index 0)
+        let _: () = msg_send![content_view, addSubview: container positioned: 1isize relativeTo: nil];
         
         inner.container_view = Some(SafeId(container));
         

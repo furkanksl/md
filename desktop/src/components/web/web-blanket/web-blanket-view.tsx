@@ -20,13 +20,15 @@ export function WebBlanketView() {
     zoomIn,
     zoomOut,
     setShouldFocusUrlBar,
-    isFullScreen
+    isFullScreen,
+    isHistoryOpen,
+    isSuggestionsOpen
   } = useWebBlanketStore();
   const { theme } = useUIStore();
 
   const activeTab = tabs.find(t => t.id === activeTabId);
   const hasTabs = tabs.length > 0;
-  const shouldShowNative = mode === "browse" && hasTabs && !!activeTab?.url;
+  const shouldShowNative = mode === "browse" && hasTabs && !!activeTab?.url && !isHistoryOpen && !isSuggestionsOpen;
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -157,20 +159,19 @@ export function WebBlanketView() {
     <div className="flex flex-col h-full w-full relative overflow-hidden">
       {/* Top Bar: Persistent URL Bar */}
       {!isFullScreen && (
-      <div className="shrink-0 z-50 py-2 bg-background/40 backdrop-blur-md border-b border-border/10">
-        <UrlBar />
-      </div>
+        <div className="shrink-0 z-50 py-2 bg-background/40 backdrop-blur-md border-b border-border/10 pointer-events-auto">
+          <UrlBar />
+        </div>
       )}
 
       {/* Main Content Area - Native View Host */}
       <div
         ref={contentRef}
-        className="flex-1 w-full bg-transparent relative min-h-0"
+        className="flex-1 w-full bg-transparent relative min-h-0 z-[100] "
         style={{ paddingBottom: isFullScreen ? 3 : 0 }}
       >
-        {/* If native view is hidden (no tabs or empty tab), show Speed Dial */}
-        {!shouldShowNative && (
-          <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm p-4">
+        {!shouldShowNative && !isSuggestionsOpen && !isHistoryOpen && (
+          <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm p-4 pointer-events-auto">
             <SpeedDial />
           </div>
         )}
@@ -178,9 +179,9 @@ export function WebBlanketView() {
 
       {/* Bottom Bar: Tabs */}
       {!isFullScreen && (
-      <div className="shrink-0 z-50">
-        <TabsStrip />
-      </div>
+        <div className="shrink-0 z-50 pointer-events-auto">
+          <TabsStrip />
+        </div>
       )}
     </div>
   );

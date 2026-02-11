@@ -79,6 +79,16 @@ class HistoryService {
     return await db.select<WebHistoryEntry[]>(query, params);
   }
 
+  async search(query: string): Promise<WebHistoryEntry[]> {
+    if (!query.trim()) return [];
+    const db = await this.getDb();
+    const searchTerm = `%${query}%`;
+    return await db.select<WebHistoryEntry[]>(
+      "SELECT * FROM web_history WHERE url LIKE $1 OR title LIKE $2 ORDER BY timestamp DESC LIMIT 5",
+      [searchTerm, searchTerm]
+    );
+  }
+
   async clearHistory(): Promise<void> {
     const db = await this.getDb();
     await db.execute("DELETE FROM web_history");

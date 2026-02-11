@@ -43,7 +43,9 @@ interface WebBlanketState {
   hoveringBrowseRegion: boolean;
   shouldFocusUrlBar: boolean;
   isFullScreen: boolean;
-  
+  isHistoryOpen: boolean;
+
+  isSuggestionsOpen: boolean;
   // Actions
   init: () => Promise<void>;
   setMode: (mode: "research" | "browse") => Promise<void>;
@@ -51,7 +53,8 @@ interface WebBlanketState {
   setUrlBarVisible: (visible: boolean) => void;
   setShouldFocusUrlBar: (focus: boolean) => void;
   setFullScreen: (isFullScreen: boolean) => void;
-  
+  setIsHistoryOpen: (isHistoryOpen: boolean) => void;
+  setIsSuggestionsOpen: (isSuggestionsOpen: boolean) => void;
   // Tab Management
   createTab: (url?: string) => Promise<string>;
   activateTab: (tabId: string) => Promise<void>;
@@ -77,6 +80,7 @@ interface WebBlanketState {
 
   // History
   getHistory: (filter: HistoryFilter) => Promise<WebHistoryEntry[]>;
+  searchHistory: (query: string) => Promise<WebHistoryEntry[]>;
   clearHistory: () => Promise<void>;
 }
 
@@ -101,9 +105,15 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   hoveringBrowseRegion: false,
   shouldFocusUrlBar: false,
   isFullScreen: false,
+  isHistoryOpen: false,
+  isSuggestionsOpen: false,
 
   setFullScreen: (isFullScreen) => set({ isFullScreen }),
 
+  setIsHistoryOpen: (isHistoryOpen: boolean) => set({ isHistoryOpen }),
+  
+  setIsSuggestionsOpen: (isSuggestionsOpen: boolean) => set({ isSuggestionsOpen }),
+ 
   init: async () => {
     try {
       // Listen for new window events from Rust
@@ -474,6 +484,10 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
 
   getHistory: async (filter) => {
       return await historyService.getHistory(filter);
+  },
+
+  searchHistory: async (query) => {
+      return await historyService.search(query);
   },
 
   clearHistory: async () => {
