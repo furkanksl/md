@@ -19,7 +19,8 @@ export function WebBlanketView() {
     goForward,
     zoomIn,
     zoomOut,
-    setShouldFocusUrlBar
+    setShouldFocusUrlBar,
+    isFullScreen
   } = useWebBlanketStore();
   const { theme } = useUIStore();
 
@@ -69,7 +70,7 @@ export function WebBlanketView() {
     return () => {
       observer.disconnect();
     };
-  }, [mode, tabs.length, shouldShowNative]);
+  }, [mode, tabs.length, shouldShowNative, isFullScreen]);
 
   // Show/Hide native blanket based on logic
   useLayoutEffect(() => {
@@ -155,14 +156,17 @@ export function WebBlanketView() {
   return (
     <div className="flex flex-col h-full w-full relative overflow-hidden">
       {/* Top Bar: Persistent URL Bar */}
+      {!isFullScreen && (
       <div className="shrink-0 z-50 py-2 bg-background/40 backdrop-blur-md border-b border-border/10">
         <UrlBar />
       </div>
+      )}
 
       {/* Main Content Area - Native View Host */}
       <div
         ref={contentRef}
         className="flex-1 w-full bg-transparent relative min-h-0"
+        style={{ paddingBottom: isFullScreen ? 3 : 0 }}
       >
         {/* If native view is hidden (no tabs or empty tab), show Speed Dial */}
         {!shouldShowNative && (
@@ -173,9 +177,11 @@ export function WebBlanketView() {
       </div>
 
       {/* Bottom Bar: Tabs */}
+      {!isFullScreen && (
       <div className="shrink-0 z-50">
         <TabsStrip />
       </div>
+      )}
     </div>
   );
 }

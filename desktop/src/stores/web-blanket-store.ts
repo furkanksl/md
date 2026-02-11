@@ -39,6 +39,7 @@ interface WebBlanketState {
   urlBarVisible: boolean;
   hoveringBrowseRegion: boolean;
   shouldFocusUrlBar: boolean;
+  isFullScreen: boolean;
   
   // Actions
   init: () => Promise<void>;
@@ -46,6 +47,7 @@ interface WebBlanketState {
   setHoveringBrowseRegion: (hovering: boolean) => void;
   setUrlBarVisible: (visible: boolean) => void;
   setShouldFocusUrlBar: (focus: boolean) => void;
+  setFullScreen: (isFullScreen: boolean) => void;
   
   // Tab Management
   createTab: (url?: string) => Promise<string>;
@@ -80,6 +82,9 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   urlBarVisible: false,
   hoveringBrowseRegion: false,
   shouldFocusUrlBar: false,
+  isFullScreen: false,
+
+  setFullScreen: (isFullScreen) => set({ isFullScreen }),
 
   init: async () => {
     try {

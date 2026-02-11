@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useUIStore } from "@/stores/ui-store";
@@ -6,6 +6,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { useClipboardStore } from "@/stores/clipboard-store";
 import { useShortcutsStore } from "@/stores/shortcuts-store";
 import { useUpdateStore } from "@/stores/update-store";
+import { useWebBlanketStore } from "@/stores/web-blanket-store";
 import { clsx } from "clsx";
 import { ChatView } from "./ai/chat-view";
 import { ClipboardView } from "./clipboard/clipboard-view";
@@ -28,13 +29,18 @@ import {
   Sun,
   Moon,
   ListTodo,
+  Minimize2,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const MainLayout = () => {
   const { activeView, setActiveView, theme, setTheme, themeName } = useUIStore();
   const { hasCompletedOnboarding } = useSettingsStore();
   const { startMonitoring } = useClipboardStore();
   const { updateAvailable, showPoster } = useUpdateStore();
+  const { isFullScreen, setFullScreen } = useWebBlanketStore();
+
+  const [isNavVisible, setIsNavVisible] = useState(true);
 
   useEffect(() => {
     startMonitoring();
@@ -66,6 +72,29 @@ export const MainLayout = () => {
       window: getCurrentWindow(),
     });
   }, []);
+
+  // Handle Full Screen Auto-Hide Nav Logic
+  useEffect(() => {
+    if (activeView !== 'web' || !isFullScreen) {
+      setIsNavVisible(true);
+      return;
+    }
+
+    // Initially hide when entering full screen
+    setIsNavVisible(false);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const fromBottom = window.innerHeight - e.clientY;
+      // Trigger area: bottom 10px
+      if (fromBottom <= 10) {
+        setIsNavVisible(true);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [activeView, isFullScreen]);
+
 
   // Ref to track latest autoHide preference without re-binding listeners constantly
   const autoHideRef = useRef(useSettingsStore.getState().autoHide);
@@ -138,6 +167,18 @@ export const MainLayout = () => {
             )}
           </div>
           <div className="flex gap-1 items-center">
+
+            {/* Minimize Button (Full Screen Web Only) */}
+            {activeView === 'web' && isFullScreen && (
+              <button
+                onClick={() => setFullScreen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full transition-colors text-muted-foreground hover:text-foreground hover:bg-accent relative z-50"
+                title="Exit Full Screen"
+              >
+                <Minimize2 size={16} strokeWidth={1.5} />
+              </button>
+            )}
+
             {/* Header Navigation Items */}
             {hasCompletedOnboarding && headerNavItems.map((item) => {
               const isActive = activeView === item.id;
@@ -227,49 +268,65 @@ export const MainLayout = () => {
 
         {/* Floating Nav Pill - Only show if onboarding completed */}
         {hasCompletedOnboarding && (
-          <div className="h-16 flex items-center justify-center shrink-0">
-            <nav className="flex items-center gap-x-1.5 bg-card p-1.5 rounded-full shadow-lg border border-border">
-              {bottomNavItems.map((item) => {
-                const isActive = activeView === item.id;
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      if (activeView === "web" && item.id !== "web") {
-                        invoke("web_blanket_hide").catch(() => {});
-                      }
-                      setActiveView(item.id as any);
-                    }}
-                    className={clsx(
-                      "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 relative overflow-hidden group",
-                      isActive
-                        ? "text-accent-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                    )}
-                    title={item.label}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="nav-bg"
-                        className="absolute inset-0 bg-accent rounded-full"
-                        transition={{
-                          type: "spring",
-                          bounce: 0.2,
-                          duration: 0.2,
-                        }}
-                      />
-                    )}
-                    <Icon
-                      size={18}
-                      strokeWidth={isActive ? 2 : 1.5}
-                      className="relative z-10"
-                    />
-                  </button>
-                );
+          <AnimatePresence>
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onMouseLeave={() => {
+                if (activeView === 'web' && isFullScreen) {
+                  setIsNavVisible(false);
+                }
+              }}
+              className={cn("flex items-center justify-center shrink-0 z-50 transition-all duration-200", {
+                "h-0": !isNavVisible,
+                "h-16": isNavVisible,
               })}
-            </nav>
-          </div>
+            >
+              <nav className="flex items-center gap-x-1.5 bg-card p-1.5 rounded-full shadow-lg border border-border">
+                {bottomNavItems.map((item) => {
+                  const isActive = activeView === item.id;
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        if (activeView === "web" && item.id !== "web") {
+                          invoke("web_blanket_hide").catch(() => { });
+                        }
+                        setActiveView(item.id as any);
+                      }}
+                      className={clsx(
+                        "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 relative overflow-hidden group",
+                        isActive
+                          ? "text-accent-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      )}
+                      title={item.label}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="nav-bg"
+                          className="absolute inset-0 bg-accent rounded-full"
+                          transition={{
+                            type: "spring",
+                            bounce: 0.2,
+                            duration: 0.2,
+                          }}
+                        />
+                      )}
+                      <Icon
+                        size={18}
+                        strokeWidth={isActive ? 2 : 1.5}
+                        className="relative z-10"
+                      />
+                    </button>
+                  );
+                })}
+              </nav>
+            </motion.div>
+          </AnimatePresence>
         )}
       </div>
     </div>

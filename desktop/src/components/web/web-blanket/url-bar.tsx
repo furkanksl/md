@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useWebBlanketStore } from "@/stores/web-blanket-store";
 import { cn } from "@/lib/utils";
-import { Smartphone, Monitor } from "lucide-react";
+import { Smartphone, Monitor, Maximize2 } from "lucide-react";
 
 export function UrlBar() {
-  const { activeTabId, tabs, navigate, createTab, shouldFocusUrlBar, setShouldFocusUrlBar, toggleUserAgent } = useWebBlanketStore();
+  const { activeTabId, tabs, navigate, createTab, shouldFocusUrlBar, setShouldFocusUrlBar, toggleUserAgent, setFullScreen } = useWebBlanketStore();
   const activeTab = tabs.find(t => t.id === activeTabId);
   const isDesktop = activeTab?.userAgent === "desktop";
 
@@ -76,6 +76,15 @@ export function UrlBar() {
           }}
         />
       </form>
+
+      {/* Expand Toggle */}
+      <button 
+        onClick={() => setFullScreen(true)}
+        className="p-1.5 ml-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+        title="Enter Full Screen"
+      >
+        <Maximize2 size={14} />
+      </button>
 
       {/* UA Toggle */}
       {activeTabId && (

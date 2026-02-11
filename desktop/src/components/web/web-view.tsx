@@ -15,6 +15,7 @@ import remarkBreaks from 'remark-breaks';
 import { isImeComposing } from '@/lib/ime';
 import { open } from '@tauri-apps/plugin-shell';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Markdown = ReactMarkdown as any;
@@ -31,7 +32,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 export const WebView = () => {
     const { history, loadHistory, addScrapingTask, deleteTask, clearHistory } = useScrapingStore();
     const { aiConfigurations } = useSettingsStore();
-    const { mode, setMode, init: initWebBlanket, tabs, activeTabId, goBack, goForward, reload, stop, zoomIn, zoomOut } = useWebBlanketStore();
+    const { mode, setMode, init: initWebBlanket, tabs, activeTabId, goBack, goForward, reload, stop, zoomIn, zoomOut, isFullScreen } = useWebBlanketStore();
 
     const [url, setUrl] = useState('');
     const [prompt, setPrompt] = useState('');
@@ -133,123 +134,127 @@ export const WebView = () => {
     }, [availableModels]);
 
     return (
-        <div className="h-full px-4 pt-3 flex flex-col relative overflow-hidden">
+        <div className={cn("h-full px-4 pt-3 flex flex-col relative overflow-hidden", {
+            "px-0 pt-0": isFullScreen,
+        })}>
             {/* Header / Mode Switcher */}
-            <div className="flex justify-between items-center shrink-0">
-                <div className="flex p-1 bg-muted/50 rounded-lg">
-                    <button
-                        onClick={() => setMode("browse")}
-                        className={clsx(
-                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-                            mode === "browse"
-                                ? "bg-background shadow-sm text-foreground"
-                                : "text-muted-foreground hover:text-foreground"
-                        )}
-                    >
-                        <LayoutGrid size={14} />
-                        Browse
-                    </button>
-                    <button
-                        onClick={() => setMode("research")}
-                        className={clsx(
-                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-                            mode === "research"
-                                ? "bg-background shadow-sm text-foreground"
-                                : "text-muted-foreground hover:text-foreground"
-                        )}
-                    >
-                        <Microscope size={14} />
-                        Research
-                    </button>
-                </div>
-
-                {mode === "browse" ? (
-                    <div className="flex items-center gap-1">
-                        <button onClick={goBack} disabled={!activeTab?.canGoBack} className="p-1.5 hover:bg-muted rounded-md disabled:opacity-30 transition-colors">
-                            <ArrowLeft size={14} />
+            {!isFullScreen && (
+                <div className="flex justify-between items-center shrink-0">
+                    <div className="flex p-1 bg-muted/50 rounded-lg">
+                        <button
+                            onClick={() => setMode("browse")}
+                            className={clsx(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                                mode === "browse"
+                                    ? "bg-background shadow-sm text-foreground"
+                                    : "text-muted-foreground hover:text-foreground"
+                            )}
+                        >
+                            <LayoutGrid size={14} />
+                            Browse
                         </button>
-                        <button onClick={goForward} disabled={!activeTab?.canGoForward} className="p-1.5 hover:bg-muted rounded-md disabled:opacity-30 transition-colors">
-                            <ArrowRight size={14} />
-                        </button>
-                        <button onClick={activeTab?.loading ? stop : reload} className="p-1.5 hover:bg-muted rounded-md transition-colors">
-                            {activeTab?.loading ? <X size={14} /> : <RotateCcw size={14} />}
-                        </button>
-
-                        <div className="w-px h-4 bg-border mx-1" />
-
-                        {/* Zoom */}
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <button className="p-1.5 hover:bg-muted rounded-md transition-colors">
-                                    <Type size={14} />
-                                </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-2" side="bottom" align="end" sideOffset={5}>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={zoomOut} className="p-2 hover:bg-accent rounded-md transition-colors"><Minus size={16} /></button>
-                                    <span className="text-xs font-medium text-muted-foreground px-1 min-w-[3ch] text-center">
-                                        {Math.round((activeTab?.zoom || 1) * 100)}%
-                                    </span>
-                                    <button onClick={zoomIn} className="p-2 hover:bg-accent rounded-md transition-colors"><Plus size={16} /></button>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-
-                        <button onClick={() => activeTab?.url && open(activeTab.url)} disabled={!activeTab?.url} className="p-1.5 hover:bg-muted rounded-md disabled:opacity-30 transition-colors">
-                            <ExternalLink size={14} />
+                        <button
+                            onClick={() => setMode("research")}
+                            className={clsx(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                                mode === "research"
+                                    ? "bg-background shadow-sm text-foreground"
+                                    : "text-muted-foreground hover:text-foreground"
+                            )}
+                        >
+                            <Microscope size={14} />
+                            Research
                         </button>
                     </div>
-                ) : (
-                    <div className="flex items-center gap-2">
-                        {/* Model Selector */}
-                        {availableModels.length > 0 && selectedModel && (
-                            <PopoverPrimitive.Root>
-                                <PopoverPrimitive.Trigger asChild>
-                                    <button className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
-                                        <Cpu size={14} />
-                                        <span>{availableModels.find(m => m.id === selectedModel)?.name}</span>
-                                        <ChevronDown size={14} className="text-muted-foreground" />
+
+                    {mode === "browse" ? (
+                        <div className="flex items-center gap-1">
+                            <button onClick={goBack} disabled={!activeTab?.canGoBack} className="p-1.5 hover:bg-muted rounded-md disabled:opacity-30 transition-colors">
+                                <ArrowLeft size={14} />
+                            </button>
+                            <button onClick={goForward} disabled={!activeTab?.canGoForward} className="p-1.5 hover:bg-muted rounded-md disabled:opacity-30 transition-colors">
+                                <ArrowRight size={14} />
+                            </button>
+                            <button onClick={activeTab?.loading ? stop : reload} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                                {activeTab?.loading ? <X size={14} /> : <RotateCcw size={14} />}
+                            </button>
+
+                            <div className="w-px h-4 bg-border mx-1" />
+
+                            {/* Zoom */}
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                                        <Type size={14} />
                                     </button>
-                                </PopoverPrimitive.Trigger>
-                                <PopoverPrimitive.Portal>
-                                    <PopoverPrimitive.Content className="z-50 min-w-[200px] bg-popover rounded-lg border border-border shadow-xl p-1 animate-in fade-in zoom-in-95 duration-200" sideOffset={5}>
-                                        <div className="max-h-[300px] overflow-y-auto scrollbar-none">
-                                            {(Object.entries(groupedModels ?? {}) as [string, { id: string; name: string; provider: string }[]][]).map(([provider, models]) => {
-                                                // Ensure models is defined before proceeding
-                                                const modelList = models || [];
-                                                if (modelList.length === 0) return null;
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-2" side="bottom" align="end" sideOffset={5}>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={zoomOut} className="p-2 hover:bg-accent rounded-md transition-colors"><Minus size={16} /></button>
+                                        <span className="text-xs font-medium text-muted-foreground px-1 min-w-[3ch] text-center">
+                                            {Math.round((activeTab?.zoom || 1) * 100)}%
+                                        </span>
+                                        <button onClick={zoomIn} className="p-2 hover:bg-accent rounded-md transition-colors"><Plus size={16} /></button>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
 
-                                                return (
-                                                    <div key={provider} className="mb-2 last:mb-0">
-                                                        <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                            {PROVIDER_LABELS[provider] || provider}
+                            <button onClick={() => activeTab?.url && open(activeTab.url)} disabled={!activeTab?.url} className="p-1.5 hover:bg-muted rounded-md disabled:opacity-30 transition-colors">
+                                <ExternalLink size={14} />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            {/* Model Selector */}
+                            {availableModels.length > 0 && selectedModel && (
+                                <PopoverPrimitive.Root>
+                                    <PopoverPrimitive.Trigger asChild>
+                                        <button className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                                            <Cpu size={14} />
+                                            <span>{availableModels.find(m => m.id === selectedModel)?.name}</span>
+                                            <ChevronDown size={14} className="text-muted-foreground" />
+                                        </button>
+                                    </PopoverPrimitive.Trigger>
+                                    <PopoverPrimitive.Portal>
+                                        <PopoverPrimitive.Content className="z-50 min-w-[200px] bg-popover rounded-lg border border-border shadow-xl p-1 animate-in fade-in zoom-in-95 duration-200" sideOffset={5}>
+                                            <div className="max-h-[300px] overflow-y-auto scrollbar-none">
+                                                {(Object.entries(groupedModels ?? {}) as [string, { id: string; name: string; provider: string }[]][]).map(([provider, models]) => {
+                                                    // Ensure models is defined before proceeding
+                                                    const modelList = models || [];
+                                                    if (modelList.length === 0) return null;
+
+                                                    return (
+                                                        <div key={provider} className="mb-2 last:mb-0">
+                                                            <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                                {PROVIDER_LABELS[provider] || provider}
+                                                            </div>
+                                                            {modelList.map(model => (
+                                                                <button
+                                                                    key={model.id}
+                                                                    onClick={() => setSelectedModel(model.id)}
+                                                                    className={clsx(
+                                                                        "w-full text-left px-2 py-1.5 rounded-md text-xs transition-colors flex items-center justify-between",
+                                                                        selectedModel === model.id
+                                                                            ? "bg-accent text-accent-foreground"
+                                                                            : "text-muted-foreground hover:bg-muted"
+                                                                    )}
+                                                                >
+                                                                    {model.name}
+                                                                    {selectedModel === model.id && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                                                                </button>
+                                                            ))}
                                                         </div>
-                                                        {modelList.map(model => (
-                                                            <button
-                                                                key={model.id}
-                                                                onClick={() => setSelectedModel(model.id)}
-                                                                className={clsx(
-                                                                    "w-full text-left px-2 py-1.5 rounded-md text-xs transition-colors flex items-center justify-between",
-                                                                    selectedModel === model.id
-                                                                        ? "bg-accent text-accent-foreground"
-                                                                        : "text-muted-foreground hover:bg-muted"
-                                                                )}
-                                                            >
-                                                                {model.name}
-                                                                {selectedModel === model.id && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </PopoverPrimitive.Content>
-                                </PopoverPrimitive.Portal>
-                            </PopoverPrimitive.Root>
-                        )}
-                    </div>
-                )}
-            </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </PopoverPrimitive.Content>
+                                    </PopoverPrimitive.Portal>
+                                </PopoverPrimitive.Root>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {mode === "browse" ? (
                 <WebBlanketView />
