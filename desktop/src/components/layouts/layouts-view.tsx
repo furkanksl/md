@@ -64,7 +64,7 @@ export const LayoutsView = () => {
     };
 
     return (
-        <div className="h-full px-4 pt-3 flex flex-col relative overflow-hidden">
+        <div className="h-full px-4 pt-1 flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-center mb-4 shrink-0">
                 <h2 className="text-xl font-light text-foreground">Window Flow</h2>
                 {!previewMode && (

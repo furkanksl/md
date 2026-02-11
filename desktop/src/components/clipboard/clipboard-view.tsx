@@ -116,7 +116,7 @@ export const ClipboardView = () => {
     const LIMIT_OPTIONS = [10, 20, 30, 50, 100, 0];
 
     return (
-        <div className="flex flex-col h-full px-4 pt-3 relative overflow-hidden">
+        <div className="flex flex-col h-full px-4 pt-1 relative overflow-hidden">
             <div className="relative mb-2 flex gap-2 shrink-0">
                 <div className="relative flex-1 transition-all">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 dark:text-stone-600" size={16} />

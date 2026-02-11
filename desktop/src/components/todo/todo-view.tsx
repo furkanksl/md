@@ -608,7 +608,7 @@ export const TodoView = () => {
   }, []);
 
   return (
-    <div className="h-full flex flex-col p-4 pt-2 gap-4">
+    <div className="h-full flex flex-col p-4 pt-1 gap-4">
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}

@@ -177,7 +177,7 @@ export const ChatView = () => {
       />
 
       {/* Gentle Header */}
-      <div className="h-12 grid grid-cols-3 items-center px-4 shrink-0 relative z-10">
+      <div className="h-10 grid grid-cols-3 items-center px-4 shrink-0 relative z-10">
         <div className="flex items-center gap-3 justify-start overflow-hidden">
           <button
             onClick={() => setIsSidebarOpen(true)}

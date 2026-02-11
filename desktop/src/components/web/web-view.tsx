@@ -146,7 +146,7 @@ export const WebView = () => {
                             className={clsx(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
                                 mode === "browse"
-                                    ? "bg-background shadow-sm text-foreground"
+                                    ? "bg-background animate-shadow-fade text-foreground"
                                     : "text-muted-foreground hover:text-foreground"
                             )}
                         >
@@ -158,7 +158,7 @@ export const WebView = () => {
                             className={clsx(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
                                 mode === "research"
-                                    ? "bg-background shadow-sm text-foreground"
+                                    ? "bg-background animate-shadow-fade text-foreground"
                                     : "text-muted-foreground hover:text-foreground"
                             )}
                         >

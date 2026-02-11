@@ -95,11 +95,16 @@ export default {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+            'shadow-fade': {
+                '0%, 50%': { 'box-shadow': '0 2px 4px 0 rgb(0 0 0 / 0.45)' },
+                '100%': { 'box-shadow': 'none' },
+            }
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+            'shadow-fade': 'shadow-fade 2s ease-out forwards',
   		}
   	}
   },

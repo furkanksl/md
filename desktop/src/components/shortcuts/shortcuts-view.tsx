@@ -122,7 +122,7 @@ export const ShortcutsView = () => {
   const visibleApps = filteredDetected.slice(0, visibleCount);
 
   return (
-    <div className="h-full px-4 pt-3 flex flex-col relative overflow-hidden">
+    <div className="h-full px-4 pt-1 flex flex-col relative overflow-hidden">
       <div className="flex justify-between items-center mb-4 shrink-0">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-light text-foreground">My Apps</h2>
