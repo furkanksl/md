@@ -55,7 +55,7 @@ export function HistoryPopover() {
       </PopoverTrigger>
       <PopoverContent className="w-[90vw] p-0 mx-auto overflow-hidden flex flex-col max-h-[500px]" align="start" alignOffset={-10} sideOffset={10}>
         {/* Filters */}
-        <div className="flex items-center justify-between gap-1 p-2 border-b overflow-x-auto scrollbar-none bg-background">
+        <div className="flex items-center justify-between gap-1 min-h-10 p-2 border-b overflow-x-auto scrollbar-none bg-background">
           {FILTERS.map((f) => (
             <button
               key={f.id}
