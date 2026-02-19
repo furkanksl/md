@@ -39,9 +39,9 @@ export function TabsStrip() {
                 title={tab.title || tab.url}
               >
                 {tab.loading ? (
-                  <div className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin shrink-0" />
+                  <div className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin shrink-0 mr-1" />
                 ) : (
-                  <div className="w-3 h-3 rounded-full bg-current/20 shrink-0" />
+                  <div className="w-3 h-3 rounded-full bg-current/20 shrink-0 mr-1" />
                 )}
 
                 {tab.muted && (
