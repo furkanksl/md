@@ -862,12 +862,14 @@ pub fn run() {
             web_blanket::web_blanket_go_back,
             web_blanket::web_blanket_go_forward,
             web_blanket::web_blanket_reload,
+            web_blanket::web_blanket_reload_tab,
             web_blanket::web_blanket_stop_loading,
             web_blanket::web_blanket_get_tab_state,
             web_blanket::web_blanket_zoom_in,
             web_blanket::web_blanket_zoom_out,
             web_blanket::web_blanket_set_theme,
-            web_blanket::web_blanket_set_user_agent
+            web_blanket::web_blanket_set_user_agent,
+            web_blanket::web_blanket_set_muted
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

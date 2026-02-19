@@ -588,6 +588,26 @@ pub fn web_blanket_reload(
 }
 
 #[tauri::command]
+pub fn web_blanket_reload_tab(
+    _window: WebviewWindow,
+    state: tauri::State<WebBlanketState>,
+    tab_id: String,
+) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let inner = state.inner.lock().map_err(|e| e.to_string())?;
+        if let Some(webview) = inner.tabs.get(&tab_id) {
+            unsafe {
+                let _: () = msg_send![webview.as_id(), reload];
+            }
+        }
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    Err("Not supported on this OS".into())
+}
+
+#[tauri::command]
 pub fn web_blanket_stop_loading(
     _window: WebviewWindow,
     state: tauri::State<WebBlanketState>,
@@ -600,6 +620,34 @@ pub fn web_blanket_stop_loading(
                 unsafe {
                     let _: () = msg_send![webview.as_id(), stopLoading];
                 }
+            }
+        }
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    Err("Not supported on this OS".into())
+}
+
+#[tauri::command]
+pub fn web_blanket_set_muted(
+    _window: WebviewWindow,
+    state: tauri::State<WebBlanketState>,
+    tab_id: String,
+    muted: bool,
+) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let inner = state.inner.lock().map_err(|e| e.to_string())?;
+        if let Some(webview) = inner.tabs.get(&tab_id) {
+            unsafe {
+                let script_source = if muted {
+                    "document.querySelectorAll('video, audio').forEach(el => { el.muted = true; });"
+                } else {
+                    "document.querySelectorAll('video, audio').forEach(el => { el.muted = false; });"
+                };
+                let script = NSString::alloc(nil).init_str(script_source);
+                let _: () = msg_send![webview.as_id(), evaluateJavaScript:script completionHandler:nil];
+                let _: () = msg_send![script, release];
             }
         }
         Ok(())

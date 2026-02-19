@@ -29,6 +29,7 @@ export type WebBlanketTab = {
   canGoForward?: boolean;
   zoom?: number;
   userAgent?: "mobile" | "desktop";
+  muted?: boolean;
   lastHistoryUrl?: string; // Track last URL added to history
 };
 
@@ -68,9 +69,11 @@ interface WebBlanketState {
   goForward: () => Promise<void>;
   reload: () => Promise<void>;
   stop: () => Promise<void>;
+  reloadTab: (tabId: string) => Promise<void>;
   zoomIn: () => Promise<void>;
   zoomOut: () => Promise<void>;
   toggleUserAgent: (tabId: string) => Promise<void>;
+  setTabMuted: (tabId: string, muted: boolean) => Promise<void>;
 
   // Favorites
   addFavorite: (title: string, url: string) => Promise<void>;
@@ -413,6 +416,10 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
       try { await invoke("web_blanket_stop_loading"); } catch (e) {}
   },
 
+  reloadTab: async (tabId) => {
+      try { await invoke("web_blanket_reload_tab", { tabId }); } catch (e) {}
+  },
+
   zoomIn: async () => {
       const { activeTabId, tabs } = get();
       if (!activeTabId) return;
@@ -480,6 +487,11 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
               await invoke("web_blanket_set_user_agent", { tabId, mode: newUserAgent });
           } catch (e) { console.error(e); }
       }
+  },
+
+  setTabMuted: async (tabId, muted) => {
+      get().updateTab(tabId, { muted });
+      try { await invoke("web_blanket_set_muted", { tabId, muted }); } catch (e) {}
   },
 
   getHistory: async (filter) => {
