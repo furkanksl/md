@@ -2775,6 +2775,7 @@ dependencies = [
  "accessibility-sys",
  "arboard",
  "base64 0.22.1",
+ "block",
  "chrono",
  "cocoa",
  "core-foundation 0.10.1",

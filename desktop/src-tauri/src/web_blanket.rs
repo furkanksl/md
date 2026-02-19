@@ -8,6 +8,8 @@ use objc::declare::ClassDecl;
 #[cfg(target_os = "macos")]
 use cocoa::base::{id, nil};
 #[cfg(target_os = "macos")]
+use block::Block;
+#[cfg(target_os = "macos")]
 use cocoa::foundation::{NSRect, NSPoint, NSSize, NSString};
 #[cfg(target_os = "macos")]
 use objc::{class, msg_send, sel, sel_impl};
@@ -232,12 +234,45 @@ fn get_delegate_class() -> &'static objc::runtime::Class {
             }
             nil
         }
+
+        extern "C" fn run_open_panel(
+            _this: &Object,
+            _sel: Sel,
+            _webview: id,
+            parameters: id,
+            _frame: id,
+            completion_handler: id,
+        ) {
+            unsafe {
+                let panel: id = msg_send![class!(NSOpenPanel), openPanel];
+                let allows_multiple: bool = msg_send![parameters, allowsMultipleSelection];
+                let allows_directories: bool = msg_send![parameters, allowsDirectories];
+
+                let _: () = msg_send![panel, setAllowsMultipleSelection: allows_multiple];
+                let _: () = msg_send![panel, setCanChooseDirectories: allows_directories];
+                let _: () = msg_send![panel, setCanChooseFiles: true];
+
+                let response: i32 = msg_send![panel, runModal];
+                let urls: id = if response == 1 {
+                    msg_send![panel, URLs]
+                } else {
+                    nil
+                };
+
+                let completion = &*(completion_handler as *const Block<(id,), ()>);
+                completion.call((urls,));
+            }
+        }
         
         unsafe {
             decl.add_method(sel!(dealloc), dealloc as extern "C" fn(&Object, Sel));
             decl.add_method(
                 sel!(webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:),
                 create_webview as extern "C" fn(&Object, Sel, id, id, id, id) -> id
+            );
+            decl.add_method(
+                sel!(webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:),
+                run_open_panel as extern "C" fn(&Object, Sel, id, id, id, id)
             );
         }
 

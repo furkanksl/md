@@ -30,6 +30,7 @@ tauri-plugin-sql = { version = "2.3.1", features = ["sqlite"] }
 window-vibrancy = "0.7.1"
 cocoa = "0.26.1"
 objc = "0.2.7"
+block = "0.1"
 base64 = "0.22.1"
 core-graphics = "0.25.0"
 core-foundation = "0.10.1"
