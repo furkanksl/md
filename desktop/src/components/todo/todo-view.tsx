@@ -16,6 +16,7 @@ import {
   Pencil,
   MoreVertical,
   Eraser,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImeComposing } from "@/lib/ime";
@@ -83,6 +84,14 @@ const TodoItemRow = ({
     if (isImeComposing(e)) return;
     if (e.key === "Enter") {
       handleSave();
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(item.text);
+    } catch (error) {
+      console.error("Failed to copy todo text:", error);
     }
   };
 
@@ -164,6 +173,9 @@ const TodoItemRow = ({
           className="flex items-center gap-2 px-3 pr-4"
         >
           <Pencil className="h-4 w-4" /> Edit
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={handleCopy} className="flex items-center gap-2 px-3 pr-4">
+          <Copy className="h-4 w-4" /> Copy
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
