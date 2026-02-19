@@ -1,14 +1,46 @@
 import { useSettingsStore } from '@/stores/settings-store';
 import { clsx } from 'clsx';
-import { EyeOff, PanelLeft, PanelRight, MousePointer2 } from 'lucide-react';
+import { EyeOff, PanelLeft, PanelRight, MousePointer2, KeyRound } from 'lucide-react';
 
 export const BehaviorSection = () => {
-    const { autoHide, setAutoHide, drawerPosition, setDrawerPosition } = useSettingsStore();
+    const { autoHide, setAutoHide, drawerPosition, setDrawerPosition, startAtLogin, setStartAtLogin } = useSettingsStore();
 
     return (
         <div>
             <h2 className="text-xl font-light text-foreground mb-4">Behavior</h2>
             <div className="space-y-3">
+                <div className="bg-card rounded-md p-4 border border-border shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className={clsx(
+                                "w-10 h-10 rounded-md flex items-center justify-center",
+                                startAtLogin ? "bg-secondary text-secondary-foreground" : "bg-muted/50 text-muted-foreground"
+                            )}>
+                                <KeyRound size={20} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-foreground">Start at Login</span>
+                                <span className="text-xs text-muted-foreground">
+                                    Launch My Drawer when you sign in
+                                </span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setStartAtLogin(!startAtLogin)}
+                            className={clsx(
+                                "w-12 h-7 rounded-full p-1 transition-colors duration-300 ease-in-out relative",
+                                startAtLogin ? "bg-primary" : "bg-input"
+                            )}
+                        >
+                            <div className={clsx(
+                                "w-5 h-5 rounded-full bg-background shadow-sm transition-transform duration-300 ease-in-out",
+                                startAtLogin ? "translate-x-5" : "translate-x-0"
+                            )} />
+                        </button>
+                    </div>
+                </div>
+
                 <div className="bg-card rounded-md p-4 border border-border shadow-sm">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
