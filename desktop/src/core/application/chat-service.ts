@@ -6,6 +6,7 @@ import { getModelById } from "../domain/models";
 import { v4 as uuidv4 } from "uuid";
 import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
+import { estimateTokens } from "@/lib/utils";
 
 // Define CoreMessage locally if not exported from 'ai' or for strict control
 interface CoreMessage {
@@ -125,7 +126,8 @@ export class ChatService {
             id: modelId,
             name: customModelConfig.modelId, // Use the API model ID as name or passed name
             provider: 'custom',
-            capabilities: { image: false, audio: false, tools: false } // Assume basic capabilities for custom
+            capabilities: { image: false, audio: false, tools: false }, // Assume basic capabilities for custom
+            contextWindow: 128000 // Default context window for custom models
         };
     }
 
@@ -145,7 +147,10 @@ export class ChatService {
       content,
       attachments,
       timestamp: new Date().toISOString(),
-      status: "completed"
+      status: "completed",
+      metadata: {
+        tokenCount: estimateTokens(content),
+      }
     };
     await msgRepo.create(userMsg);
 
@@ -156,7 +161,10 @@ export class ChatService {
     });
     
     // 4. Sanitize History
-    const sanitizedHistory: CoreMessage[] = previousMessages.map(msg => {
+    // Filter out messages that have been compacted, we only send the summaries and recent messages
+    const activeMessages = previousMessages.filter(msg => !(msg as any).metadata?.isCompacted);
+    
+    const sanitizedHistory: CoreMessage[] = activeMessages.map(msg => {
         // If it's already a string, it's safe
         if (typeof msg.content === 'string') return { role: msg.role, content: msg.content };
         
@@ -188,7 +196,27 @@ export class ChatService {
         return { role: msg.role, content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content) };
     });
 
-    // 5. Prepare New Message
+    // 5. Apply Sliding Window Compression if necessary
+    const targetModelId = customModelConfig?.modelId || modelId;
+    const totalTokens = sanitizedHistory.reduce((acc, msg) => acc + (msg as any).metadata?.tokenCount || 0, 0) + estimateTokens(content);
+    const maxTokens = targetModelId ? (getModelById(targetModelId)?.contextWindow || 128000) : 128000;
+    
+    let activeHistory = sanitizedHistory;
+    
+    // If over 85% capacity, keep system prompt + last 10 messages, replace middle with a placeholder
+    if (totalTokens > maxTokens * 0.85 && sanitizedHistory.length > 10) {
+        console.warn(`Context near limit (${totalTokens}/${maxTokens}). Applying sliding window compression.`);
+        const systemPrompts = sanitizedHistory.filter(m => m.role === 'system');
+        const recentMessages = sanitizedHistory.slice(-10);
+        
+        activeHistory = [
+            ...systemPrompts,
+            { role: 'assistant', content: '[... earlier messages omitted automatically to preserve context window ...]' },
+            ...recentMessages
+        ];
+    }
+
+    // 6. Prepare New Message
     let currentContent: string | Array<TextPart | ImagePart> = content;
     
     if (attachments.length > 0) {
@@ -204,10 +232,7 @@ export class ChatService {
         currentContent = contentParts;
     }
 
-    const messagesPayload: CoreMessage[] = [...sanitizedHistory, { role: "user", content: currentContent }];
-
-    // Use the custom model ID if provided, otherwise the selected model ID
-    const targetModelId = customModelConfig?.modelId || modelId;
+    const messagesPayload: CoreMessage[] = [...activeHistory, { role: "user", content: currentContent }];
 
     // Explicitly use .chat() if available (common for OpenAI-compatible providers)
     // This avoids issues where the default resolution might pick the wrong endpoint style
@@ -229,7 +254,11 @@ export class ChatService {
           content: text,
           attachments: [],
           timestamp: new Date().toISOString(),
-          status: "completed"
+          status: "completed",
+          metadata: {
+            tokenCount: estimateTokens(text),
+            model: targetModelId
+          }
         };
         await msgRepo.create(assistantMsg);
       }
@@ -291,7 +320,8 @@ export class ChatService {
             id: modelId,
             name: customModelConfig.modelId,
             provider: 'custom',
-            capabilities: { image: false, audio: false, tools: false }
+            capabilities: { image: false, audio: false, tools: false },
+            contextWindow: 128000
         };
     }
     if (!model) throw new Error(`Model ${modelId} not found`);
@@ -307,7 +337,10 @@ export class ChatService {
     });
 
     // 7. Sanitize History (Same logic as sendMessage)
-    const sanitizedHistory: CoreMessage[] = previousMessages.map(msg => {
+    // Filter out messages that have been compacted
+    const activeMessages = previousMessages.filter(msg => !(msg as any).metadata?.isCompacted);
+    
+    const sanitizedHistory: CoreMessage[] = activeMessages.map(msg => {
         if (typeof msg.content === 'string') return { role: msg.role as any, content: msg.content };
         if (Array.isArray(msg.content)) {
              let validParts = (msg.content as any[]).filter((part: any) => {
@@ -324,7 +357,26 @@ export class ChatService {
         return { role: msg.role as any, content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content) };
     });
 
-    // 8. Prepare Current Message Payload
+    // 8. Apply Sliding Window Compression
+    const targetModelId = customModelConfig?.modelId || modelId;
+    const totalTokens = sanitizedHistory.reduce((acc, msg) => acc + (msg as any).metadata?.tokenCount || 0, 0) + estimateTokens(newContent);
+    const maxTokens = targetModelId ? (getModelById(targetModelId)?.contextWindow || 128000) : 128000;
+    
+    let activeHistory = sanitizedHistory;
+    
+    if (totalTokens > maxTokens * 0.85 && sanitizedHistory.length > 10) {
+        console.warn(`Context near limit (${totalTokens}/${maxTokens}). Applying sliding window compression.`);
+        const systemPrompts = sanitizedHistory.filter(m => m.role === 'system');
+        const recentMessages = sanitizedHistory.slice(-10);
+        
+        activeHistory = [
+            ...systemPrompts,
+            { role: 'assistant', content: '[... earlier messages omitted automatically to preserve context window ...]' },
+            ...recentMessages
+        ];
+    }
+
+    // 9. Prepare Current Message Payload
     let currentContent: string | Array<TextPart | ImagePart> = newContent;
     // If it has attachments, rebuild the content array
     if (currentMsg.attachments && currentMsg.attachments.length > 0) {
@@ -340,9 +392,7 @@ export class ChatService {
         currentContent = contentParts;
     }
 
-    const messagesPayload: CoreMessage[] = [...sanitizedHistory, { role: "user", content: currentContent }];
-
-    const targetModelId = customModelConfig?.modelId || modelId;
+    const messagesPayload: CoreMessage[] = [...activeHistory, { role: "user", content: currentContent }];
 
     const providerInstance = providerFn as unknown as { chat: (id: string) => LanguageModel };
     const modelInstance = providerInstance.chat ? providerInstance.chat(targetModelId) : providerFn(targetModelId);
@@ -362,13 +412,97 @@ export class ChatService {
           content: text,
           attachments: [],
           timestamp: new Date().toISOString(),
-          status: "completed"
+          status: "completed",
+          metadata: {
+            tokenCount: estimateTokens(text),
+            model: targetModelId
+          }
         };
         await msgRepo.create(assistantMsg);
       }
     });
 
     return result;
+  }
+  async compactConversation(
+    conversationId: string,
+    modelId: string,
+    providerId: string,
+    apiKey: string,
+    customModelConfig?: { baseUrl: string; modelId: string }
+  ) {
+    const allMessages = await msgRepo.getByConversation(conversationId);
+    if (allMessages.length < 2) return; // Nothing to compact
+
+    // Skip already compacted messages if we wanted to be incremental, 
+    // but here we just compact the entire visible history.
+    const messagesToCompact = allMessages.filter(m => !m.metadata?.isSummary);
+
+    if (messagesToCompact.length === 0) return;
+
+    let model = getModelById(modelId);
+    if (!model && providerId === 'custom' && customModelConfig) {
+        model = {
+            id: modelId,
+            name: customModelConfig.modelId,
+            provider: 'custom',
+            capabilities: { image: false, audio: false, tools: false },
+            contextWindow: 128000
+        };
+    }
+    if (!model) throw new Error(`Model ${modelId} not found`);
+
+    const providerFn = getProvider(providerId, apiKey, { 
+        baseUrl: customModelConfig?.baseUrl,
+        enableWebSearch: false // No need for web search during summarization
+    });
+
+    const targetModelId = customModelConfig?.modelId || modelId;
+    const providerInstance = providerFn as unknown as { chat: (id: string) => LanguageModel };
+    const modelInstance = providerInstance.chat ? providerInstance.chat(targetModelId) : providerFn(targetModelId);
+
+    // Format for summarization
+    const formattedHistory = messagesToCompact.map(m => {
+        const textContent = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+        return `${m.role.toUpperCase()}: ${textContent}`;
+    }).join('\n\n');
+
+    const prompt = `Please summarize the following conversation history. Focus on retaining core facts, user preferences, code snippets, and the overall context so that an AI can use this summary to seamlessly continue the conversation. Do not include introductory filler, just output the dense summary.\n\n${formattedHistory}`;
+
+    // Get the summary
+    // Since we don't have generateText, we can use streamText and wait for it
+    const result = await streamText({
+        model: modelInstance,
+        messages: [{ role: 'user', content: prompt }]
+    });
+
+    let summaryText = "";
+    for await (const chunk of result.textStream) {
+        summaryText += chunk;
+    }
+
+    // Mark old messages as compacted
+    for (const m of messagesToCompact) {
+        if (!m.metadata?.isCompacted) {
+            await msgRepo.updateMetadata(m.id, { ...m.metadata, isCompacted: true });
+        }
+    }
+
+    // Create a new assistant message with the summary to avoid "system messages only at beginning" errors with certain providers like Google
+    const summaryMsg: Message = {
+        id: uuidv4(),
+        conversationId,
+        role: "assistant",
+        content: `[COMPACTED CONTEXT SUMMARY]\n${summaryText}`,
+        attachments: [],
+        timestamp: new Date().toISOString(),
+        status: "completed",
+        metadata: {
+            isSummary: true,
+            tokenCount: estimateTokens(summaryText)
+        }
+    };
+    await msgRepo.create(summaryMsg);
   }
 }
 

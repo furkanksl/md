@@ -22,6 +22,8 @@ export const MessageSchema = z.object({
     model: z.string().optional(),
     tokenCount: z.number().optional(),
     cost: z.number().optional(),
+    isCompacted: z.boolean().optional(),
+    isSummary: z.boolean().optional(),
   }).optional(),
 });
 

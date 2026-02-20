@@ -78,6 +78,7 @@ export class MessageRepository {
       role: r.role,
       content: r.content,
       attachments: JSON.parse(r.attachments || "[]"),
+      metadata: r.metadata ? JSON.parse(r.metadata) : undefined,
       timestamp: new Date(r.timestamp)
     }));
   }
@@ -93,6 +94,7 @@ export class MessageRepository {
       role: r.role,
       content: r.content,
       attachments: JSON.parse(r.attachments || "[]"),
+      metadata: r.metadata ? JSON.parse(r.metadata) : undefined,
       timestamp: new Date(r.timestamp)
     };
   }
@@ -100,16 +102,22 @@ export class MessageRepository {
   async create(message: Message): Promise<void> {
     const db = await dbClient.getDb();
     await db.execute(
-      "INSERT INTO messages (id, conversation_id, role, content, attachments, timestamp) VALUES ($1, $2, $3, $4, $5, $6)",
+      "INSERT INTO messages (id, conversation_id, role, content, attachments, metadata, timestamp) VALUES ($1, $2, $3, $4, $5, $6, $7)",
       [
         message.id,
         message.conversationId,
         message.role,
         message.content,
         JSON.stringify(message.attachments),
+        message.metadata ? JSON.stringify(message.metadata) : null,
         message.timestamp instanceof Date ? message.timestamp.toISOString() : message.timestamp
       ]
     );
+  }
+
+  async updateMetadata(id: string, metadata: any): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("UPDATE messages SET metadata = $1 WHERE id = $2", [JSON.stringify(metadata), id]);
   }
 
   async updateContent(id: string, content: string): Promise<void> {

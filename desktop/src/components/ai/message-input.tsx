@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useChatStore } from '@/stores/chat-store';
-import { Paperclip, ArrowUp, X, File as FileIcon, Square } from 'lucide-react';
+import { Paperclip, ArrowUp, X, File as FileIcon, Square, Minimize2, Activity, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Attachment } from '@/core/domain/entities';
 import { isImeComposing } from '@/lib/ime';
+import { getModelById } from '@/core/domain/models';
 
 interface MessageInputProps {
     attachments: File[];
@@ -12,7 +13,7 @@ interface MessageInputProps {
 }
 
 export const MessageInput = ({ attachments, setAttachments }: MessageInputProps) => {
-    const { input, setInput, sendMessage, isStreaming, stopGeneration } = useChatStore();
+    const { input, setInput, sendMessage, isStreaming, isCompacting, stopGeneration, messages, selectedModelId } = useChatStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const isComposingRef = useRef(false);
@@ -20,6 +21,99 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
     const [previews, setPreviews] = useState<Record<string, string>>({});
     const [isExpanded, setIsExpanded] = useState(false);
     const [hasUsedShiftEnter, setHasUsedShiftEnter] = useState(false);
+    const [isSlashMenuDismissed, setIsSlashMenuDismissed] = useState(false);
+    const [showStats, setShowStats] = useState(false);
+
+    const model = getModelById(selectedModelId);
+    const totalTokens = messages.reduce((acc, msg) => acc + (msg.metadata?.tokenCount || 0), 0);
+    const rawPercentage = (totalTokens / (model?.contextWindow || 128000)) * 100;
+    const tokenPercentage = Math.min(rawPercentage, 100);
+    
+    // Formatting helper
+    const formatTokens = (tokens: number) => {
+        if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
+        if (tokens >= 1000) return `${Math.round(tokens / 1000)}k`;
+        return tokens.toString();
+    };
+
+    const executeCompactCommand = () => {
+        setInput("");
+        setIsSlashMenuDismissed(false);
+        setShowStats(false);
+        
+        // Ensure textarea height is reset immediately
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+        }
+        setIsExpanded(false);
+        
+        useChatStore.getState().compactConversation();
+    };
+
+    const executeStatsCommand = () => {
+        setInput("");
+        setIsSlashMenuDismissed(true); // Hide slash menu
+        setShowStats(true); // Show stats popover
+        
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+        }
+        setIsExpanded(false);
+    };
+
+    const AVAILABLE_COMMANDS = [
+        {
+            id: 'compact',
+            icon: Minimize2,
+            title: '/compact',
+            description: 'Summarize history to save context',
+            action: executeCompactCommand
+        },
+        {
+            id: 'stats',
+            icon: Activity,
+            title: '/stats',
+            description: 'View token usage and context details',
+            action: executeStatsCommand
+        }
+    ];
+
+    // Reset dismissed state if user clears or changes start character
+    useEffect(() => {
+        if (!input.startsWith('/')) {
+            setIsSlashMenuDismissed(false);
+        }
+    }, [input]);
+
+    // Handle global click/escape to close stats
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && showStats) {
+                setShowStats(false);
+            }
+        };
+
+        const handleGlobalClick = (e: MouseEvent) => {
+            // We'll add an ID to the stats container to check clicks outside
+            const statsEl = document.getElementById('stats-popover');
+            if (showStats && statsEl && !statsEl.contains(e.target as Node)) {
+                setShowStats(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        window.addEventListener('mousedown', handleGlobalClick);
+        return () => {
+            window.removeEventListener('keydown', handleGlobalKeyDown);
+            window.removeEventListener('mousedown', handleGlobalClick);
+        };
+    }, [showStats]);
+
+    const filteredCommands = input.startsWith('/') && !isSlashMenuDismissed
+        ? AVAILABLE_COMMANDS.filter(c => c.title.toLowerCase().startsWith(input.toLowerCase()))
+        : [];
+
+    const showSlashMenu = filteredCommands.length > 0;
 
     // Auto-resize textarea
     useEffect(() => {
@@ -110,6 +204,18 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (isImeComposing(e, isComposingRef)) {
             return;
+        }
+
+        if (showSlashMenu) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                filteredCommands[0]?.action();
+                return;
+            }
+            if (e.key === 'Escape') {
+                setIsSlashMenuDismissed(true);
+                return;
+            }
         }
 
         if (e.key === 'Enter') {
@@ -219,12 +325,118 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                 )}
             </AnimatePresence>
 
-            <form
-                className={clsx(
-                    "bg-card rounded-lg p-1 px-2 shadow-md border border-border flex gap-1 transition-all duration-200 ease-in-out min-h-[40px]",
-                    isExpanded ? "items-end" : "items-center"
-                )}
-            >                <button
+            <div className="relative w-full">
+                <AnimatePresence>
+                    {showSlashMenu && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 5, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 5, scale: 0.98 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute bottom-[calc(100%+8px)] left-0 w-full z-50 px-2"
+                        >
+                            <div className="bg-popover border border-border shadow-sm rounded-lg overflow-hidden flex flex-col p-1">
+                                {filteredCommands.map((cmd, index) => {
+                                    const Icon = cmd.icon;
+                                    return (
+                                        <button
+                                            key={cmd.id}
+                                            onClick={cmd.action}
+                                            className={clsx(
+                                                "flex items-center gap-2.5 px-2 py-1.5 w-full text-left rounded-md transition-colors group",
+                                                index === 0 ? "bg-accent focus:bg-accent" : "hover:bg-accent focus:bg-accent focus:outline-none"
+                                            )}
+                                        >
+                                            <Icon size={14} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                                            <div className="flex items-center gap-2 flex-1 overflow-hidden">
+                                                <span className="text-sm font-medium text-foreground">{cmd.title}</span>
+                                                <span className="text-xs text-muted-foreground truncate">{cmd.description}</span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {showStats && (
+                        <motion.div
+                            id="stats-popover"
+                            initial={{ opacity: 0, y: 5, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 5, scale: 0.98 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute bottom-[calc(100%+8px)] left-0 w-full z-50 px-2"
+                        >
+                            <div className="bg-popover border border-border shadow-md rounded-lg p-3 flex flex-col gap-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                                        <Activity size={14} className="text-primary" />
+                                        Context Usage
+                                    </div>
+                                    <button 
+                                        onClick={() => setShowStats(false)}
+                                        className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-accent"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                                
+                                <div className="flex flex-col gap-1 mt-1">
+                                    <div className="flex justify-between text-xs font-medium">
+                                        <span className="text-muted-foreground">Tokens</span>
+                                        <span className={clsx(
+                                            tokenPercentage < 75 ? "text-foreground" :
+                                            tokenPercentage < 90 ? "text-yellow-500" : "text-destructive"
+                                        )}>
+                                            {formatTokens(totalTokens)} / {formatTokens(model?.contextWindow || 128000)}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Progress Bar */}
+                                    <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                                        <div 
+                                            className={clsx(
+                                                "h-full transition-all duration-500 rounded-full",
+                                                tokenPercentage < 75 ? "bg-primary" :
+                                                tokenPercentage < 90 ? "bg-yellow-500" : "bg-destructive"
+                                            )}
+                                            style={{ width: `${Math.min(tokenPercentage, 100)}%` }}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
+                                        <span>{Math.round(rawPercentage)}% used</span>
+                                        <span>Max Capacity</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Compacting Indicator */}
+                <AnimatePresence>
+                    {isCompacting && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            className="absolute -top-7 left-2 flex items-center gap-1.5 text-[10px] font-medium z-10 text-muted-foreground animate-pulse"
+                        >
+                            <Sparkles size={12} className="text-primary" />
+                            <span>Compacting...</span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <form
+                    className={clsx(
+                        "bg-card rounded-lg p-1 px-2 shadow-md border border-border flex gap-1 transition-all duration-200 ease-in-out min-h-[40px]",
+                        isExpanded ? "items-end" : "items-center"
+                    )}
+                >                <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className={clsx(
@@ -286,6 +498,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                     )}
                 </button>
             </form>
+            </div>
         </div>
     );
 };

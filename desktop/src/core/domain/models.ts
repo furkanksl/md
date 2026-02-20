@@ -8,6 +8,7 @@ export interface ModelMetadata {
     tools: boolean;
     webSearch?: boolean; // New capability for grounding/search
   };
+  contextWindow: number; // Maximum tokens the model can process
   // For custom models
   config?: {
     baseUrl: string;
@@ -18,39 +19,39 @@ export interface ModelMetadata {
 
 export const MODELS: ModelMetadata[] = [
  // OpenAI (2026 Series)
- { id: "gpt-5.3", name: "GPT-5.3", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
- { id: "gpt-5.2", name: "GPT-5.2", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
- { id: "gpt-5-mini", name: "GPT-5 Mini", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
- { id: "gpt-4o", name: "GPT-4o", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
- { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+ { id: "gpt-5.3", name: "GPT-5.3", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true }, contextWindow: 256000 },
+ { id: "gpt-5.2", name: "GPT-5.2", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true }, contextWindow: 256000 },
+ { id: "gpt-5-mini", name: "GPT-5 Mini", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true }, contextWindow: 256000 },
+ { id: "gpt-4o", name: "GPT-4o", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true }, contextWindow: 128000 },
+ { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai", capabilities: { image: true, audio: true, tools: true, webSearch: true }, contextWindow: 128000 },
  
   // Anthropic (4.x Series)
-  { id: "claude-opus-4-6", name: "Claude Opus 4.6", provider: "anthropic", capabilities: { image: true, audio: false, tools: true, webSearch: true } },
-  { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5", provider: "anthropic", capabilities: { image: true, audio: false, tools: true, webSearch: true } },
-  { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", provider: "anthropic", capabilities: { image: false, audio: false, tools: true, webSearch: true } },
-  { id: "claude-opus-4-1", name: "Claude Opus 4.1", provider: "anthropic", capabilities: { image: true, audio: false, tools: true, webSearch: true } },
+  { id: "claude-opus-4-6", name: "Claude Opus 4.6", provider: "anthropic", capabilities: { image: true, audio: false, tools: true, webSearch: true }, contextWindow: 200000 },
+  { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5", provider: "anthropic", capabilities: { image: true, audio: false, tools: true, webSearch: true }, contextWindow: 200000 },
+  { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", provider: "anthropic", capabilities: { image: false, audio: false, tools: true, webSearch: true }, contextWindow: 200000 },
+  { id: "claude-opus-4-1", name: "Claude Opus 4.1", provider: "anthropic", capabilities: { image: true, audio: false, tools: true, webSearch: true }, contextWindow: 200000 },
 
   // Google (Gemini 3 & 2.5) - Web Search Supported
-  { id: "gemini-3-pro-preview", name: "Gemini 3 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
-  { id: "gemini-3-flash-preview", name: "Gemini 3 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
-  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true } },
+  { id: "gemini-3-pro-preview", name: "Gemini 3 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true }, contextWindow: 2000000 },
+  { id: "gemini-3-flash-preview", name: "Gemini 3 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true }, contextWindow: 1000000 },
+  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true }, contextWindow: 2000000 },
+  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "google", capabilities: { image: true, audio: true, tools: true, webSearch: true }, contextWindow: 1000000 },
 
   // Groq (Llama 3.x & Specialized)
-  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
-  { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
-  { id: "qwen/qwen3-32b", name: "Qwen 3 32B", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
-  { id: "moonshotai/kimi-k2-instruct-0905", name: "Kimi K2 Instruct", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
-  { id: "openai/gpt-oss-120b", name: "GPT OSS 120B", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
-  { id: "openai/gpt-oss-20b", name: "GPT OSS 20B", provider: "groq", capabilities: { image: false, audio: false, tools: true } },
+  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", provider: "groq", capabilities: { image: false, audio: false, tools: true }, contextWindow: 131072 },
+  { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B", provider: "groq", capabilities: { image: false, audio: false, tools: true }, contextWindow: 128000 },
+  { id: "qwen/qwen3-32b", name: "Qwen 3 32B", provider: "groq", capabilities: { image: false, audio: false, tools: true }, contextWindow: 32768 },
+  { id: "moonshotai/kimi-k2-instruct-0905", name: "Kimi K2 Instruct", provider: "groq", capabilities: { image: false, audio: false, tools: true }, contextWindow: 200000 },
+  { id: "openai/gpt-oss-120b", name: "GPT OSS 120B", provider: "groq", capabilities: { image: false, audio: false, tools: true }, contextWindow: 128000 },
+  { id: "openai/gpt-oss-20b", name: "GPT OSS 20B", provider: "groq", capabilities: { image: false, audio: false, tools: true }, contextWindow: 128000 },
 
   // Mistral (Latest Official)
-  { id: "mistral-large-latest", name: "Mistral Large 3", provider: "mistral", capabilities: { image: true, audio: false, tools: true } },
-  { id: "mistral-medium-latest", name: "Mistral Medium 3.1", provider: "mistral", capabilities: { image: true, audio: false, tools: true } },
-  { id: "mistral-small-latest", name: "Mistral Small 3.2", provider: "mistral", capabilities: { image: false, audio: false, tools: true } },
-  { id: "ministral-3-latest", name: "Ministral 3", provider: "mistral", capabilities: { image: true, audio: false, tools: true } },
-  { id: "codestral-latest", name: "Codestral 25.01", provider: "mistral", capabilities: { image: false, audio: false, tools: true } },
-  { id: "pixtral-large-latest", name: "Pixtral Large", provider: "mistral", capabilities: { image: true, audio: false, tools: true } },
+  { id: "mistral-large-latest", name: "Mistral Large 3", provider: "mistral", capabilities: { image: true, audio: false, tools: true }, contextWindow: 256000 },
+  { id: "mistral-medium-latest", name: "Mistral Medium 3.1", provider: "mistral", capabilities: { image: true, audio: false, tools: true }, contextWindow: 128000 },
+  { id: "mistral-small-latest", name: "Mistral Small 3.2", provider: "mistral", capabilities: { image: false, audio: false, tools: true }, contextWindow: 128000 },
+  { id: "ministral-3-latest", name: "Ministral 3", provider: "mistral", capabilities: { image: true, audio: false, tools: true }, contextWindow: 128000 },
+  { id: "codestral-latest", name: "Codestral 25.01", provider: "mistral", capabilities: { image: false, audio: false, tools: true }, contextWindow: 256000 },
+  { id: "pixtral-large-latest", name: "Pixtral Large", provider: "mistral", capabilities: { image: true, audio: false, tools: true }, contextWindow: 128000 },
 ];
 
 export const getModelById = (id: string) => MODELS.find(m => m.id === id) || MODELS[0];

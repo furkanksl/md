@@ -4,6 +4,7 @@ import { Conversation, Message, Attachment } from "@/core/domain/entities";
 import { getModelById, MODELS } from "@/core/domain/models";
 import { useSettingsStore } from "./settings-store";
 import { v4 as uuidv4 } from "uuid";
+import { estimateTokens } from "@/lib/utils";
 
 interface Folder {
     id: string;
@@ -24,6 +25,7 @@ interface ChatState {
   input: string;
   selectedModelId: string;
   isStreaming: boolean;
+  isCompacting: boolean;
   abortController: AbortController | null;
   
   // Actions
@@ -48,6 +50,7 @@ interface ChatState {
   editMessage: (messageId: string, newContent: string) => Promise<void>;
   rewind: (messageId: string) => Promise<void>;
   regenerate: (messageId: string) => Promise<void>;
+  compactConversation: () => Promise<void>;
   reorderFolders: (order: string[]) => void;
   reorderRootChats: (order: string[]) => void;
   reorderFolderChats: (folderId: string, order: string[]) => void;
@@ -89,6 +92,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   input: "",
   selectedModelId: "gpt-5.2",
   isStreaming: false,
+  isCompacting: false,
   abortController: null,
 
   setInput: (v) => set({ input: v }),
@@ -144,6 +148,45 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const msg = messages.find(m => m.id === messageId);
       if (!msg) return;
       await get().editMessage(messageId, typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content));
+  },
+
+  compactConversation: async () => {
+      const { activeConversationId, messages, selectedModelId } = get();
+      if (!activeConversationId || messages.length === 0) return;
+
+      const { model, customConfig } = resolveModel(selectedModelId);
+      if (!model) return;
+
+      const settings = useSettingsStore.getState();
+      const config = settings.aiConfigurations[model.provider];
+      
+      let apiKey = config?.apiKey;
+      if (model.provider === 'custom' && customConfig) {
+           const foundCustom = settings.aiConfigurations['custom']?.customModels?.find(m => m.id === selectedModelId);
+           apiKey = foundCustom?.apiKey || apiKey || 'not-needed';
+      }
+      
+      if (!apiKey) {
+          throw new Error(`API Key for ${model.provider} is missing. Please add it in Settings.`);
+      }
+
+      set({ isCompacting: true });
+      try {
+          await chatService.compactConversation(
+              activeConversationId,
+              selectedModelId,
+              model.provider,
+              apiKey,
+              customConfig
+          );
+          // Refresh messages from DB to get the updated status/flags if any
+          const msgs = await chatService.getMessages(activeConversationId);
+          set({ messages: msgs });
+      } catch (err) {
+          console.error("Compact Error:", err);
+      } finally {
+          set({ isCompacting: false });
+      }
   },
 
   syncStructure: async () => {
@@ -286,7 +329,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
           content: "",
           attachments: [],
           timestamp: new Date().toISOString(),
-          status: "pending"
+          status: "pending",
+          metadata: {
+              tokenCount: 0,
+              model: selectedModelId,
+          }
       };
 
       const controller = new AbortController();
@@ -316,7 +363,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
               fullText += chunk;
               set(state => ({
                   messages: state.messages.map(m => 
-                      m.id === assistantId ? { ...m, content: fullText } : m
+                      m.id === assistantId ? { 
+                          ...m, 
+                          content: fullText,
+                          metadata: { ...m.metadata, tokenCount: estimateTokens(fullText) }
+                      } : m
                   )
               }));
           }
@@ -400,7 +451,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         content,
         attachments,
         timestamp: new Date().toISOString(),
-        status: "completed"
+        status: "completed",
+        metadata: {
+            tokenCount: estimateTokens(content),
+        }
     };
 
     const assistantId = uuidv4();
@@ -411,7 +465,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         content: "",
         attachments: [],
         timestamp: new Date().toISOString(),
-        status: "pending"
+        status: "pending",
+        metadata: {
+            tokenCount: 0,
+            model: selectedModelId,
+        }
     };
 
     const controller = new AbortController();
@@ -440,7 +498,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
             fullText += chunk;
             set(state => ({
                 messages: state.messages.map(m => 
-                    m.id === assistantId ? { ...m, content: fullText } : m
+                    m.id === assistantId ? { 
+                        ...m, 
+                        content: fullText,
+                        metadata: { ...m.metadata, tokenCount: estimateTokens(fullText) }
+                    } : m
                 )
             }));
         }
