@@ -390,6 +390,51 @@ async fn fetch_webpage(url: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+async fn export_markdown_dialog(title: String, date_str: String, content: String) -> Result<(), String> {
+    let file_name = format!("{}-{}.md", title.replace(|c: char| !c.is_ascii_alphanumeric(), "_").to_lowercase(), date_str);
+    
+    #[cfg(target_os = "macos")]
+    {
+        // Use AppleScript to force an independent, OS-level save dialog 
+        // that is completely detached from the Tauri frameless window.
+        let script = format!(
+            r#"POSIX path of (choose file name with prompt "Export Chat History" default name "{}")"#,
+            file_name
+        );
+        
+        let output = std::process::Command::new("osascript")
+            .arg("-e")
+            .arg(&script)
+            .output()
+            .map_err(|e| e.to_string())?;
+            
+        if output.status.success() {
+            let path_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !path_str.is_empty() {
+                std::fs::write(&path_str, content).map_err(|e| e.to_string())?;
+            }
+        }
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Fallback for non-macOS (though app is currently mac-focused)
+        let path = rfd::AsyncFileDialog::new()
+            .set_title("Export Chat History")
+            .set_file_name(&file_name)
+            .add_filter("Markdown", &["md"])
+            .save_file()
+            .await;
+            
+        if let Some(file) = path {
+            std::fs::write(file.path(), content).map_err(|e| e.to_string())?;
+        }
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
 fn set_ignore_mouse_events(ignore: bool, window: tauri::Window) {
     window.set_ignore_cursor_events(ignore).unwrap_or(());
 }
@@ -844,6 +889,7 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![
             greet,
+            export_markdown_dialog,
             get_app_icon,
             launch_app,
             get_windows,

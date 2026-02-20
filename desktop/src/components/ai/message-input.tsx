@@ -1,11 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useChatStore } from '@/stores/chat-store';
-import { Paperclip, ArrowUp, X, File as FileIcon, Square, Minimize2, Activity, Sparkles } from 'lucide-react';
+import { Paperclip, ArrowUp, X, File as FileIcon, Square, Minimize2, Activity, Sparkles, FolderOutput } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Attachment } from '@/core/domain/entities';
 import { isImeComposing } from '@/lib/ime';
 import { getModelById } from '@/core/domain/models';
+import { invoke } from '@tauri-apps/api/core';
 
 interface MessageInputProps {
     attachments: File[];
@@ -26,9 +27,14 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
 
     const model = getModelById(selectedModelId);
     const totalTokens = messages.reduce((acc, msg) => acc + (msg.metadata?.tokenCount || 0), 0);
-    const rawPercentage = (totalTokens / (model?.contextWindow || 128000)) * 100;
-    const tokenPercentage = Math.min(rawPercentage, 100);
-    
+    const maxTokens = model?.contextWindow || 128000;
+
+    // Ensure rawPercentage is a valid number, even if totalTokens is 0
+    const rawPercentage = maxTokens > 0 ? (totalTokens / maxTokens) * 100 : 0;
+
+    // The CSS width percentage must not exceed 100%
+    const tokenPercentage = Math.min(Math.max(rawPercentage, 0), 100);
+
     // Formatting helper
     const formatTokens = (tokens: number) => {
         if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
@@ -40,13 +46,13 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
         setInput("");
         setIsSlashMenuDismissed(false);
         setShowStats(false);
-        
+
         // Ensure textarea height is reset immediately
         if (textareaRef.current) {
             textareaRef.current.style.height = "auto";
         }
         setIsExpanded(false);
-        
+
         useChatStore.getState().compactConversation();
     };
 
@@ -54,11 +60,56 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
         setInput("");
         setIsSlashMenuDismissed(true); // Hide slash menu
         setShowStats(true); // Show stats popover
-        
+
         if (textareaRef.current) {
             textareaRef.current.style.height = "auto";
         }
         setIsExpanded(false);
+    };
+
+    const executeExportCommand = async () => {
+        setInput("");
+        setIsSlashMenuDismissed(false);
+        setIsExpanded(false);
+        if (textareaRef.current) textareaRef.current.style.height = "auto";
+
+        if (messages.length === 0) return;
+
+        // Generate Markdown Content
+        const dateStr = new Date().toISOString().split('T')[0];
+        const currentConv = useChatStore.getState().conversations[useChatStore.getState().activeConversationId || ""];
+        const title = currentConv?.title || "Conversation";
+
+        let mdContent = `# Chat Export: ${title}\n*Exported on: ${dateStr}*\n---\n\n`;
+
+        messages.forEach(msg => {
+            if (msg.role === 'system' && !msg.metadata?.isSummary) return; // Skip internal system prompts, but keep summaries
+
+            const roleName = msg.role === 'user' ? '### User' : msg.role === 'assistant' ? '### Assistant' : '### System (Compact Summary)';
+
+            let text = "";
+            if (typeof msg.content === 'string') {
+                text = msg.content;
+            } else if (Array.isArray(msg.content)) {
+                text = (msg.content as any[]).map((p: any) => {
+                    if (p.type === 'text') return p.text;
+                    if (p.type === 'image') return '[Image attached]';
+                    return '';
+                }).join('\n');
+            }
+
+            mdContent += `${roleName}\n${text}\n\n`;
+        });
+
+        try {
+            await invoke('export_markdown_dialog', {
+                title,
+                dateStr,
+                content: mdContent
+            });
+        } catch (error) {
+            console.error("Failed to export chat:", error);
+        }
     };
 
     const AVAILABLE_COMMANDS = [
@@ -67,14 +118,24 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
             icon: Minimize2,
             title: '/compact',
             description: 'Summarize history to save context',
-            action: executeCompactCommand
+            action: executeCompactCommand,
+            disabled: messages.length === 0
         },
         {
             id: 'stats',
             icon: Activity,
             title: '/stats',
             description: 'View token usage and context details',
-            action: executeStatsCommand
+            action: executeStatsCommand,
+            disabled: false
+        },
+        {
+            id: 'export',
+            icon: FolderOutput,
+            title: '/export',
+            description: 'Export chat history as Markdown',
+            action: executeExportCommand,
+            disabled: messages.length === 0
         }
     ];
 
@@ -209,7 +270,10 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
         if (showSlashMenu) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                filteredCommands[0]?.action();
+                const targetCmd = filteredCommands[0];
+                if (targetCmd && !targetCmd.disabled) {
+                    targetCmd.action();
+                }
                 return;
             }
             if (e.key === 'Escape') {
@@ -333,7 +397,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 5, scale: 0.98 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute bottom-[calc(100%+8px)] left-0 w-full z-50 px-2"
+                            className="absolute bottom-[calc(100%+8px)] left-0 w-full z-50"
                         >
                             <div className="bg-popover border border-border shadow-sm rounded-lg overflow-hidden flex flex-col p-1">
                                 {filteredCommands.map((cmd, index) => {
@@ -342,12 +406,18 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                                         <button
                                             key={cmd.id}
                                             onClick={cmd.action}
+                                            disabled={cmd.disabled}
                                             className={clsx(
                                                 "flex items-center gap-2.5 px-2 py-1.5 w-full text-left rounded-md transition-colors group",
-                                                index === 0 ? "bg-accent focus:bg-accent" : "hover:bg-accent focus:bg-accent focus:outline-none"
+                                                cmd.disabled && "opacity-50 cursor-not-allowed",
+                                                !cmd.disabled && index === 0 && "bg-accent focus:bg-accent",
+                                                !cmd.disabled && index !== 0 && "hover:bg-accent focus:bg-accent focus:outline-none"
                                             )}
                                         >
-                                            <Icon size={14} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                                            <Icon size={14} className={clsx(
+                                                "text-muted-foreground transition-colors",
+                                                !cmd.disabled && "group-hover:text-foreground"
+                                            )} />
                                             <div className="flex items-center gap-2 flex-1 overflow-hidden">
                                                 <span className="text-sm font-medium text-foreground">{cmd.title}</span>
                                                 <span className="text-xs text-muted-foreground truncate">{cmd.description}</span>
@@ -376,32 +446,32 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                                         <Activity size={14} className="text-primary" />
                                         Context Usage
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={() => setShowStats(false)}
                                         className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-accent"
                                     >
                                         <X size={14} />
                                     </button>
                                 </div>
-                                
+
                                 <div className="flex flex-col gap-1 mt-1">
                                     <div className="flex justify-between text-xs font-medium">
                                         <span className="text-muted-foreground">Tokens</span>
                                         <span className={clsx(
                                             tokenPercentage < 75 ? "text-foreground" :
-                                            tokenPercentage < 90 ? "text-yellow-500" : "text-destructive"
+                                                tokenPercentage < 90 ? "text-yellow-500" : "text-destructive"
                                         )}>
                                             {formatTokens(totalTokens)} / {formatTokens(model?.contextWindow || 128000)}
                                         </span>
                                     </div>
-                                    
+
                                     {/* Progress Bar */}
                                     <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className={clsx(
                                                 "h-full transition-all duration-500 rounded-full",
                                                 tokenPercentage < 75 ? "bg-primary" :
-                                                tokenPercentage < 90 ? "bg-yellow-500" : "bg-destructive"
+                                                    tokenPercentage < 90 ? "bg-yellow-500" : "bg-destructive"
                                             )}
                                             style={{ width: `${Math.min(tokenPercentage, 100)}%` }}
                                         />
@@ -419,7 +489,7 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                 {/* Compacting Indicator */}
                 <AnimatePresence>
                     {isCompacting && (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, y: 5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 5 }}
@@ -437,67 +507,67 @@ export const MessageInput = ({ attachments, setAttachments }: MessageInputProps)
                         isExpanded ? "items-end" : "items-center"
                     )}
                 >                <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className={clsx(
-                    "p-1.5 rounded-full transition-colors",
-                    isExpanded && "mb-0.5",
-                    attachments.length >= 3
-                        ? "text-muted-foreground cursor-not-allowed"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                )}
-                disabled={attachments.length >= 3 || isStreaming}
-            >
-                    <Paperclip size={16} strokeWidth={1.5} />
-                </button>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    multiple
-                    onChange={handleFileChange}
-                />
-
-                <textarea
-                    ref={textareaRef}
-                    className="flex-1 bg-transparent border-none focus:outline-none text-foreground placeholder:text-muted-foreground text-sm resize-none py-2.5 max-h-[120px] scrollbar-none"
-                    placeholder={attachments.length > 0 ? "Add a caption..." : "Type a message..."}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onCompositionStart={() => {
-                        isComposingRef.current = true;
-                    }}
-                    onCompositionEnd={() => {
-                        isComposingRef.current = false;
-                        ignoreNextEnterRef.current = true;
-                        setTimeout(() => {
-                            ignoreNextEnterRef.current = false;
-                        }, 0);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    disabled={isStreaming}
-                    rows={1}
-                />
-
-                <button
                     type="button"
-                    onClick={() => handleSubmit()}
-                    disabled={(!input.trim() && attachments.length === 0) && !isStreaming}
+                    onClick={() => fileInputRef.current?.click()}
                     className={clsx(
-                        "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shrink-0",
+                        "p-1.5 rounded-full transition-colors",
                         isExpanded && "mb-0.5",
-                        ((input.trim() || attachments.length > 0) || isStreaming)
-                            ? "bg-primary text-primary-foreground shadow-md hover:scale-105"
-                            : "bg-muted text-muted-foreground cursor-not-allowed"
+                        attachments.length >= 3
+                            ? "text-muted-foreground cursor-not-allowed"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent"
                     )}
+                    disabled={attachments.length >= 3 || isStreaming}
                 >
-                    {isStreaming ? (
-                        <Square size={14} fill="currentColor" />
-                    ) : (
-                        <ArrowUp size={16} strokeWidth={2.5} />
-                    )}
-                </button>
-            </form>
+                        <Paperclip size={16} strokeWidth={1.5} />
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        multiple
+                        onChange={handleFileChange}
+                    />
+
+                    <textarea
+                        ref={textareaRef}
+                        className="flex-1 bg-transparent border-none focus:outline-none text-foreground placeholder:text-muted-foreground text-sm resize-none py-2.5 max-h-[120px] scrollbar-none"
+                        placeholder={attachments.length > 0 ? "Add a caption..." : "Type a message..."}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onCompositionStart={() => {
+                            isComposingRef.current = true;
+                        }}
+                        onCompositionEnd={() => {
+                            isComposingRef.current = false;
+                            ignoreNextEnterRef.current = true;
+                            setTimeout(() => {
+                                ignoreNextEnterRef.current = false;
+                            }, 0);
+                        }}
+                        onKeyDown={handleKeyDown}
+                        disabled={isStreaming}
+                        rows={1}
+                    />
+
+                    <button
+                        type="button"
+                        onClick={() => handleSubmit()}
+                        disabled={(!input.trim() && attachments.length === 0) && !isStreaming}
+                        className={clsx(
+                            "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shrink-0",
+                            isExpanded && "mb-0.5",
+                            ((input.trim() || attachments.length > 0) || isStreaming)
+                                ? "bg-primary text-primary-foreground shadow-md hover:scale-105"
+                                : "bg-muted text-muted-foreground cursor-not-allowed"
+                        )}
+                    >
+                        {isStreaming ? (
+                            <Square size={14} fill="currentColor" />
+                        ) : (
+                            <ArrowUp size={16} strokeWidth={2.5} />
+                        )}
+                    </button>
+                </form>
             </div>
         </div>
     );
