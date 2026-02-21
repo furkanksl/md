@@ -252,13 +252,15 @@ export const ClipboardView = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-4 pb-2 flex items-center justify-center">
+                        <div className="flex-1 overflow-y-auto p-4 pb-2">
                             {selectedItem.content.startsWith('data:image') ? (
-                                <div className="max-w-full max-h-full rounded-2xl shadow-sm border border-stone-50 dark:border-stone-800 overflow-hidden">
-                                    <img src={selectedItem.content} alt="Full Content" className="max-w-full max-h-full object-contain" />
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <div className="max-w-full max-h-full rounded-2xl shadow-sm border border-stone-50 dark:border-stone-800 overflow-hidden">
+                                        <img src={selectedItem.content} alt="Full Content" className="max-w-full max-h-full object-contain" />
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-sm border border-stone-50 dark:border-stone-800 w-full min-h-full whitespace-pre-wrap font-mono text-sm text-stone-700 dark:text-stone-300 leading-relaxed selection:bg-stone-200 dark:selection:bg-stone-700">
+                                <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-sm border border-stone-50 dark:border-stone-800 w-full whitespace-pre-wrap break-words font-mono text-sm text-stone-700 dark:text-stone-300 leading-relaxed selection:bg-stone-200 dark:selection:bg-stone-700">
                                     {selectedItem.content}
                                 </div>
                             )}
