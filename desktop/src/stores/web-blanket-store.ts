@@ -219,20 +219,30 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
           await settingsRepo.set("web_blanket_favorites", initialFavorites);
         }
 
+        const resolvedEnabled = enabled ?? false;
         set({
-          enabled: enabled ?? false,
+          enabled: resolvedEnabled,
+          mode: resolvedEnabled ? "browse" : "research",
           favorites: initialFavorites || [],
           tabs: tabs || [],
           activeTabId: activeTabId || null,
         });
 
         // Restore native session if enabled
-        if (enabled && tabs && tabs.length > 0) {
+        if (resolvedEnabled && tabs && tabs.length > 0) {
           try {
             await Promise.all(tabs.map(t =>
               invoke("web_blanket_tab_create", { tabId: t.id, url: t.url })
                 .catch(e => console.error("Failed to restore tab:", t.id, e))
             ));
+
+            await Promise.all(tabs.map(t => {
+              if (t.userAgent === "desktop") {
+                return invoke("web_blanket_set_user_agent", { tabId: t.id, mode: "desktop" })
+                  .catch(e => console.error("Failed to restore user agent:", t.id, e));
+              }
+              return Promise.resolve();
+            }));
 
             if (activeTabId) {
               await invoke("web_blanket_tab_activate", { tabId: activeTabId })
@@ -272,8 +282,28 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
     if (isBrowse) { 
       const { tabs } = get();
       if (tabs.length > 0) {
-         // We'll optimistically try to create them. If they exist, we might get duplicates in UI.
-         // Let's rely on a flag.
+        try {
+          await Promise.all(tabs.map(t =>
+            invoke("web_blanket_tab_create", { tabId: t.id, url: t.url || null })
+              .catch(e => console.error("Failed to create tab:", t.id, e))
+          ));
+
+          await Promise.all(tabs.map(t => {
+            if (t.userAgent === "desktop") {
+              return invoke("web_blanket_set_user_agent", { tabId: t.id, mode: "desktop" })
+                .catch(e => console.error("Failed to restore user agent:", t.id, e));
+            }
+            return Promise.resolve();
+          }));
+
+          const { activeTabId } = get();
+          if (activeTabId) {
+            await invoke("web_blanket_tab_activate", { tabId: activeTabId })
+              .catch(e => console.error("Failed to activate tab:", activeTabId, e));
+          }
+        } catch (e) {
+          console.error("Failed to restore tabs on mode switch:", e);
+        }
       }
     } else {
       try {
