@@ -64,15 +64,17 @@ const ClipboardItem = memo(({ item, onCopy, onDelete, onClick, copiedId }: { ite
 });
 
 export const ClipboardView = () => {
-    const { items, loadHistory, startMonitoring, deleteItem, isMonitoring } = useClipboardStore();
+    const { items, loadHistory, startMonitoring, deleteItem, isMonitoring, hasMore, offset } = useClipboardStore();
     const { clipboardHistoryLimit, setClipboardHistoryLimit } = useSettingsStore();
     const [search, setSearch] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const pageSize = 50;
 
     useEffect(() => {
         if (items.length === 0) {
-            loadHistory();
+            loadHistory({ limit: pageSize, offset: 0, append: false });
         }
         if (!isMonitoring) {
             startMonitoring();
@@ -80,7 +82,7 @@ export const ClipboardView = () => {
     }, []);
 
     useEffect(() => {
-        loadHistory();
+        loadHistory({ limit: pageSize, offset: 0, append: false });
     }, [clipboardHistoryLimit]);
 
     const filtered = items.filter(item =>
@@ -154,7 +156,7 @@ export const ClipboardView = () => {
                                             : "text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800"
                                     )}
                                 >
-                                    {limit === 0 ? `Keep All (${items.length})` : `Last ${limit}`}
+                                    {limit === 0 ? `Keep All` : `Last ${limit}`}
                                     {clipboardHistoryLimit === limit && <div className="w-1.5 h-1.5 rounded-full bg-stone-800 dark:bg-stone-200" />}
                                 </button>
                             ))}
@@ -174,6 +176,35 @@ export const ClipboardView = () => {
                         copiedId={copiedId}
                     />
                 ))}
+                {filtered.length > 0 && hasMore && (
+                    <div className="col-span-2 flex justify-center pb-3">
+                        <button
+                            onClick={async () => {
+                                if (isLoadingMore) return;
+                                setIsLoadingMore(true);
+                                try {
+                                    await loadHistory({ limit: pageSize, offset, append: true });
+                                } finally {
+                                    setIsLoadingMore(false);
+                                }
+                            }}
+                            className="text-muted-foreground hover:text-foreground text-[10px] uppercase tracking-wider font-medium transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-muted"
+                            disabled={isLoadingMore}
+                        >
+                            {isLoadingMore ? (
+                                <>
+                                    <ChevronDown size={12} className="animate-pulse" />
+                                    Loading
+                                </>
+                            ) : (
+                                <>
+                                    <ChevronDown size={12} />
+                                    Load More
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Detail Modal */}

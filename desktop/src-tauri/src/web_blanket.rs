@@ -69,15 +69,15 @@ const WHATSAPP_SCRIPT: &str = r#"
          document.head.appendChild(style);
     }
 
-    setInterval(() => {
-        if (document.getElementById(BTN_ID)) return;
+    const tryInject = () => {
+        if (document.getElementById(BTN_ID)) return true;
         
         const firstNavItem = document.querySelector('[data-navbar-item]');
-        if (!firstNavItem) return;
+        if (!firstNavItem) return false;
         
         // Target: parent -> parent -> parent
         const targetContainer = firstNavItem.parentElement?.parentElement?.parentElement;
-        if (!targetContainer) return;
+        if (!targetContainer) return false;
 
         const btn = document.createElement('div');
         btn.id = BTN_ID;
@@ -101,8 +101,16 @@ const WHATSAPP_SCRIPT: &str = r#"
         };
         
         targetContainer.insertBefore(btn, targetContainer.firstChild);
+        return true;
+    };
 
-    }, 1000);
+    if (!tryInject()) {
+        const observer = new MutationObserver(() => {
+            if (tryInject()) observer.disconnect();
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 30000);
+    }
 })();
 "#;
 
@@ -407,6 +415,7 @@ pub fn web_blanket_tab_create(
 
             let webview: id = msg_send![class!(WKWebView), alloc];
             let webview: id = msg_send![webview, initWithFrame: NSRect::new(NSPoint::new(0., 0.), NSSize::new(0., 0.)) configuration: config];
+            let _: () = msg_send![config, release];
             
             // Set autoresizing mask to resize with container
             // NSViewWidthSizable | NSViewHeightSizable = 18

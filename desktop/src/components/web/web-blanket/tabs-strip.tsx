@@ -32,19 +32,20 @@ export function TabsStrip() {
                   "flex items-center gap-0 px-1 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors max-w-[120px] shrink-0 border border-transparent select-none",
                   isActive
                     ? "bg-primary/10 text-primary border-primary/20"
-                    : "hover:bg-accent hover:text-accent-foreground text-muted-foreground", {
-                  "pl-0": tab.muted,
-                }
+                    : "hover:bg-accent hover:text-accent-foreground text-muted-foreground",
+                  {
+                    "pl-0": tab.muted,
+                  },
                 )}
                 title={tab.title || tab.url}
               >
                 {tab.loading ? (
-                  <div className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin shrink-0 mr-1" />
+                  <div className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin shrink-0 mx-1" />
                 ) : (
                   <div className="w-3 h-3 rounded-full bg-current/20 shrink-0 mr-1" />
                 )}
 
-                {tab.muted && (
+                {tab.muted && !tab.loading && (
                   <VolumeX size={12} className="opacity-90 shrink-0 mr-1" />
                 )}
 

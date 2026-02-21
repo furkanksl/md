@@ -175,6 +175,17 @@ export class ClipboardRepository {
     return await db.select("SELECT * FROM clipboard ORDER BY timestamp DESC LIMIT $1", [limit]);
   }
 
+  async getPage(limit: number, offset: number): Promise<any[]> {
+    const db = await dbClient.getDb();
+    if (limit <= 0) {
+        return [];
+    }
+    return await db.select(
+        "SELECT * FROM clipboard ORDER BY timestamp DESC LIMIT $1 OFFSET $2",
+        [limit, offset]
+    );
+  }
+
   async create(content: string, sourceApp?: string): Promise<void> {
     const db = await dbClient.getDb();
     const id = uuidv4();

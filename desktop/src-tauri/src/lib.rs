@@ -714,11 +714,16 @@ pub fn run() {
             // Start Mouse Polling Thread
             let handle = app.handle().clone();
             std::thread::spawn(move || {
+                let source = match CGEventSource::new(CGEventSourceStateID::HIDSystemState) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        eprintln!("Failed to create CGEventSource: {:?}", e);
+                        return;
+                    }
+                };
                 loop {
                     // Check mouse position using CoreGraphics
-                    if let Ok(event) = CGEvent::new(
-                        CGEventSource::new(CGEventSourceStateID::HIDSystemState).unwrap(),
-                    ) {
+                    if let Ok(event) = CGEvent::new(source.clone()) {
                         let point = event.location();
                         
                         // Get screen dimensions locally to be responsive

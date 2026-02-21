@@ -49,6 +49,7 @@ interface WebBlanketState {
   isSuggestionsOpen: boolean;
   // Actions
   init: () => Promise<void>;
+  dispose: () => void;
   setMode: (mode: "research" | "browse") => Promise<void>;
   setHoveringBrowseRegion: (hovering: boolean) => void;
   setUrlBarVisible: (visible: boolean) => void;
@@ -98,6 +99,10 @@ const createDefaultFavorites = (): WebBlanketFavorite[] => [
   { id: uuidv4(), title: "My Drawer", url: "https://mydrawer.furkanksl.com", createdAt: Date.now(), updatedAt: Date.now() },
 ];
 
+let isInitialized = false;
+let initPromise: Promise<void> | null = null;
+let unlistenFns: Array<() => void> = [];
+
 export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   mode: "browse",
   enabled: false,
@@ -111,6 +116,19 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   isHistoryOpen: false,
   isSuggestionsOpen: false,
 
+  dispose: () => {
+    unlistenFns.forEach((unlisten) => {
+      try {
+        unlisten();
+      } catch (e) {
+        console.warn("Failed to unlisten web blanket listener:", e);
+      }
+    });
+    unlistenFns = [];
+    isInitialized = false;
+    initPromise = null;
+  },
+
   setFullScreen: (isFullScreen) => set({ isFullScreen }),
 
   setIsHistoryOpen: (isHistoryOpen: boolean) => set({ isHistoryOpen }),
@@ -118,88 +136,132 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   setIsSuggestionsOpen: (isSuggestionsOpen: boolean) => set({ isSuggestionsOpen }),
  
   init: async () => {
-    try {
-      // Listen for new window events from Rust
-      listen<{ url: string }>("web-blanket-new-window", (event) => {
-          console.log("New window requested:", event.payload.url);
-          get().createTab(event.payload.url);
-      }).catch(e => console.error("Failed to setup new window listener", e));
+    if (isInitialized) return;
+    if (initPromise) return initPromise;
 
-      // Listen for menu shortcuts
-      listen("web-blanket-new-tab", () => {
-          get().createTab();
-      }).catch(e => console.error("Failed to setup new tab listener", e));
+    initPromise = (async () => {
+      try {
+        // Listen for new window events from Rust
+        try {
+          const unlisten = await listen<{ url: string }>("web-blanket-new-window", (event) => {
+            console.log("New window requested:", event.payload.url);
+            get().createTab(event.payload.url);
+          });
+          unlistenFns.push(unlisten);
+        } catch (e) {
+          console.error("Failed to setup new window listener", e);
+        }
 
-      listen("web-blanket-close-tab", () => {
-          const { activeTabId, closeTab } = get();
-          if (activeTabId) {
+        // Listen for menu shortcuts
+        try {
+          const unlisten = await listen("web-blanket-new-tab", () => {
+            get().createTab();
+          });
+          unlistenFns.push(unlisten);
+        } catch (e) {
+          console.error("Failed to setup new tab listener", e);
+        }
+
+        try {
+          const unlisten = await listen("web-blanket-close-tab", () => {
+            const { activeTabId, closeTab } = get();
+            if (activeTabId) {
               closeTab(activeTabId);
-          }
-      }).catch(e => console.error("Failed to setup close tab listener", e));
+            }
+          });
+          unlistenFns.push(unlisten);
+        } catch (e) {
+          console.error("Failed to setup close tab listener", e);
+        }
 
-      listen("web-blanket-focus-url", () => {
-          get().setShouldFocusUrlBar(true);
-      }).catch(e => console.error("Failed to setup focus url listener", e));
+        try {
+          const unlisten = await listen("web-blanket-focus-url", () => {
+            get().setShouldFocusUrlBar(true);
+          });
+          unlistenFns.push(unlisten);
+        } catch (e) {
+          console.error("Failed to setup focus url listener", e);
+        }
 
-      listen<{ index: number | "last" }>("web-blanket-switch-tab", (event) => {
-          const { tabs, activateTab } = get();
-          if (tabs.length === 0) return;
+        try {
+          const unlisten = await listen<{ index: number | "last" }>("web-blanket-switch-tab", (event) => {
+            const { tabs, activateTab } = get();
+            if (tabs.length === 0) return;
 
-          if (event.payload.index === "last") {
+            if (event.payload.index === "last") {
               const lastTab = tabs[tabs.length - 1];
               if (lastTab) activateTab(lastTab.id);
-          } else {
+            } else {
               const tab = tabs[event.payload.index];
               if (tab) activateTab(tab.id);
-          }
-      }).catch(e => console.error("Failed to setup switch tab listener", e));
+            }
+          });
+          unlistenFns.push(unlisten);
+        } catch (e) {
+          console.error("Failed to setup switch tab listener", e);
+        }
 
-      const [
-        enabled,
-        favorites,
-        tabs,
-        activeTabId
-      ] = await Promise.all([
-        settingsRepo.get<boolean>("web_blanket_enabled"),
-        settingsRepo.get<WebBlanketFavorite[]>("web_blanket_favorites"),
-        settingsRepo.get<WebBlanketTab[]>("web_blanket_tabs"),
-        settingsRepo.get<string>("web_blanket_active_tab_id"),
-      ]);
+        const [
+          enabled,
+          favorites,
+          tabs,
+          activeTabId
+        ] = await Promise.all([
+          settingsRepo.get<boolean>("web_blanket_enabled"),
+          settingsRepo.get<WebBlanketFavorite[]>("web_blanket_favorites"),
+          settingsRepo.get<WebBlanketTab[]>("web_blanket_tabs"),
+          settingsRepo.get<string>("web_blanket_active_tab_id"),
+        ]);
 
-      let initialFavorites = favorites;
-      if (!initialFavorites) {
+        let initialFavorites = favorites;
+        if (!initialFavorites) {
           initialFavorites = createDefaultFavorites();
           await settingsRepo.set("web_blanket_favorites", initialFavorites);
-      }
+        }
 
-      set({
-        enabled: enabled ?? false,
-        favorites: initialFavorites || [],
-        tabs: tabs || [],
-        activeTabId: activeTabId || null,
-      });
-      
-      // Restore native session if enabled
-      if (enabled && tabs && tabs.length > 0) {
+        set({
+          enabled: enabled ?? false,
+          favorites: initialFavorites || [],
+          tabs: tabs || [],
+          activeTabId: activeTabId || null,
+        });
+
+        // Restore native session if enabled
+        if (enabled && tabs && tabs.length > 0) {
           try {
-              // We need to create tabs sequentially or parallel
-              await Promise.all(tabs.map(t => 
-                  invoke("web_blanket_tab_create", { tabId: t.id, url: t.url })
-                    .catch(e => console.error("Failed to restore tab:", t.id, e))
-              ));
-              
-              if (activeTabId) {
-                  await invoke("web_blanket_tab_activate", { tabId: activeTabId })
-                    .catch(e => console.error("Failed to activate tab:", activeTabId, e));
-              }
-          } catch (e) {
-              console.error("Failed to restore native session:", e);
-          }
-      }
+            await Promise.all(tabs.map(t =>
+              invoke("web_blanket_tab_create", { tabId: t.id, url: t.url })
+                .catch(e => console.error("Failed to restore tab:", t.id, e))
+            ));
 
-    } catch (e) {
-      console.error("Failed to load Web Blanket settings:", e);
-    }
+            if (activeTabId) {
+              await invoke("web_blanket_tab_activate", { tabId: activeTabId })
+                .catch(e => console.error("Failed to activate tab:", activeTabId, e));
+            }
+          } catch (e) {
+            console.error("Failed to restore native session:", e);
+          }
+        }
+
+        isInitialized = true;
+      } catch (e) {
+        console.error("Failed to load Web Blanket settings:", e);
+        unlistenFns.forEach((unlisten) => {
+          try {
+            unlisten();
+          } catch (err) {
+            console.warn("Failed to unlisten web blanket listener after init error:", err);
+          }
+        });
+        unlistenFns = [];
+        isInitialized = false;
+        throw e;
+      } finally {
+        initPromise = null;
+      }
+    })();
+
+    return initPromise;
   },
 
   setMode: async (mode) => {
