@@ -11,7 +11,7 @@ const getHeader = (headers: RequestInit["headers"], key: string): string | null 
   }
   const record = headers as Record<string, string>;
   const matchKey = Object.keys(record).find((k) => k.toLowerCase() === key.toLowerCase());
-  return matchKey ? record[matchKey] : null;
+  return matchKey ? (record[matchKey] ?? null) : null;
 };
 
 export const customFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
