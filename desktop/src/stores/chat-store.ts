@@ -359,18 +359,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
           );
 
           let fullText = "";
+          let lastUpdate = 0;
+          const updateIntervalMs = 50;
+
           for await (const chunk of streamResult.textStream) {
               fullText += chunk;
-              set(state => ({
-                  messages: state.messages.map(m => 
-                      m.id === assistantId ? { 
-                          ...m, 
-                          content: fullText,
-                          metadata: { ...m.metadata, tokenCount: estimateTokens(fullText) }
-                      } : m
-                  )
-              }));
+              const now = Date.now();
+              if (now - lastUpdate >= updateIntervalMs) {
+                  lastUpdate = now;
+                  set(state => ({
+                      messages: state.messages.map(m => 
+                          m.id === assistantId ? { 
+                              ...m, 
+                              content: fullText
+                          } : m
+                      )
+                  }));
+              }
           }
+
+          // Final update with token count
+          set(state => ({
+              messages: state.messages.map(m => 
+                  m.id === assistantId ? { 
+                      ...m, 
+                      content: fullText,
+                      metadata: { ...m.metadata, tokenCount: estimateTokens(fullText) }
+                  } : m
+              )
+          }));
       } catch (err) {
           if (err instanceof Error && err.name === 'AbortError') {
               console.log("Generation aborted");
@@ -494,18 +511,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
         );
 
         let fullText = "";
+        let lastUpdate = 0;
+        const updateIntervalMs = 50;
+
         for await (const chunk of streamResult.textStream) {
             fullText += chunk;
-            set(state => ({
-                messages: state.messages.map(m => 
-                    m.id === assistantId ? { 
-                        ...m, 
-                        content: fullText,
-                        metadata: { ...m.metadata, tokenCount: estimateTokens(fullText) }
-                    } : m
-                )
-            }));
+            const now = Date.now();
+            if (now - lastUpdate >= updateIntervalMs) {
+                lastUpdate = now;
+                set(state => ({
+                    messages: state.messages.map(m => 
+                        m.id === assistantId ? { 
+                            ...m, 
+                            content: fullText
+                        } : m
+                    )
+                }));
+            }
         }
+
+        // Final update with token count
+        set(state => ({
+            messages: state.messages.map(m => 
+                m.id === assistantId ? { 
+                    ...m, 
+                    content: fullText,
+                    metadata: { ...m.metadata, tokenCount: estimateTokens(fullText) }
+                } : m
+            )
+        }));
     } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
             console.log("Generation aborted");

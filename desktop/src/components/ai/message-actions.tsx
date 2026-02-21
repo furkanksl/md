@@ -15,6 +15,13 @@ export const MessageActions = ({ isUser, content, onEdit, onRegenerate, onRewind
   if (isUser) {
     return (
       <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-0 -top-6 flex items-center gap-1">
+        <button
+          onClick={() => copyToClipboard(content)}
+          className="p-1 text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+          title="Copy"
+        >
+          {isCopied ? <Check size={12} /> : <Copy size={12} />}
+        </button>
         {onEdit && (
           <button
             onClick={onEdit}

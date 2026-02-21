@@ -1,3 +1,4 @@
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { clsx } from 'clsx';
 
@@ -6,7 +7,7 @@ interface MarkdownRendererProps {
   className?: string;
 }
 
-export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) => {
+const MarkdownRendererBase = ({ content, className }: MarkdownRendererProps) => {
   const Component = ReactMarkdown as any;
   return (
     <div className={clsx(
@@ -23,3 +24,8 @@ export const MarkdownRenderer = ({ content, className }: MarkdownRendererProps) 
     </div>
   );
 };
+
+export const MarkdownRenderer = React.memo(
+  MarkdownRendererBase,
+  (prev, next) => prev.content === next.content && prev.className === next.className
+);

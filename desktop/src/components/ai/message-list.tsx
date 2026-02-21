@@ -41,7 +41,7 @@ export const MessageList = () => {
     activeConversationId,
     conversations,
     regenerate,
-    rewind
+    rewind,
   } = useChatStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -69,7 +69,7 @@ export const MessageList = () => {
     if (isAtBottom && scrollRef.current) {
       scrollRef.current.scrollTo({
         top: scrollRef.current.scrollHeight,
-        behavior: "smooth",
+        behavior: isStreaming ? "auto" : "smooth",
       });
     }
   }, [messages, isStreaming, isAtBottom]);
@@ -85,13 +85,13 @@ export const MessageList = () => {
   useEffect(() => {
     if (!previewSrc) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setPreviewSrc(null);
         setPreviewName(null);
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [previewSrc]);
 
   const startEditing = (id: string, content: string) => {
@@ -120,7 +120,9 @@ export const MessageList = () => {
     >
       {activeChat && messages.length > 0 && (
         <div className="sticky top-0 z-20 w-full flex justify-center items-center">
-                      <div className="flex items-center justify-center h-full bg-background/30 backdrop-blur-md px-3 py-1 rounded-full border border-border/40 shadow-sm">            <span className="text-[10px] font-medium text-stone-400 dark:text-stone-300 tracking-widest ">
+          <div className="flex items-center justify-center h-full bg-background/30 backdrop-blur-md px-3 py-1 rounded-full border border-border/40 shadow-sm">
+            {" "}
+            <span className="text-[10px] font-medium text-stone-400 dark:text-stone-300 tracking-widest ">
               {activeChat.title}
             </span>
           </div>
@@ -139,25 +141,49 @@ export const MessageList = () => {
         const isNewDay = !prevTs || ts.toDateString() !== prevTs.toDateString();
 
         // Time string (always shown outside the bubble)
-        const timeLabel = ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        const timeLabel = ts.toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
         // Localized date label for day separators
         const dateLabel = (() => {
           const today = new Date();
           const yesterday = new Date();
           yesterday.setDate(today.getDate() - 1);
-          if (ts.toDateString() === today.toDateString()) return new Intl.DateTimeFormat(undefined, { weekday: 'long', hour: undefined }).format(ts) === undefined ? 'Today' : (navigator.language && (new Intl.DateTimeFormat(navigator.language, { weekday: 'long' }).format(ts))) || 'Today';
-          if (ts.toDateString() === yesterday.toDateString()) return 'Yesterday';
-          return new Intl.DateTimeFormat(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }).format(ts);
+          if (ts.toDateString() === today.toDateString())
+            return new Intl.DateTimeFormat(undefined, {
+              weekday: "long",
+              hour: undefined,
+            }).format(ts) === undefined
+              ? "Today"
+              : (navigator.language &&
+                  new Intl.DateTimeFormat(navigator.language, {
+                    weekday: "long",
+                  }).format(ts)) ||
+                  "Today";
+          if (ts.toDateString() === yesterday.toDateString())
+            return "Yesterday";
+          return new Intl.DateTimeFormat(undefined, {
+            weekday: "long",
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }).format(ts);
         })();
 
-        const contentString = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+        const contentString =
+          typeof msg.content === "string"
+            ? msg.content
+            : JSON.stringify(msg.content);
 
         return (
           <div key={msg.id || i} className="w-full">
             {isNewDay && (
               <div className="w-full flex items-center my-3">
                 <div className="flex-1 h-px bg-stone-100 dark:bg-stone-800" />
-                <div className="px-3 text-[11px] text-stone-400 dark:text-stone-500 whitespace-nowrap">{dateLabel}</div>
+                <div className="px-3 text-[11px] text-stone-400 dark:text-stone-500 whitespace-nowrap">
+                  {dateLabel}
+                </div>
                 <div className="flex-1 h-px bg-stone-100 dark:bg-stone-800" />
               </div>
             )}
@@ -168,7 +194,9 @@ export const MessageList = () => {
               transition={{ duration: 0.2 }}
               className={clsx(
                 "flex flex-col max-w-[92%] min-w-0 group relative",
-                isUser ? "self-end items-end" : "self-start items-start"
+                isUser
+                  ? "self-end items-end ml-auto"
+                  : "self-start items-start",
               )}
             >
               <div
@@ -176,7 +204,7 @@ export const MessageList = () => {
                   "px-3.5 py-2 text-xs leading-relaxed shadow-sm overflow-hidden relative",
                   isUser
                     ? "bg-stone-800 text-stone-50 dark:bg-stone-100 dark:text-stone-900 rounded-[1.25rem] rounded-tr-none"
-                    : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 rounded-[1.25rem] rounded-tl-none border border-stone-100 dark:border-stone-800 overflow-x-auto scrollbar-none"
+                    : "bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 rounded-[1.25rem] rounded-tl-none border border-stone-100 dark:border-stone-800 overflow-x-auto scrollbar-none",
                 )}
               >
                 {msg.content === "" && !isUser ? (
@@ -188,23 +216,53 @@ export const MessageList = () => {
 
               {/* Attachments (images) rendered outside the bubble */}
               {msg.attachments && msg.attachments.length > 0 && (
-                <div className={clsx("mt-2 flex gap-3", isUser ? "justify-end" : "justify-start")}>
+                <div
+                  className={clsx(
+                    "mt-2 flex gap-3",
+                    isUser ? "justify-end" : "justify-start",
+                  )}
+                >
                   {msg.attachments.map((att: any, idx: number) => {
-                    const isImage = att.type?.startsWith?.('image/') || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(att.name || '');
-                    const src = att.base64 || (att.path ? `file://${att.path}` : undefined);
+                    const isImage =
+                      att.type?.startsWith?.("image/") ||
+                      /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(att.name || "");
+                    const src =
+                      att.base64 ||
+                      (att.path ? `file://${att.path}` : undefined);
                     if (isImage && src) {
                       return (
-                        <button key={idx} onClick={() => { setPreviewSrc(src); setPreviewName(att.name); }} className="block p-0 bg-transparent border-0">
-                          <img src={src} alt={att.name || 'image'} className="w-24 h-24 object-cover rounded-lg border border-stone-100 dark:border-stone-800 shadow-sm cursor-zoom-in" />
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setPreviewSrc(src);
+                            setPreviewName(att.name);
+                          }}
+                          className="block p-0 bg-transparent border-0"
+                        >
+                          <img
+                            src={src}
+                            alt={att.name || "image"}
+                            className="w-24 h-24 object-cover rounded-lg border border-stone-100 dark:border-stone-800 shadow-sm cursor-zoom-in"
+                          />
                         </button>
                       );
                     }
                     // Fallback for non-image attachments
                     return (
-                      <div key={idx} className="px-3 py-2 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-100 dark:border-stone-700 text-xs">
-                        <a href={att.base64 || att.path} target="_blank" rel="noreferrer noopener" className="flex items-center gap-2">
+                      <div
+                        key={idx}
+                        className="px-3 py-2 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-100 dark:border-stone-700 text-xs"
+                      >
+                        <a
+                          href={att.base64 || att.path}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="flex items-center gap-2"
+                        >
                           <FileIcon size={14} />
-                          <span className="truncate max-w-[160px]">{att.name}</span>
+                          <span className="truncate max-w-[160px]">
+                            {att.name}
+                          </span>
                         </a>
                       </div>
                     );
@@ -213,24 +271,27 @@ export const MessageList = () => {
               )}
 
               {/* Timestamp (always visible, outside bubble) */}
-              <div className={clsx("mt-1 text-[11px] text-stone-400 dark:text-stone-500 select-none flex items-center gap-2", isUser ? "justify-end" : "justify-start")} aria-hidden>
+              <div
+                className={clsx(
+                  "mt-1 text-[11px] text-stone-400 dark:text-stone-500 select-none flex items-center gap-2",
+                  isUser ? "justify-end ml-auto" : "justify-start",
+                )}
+                aria-hidden
+              >
                 {timeLabel}
                 {!isUser && !isStreaming && (
-                  <MessageActions 
-                      isUser={false}
-                      content={contentString}
-                  />
+                  <MessageActions isUser={false} content={contentString} />
                 )}
               </div>
 
               {/* Action Buttons for User */}
               {isUser && !isStreaming && (
-                <MessageActions 
-                    isUser={true}
-                    content={contentString}
-                    onEdit={() => startEditing(msg.id, contentString)}
-                    onRegenerate={() => regenerate(msg.id)}
-                    onRewind={() => rewind(msg.id)}
+                <MessageActions
+                  isUser={true}
+                  content={contentString}
+                  onEdit={() => startEditing(msg.id, contentString)}
+                  onRegenerate={() => regenerate(msg.id)}
+                  onRewind={() => rewind(msg.id)}
                 />
               )}
             </motion.div>
@@ -246,18 +307,39 @@ export const MessageList = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 rounded-lg border border-stone-100 dark:border-stone-800"
-            onClick={() => { setPreviewSrc(null); setPreviewName(null); }}
+            onClick={() => {
+              setPreviewSrc(null);
+              setPreviewName(null);
+            }}
           >
-            <motion.div initial={{ scale: 0.98 }} animate={{ scale: 1 }} exit={{ scale: 0.98 }} className="flex max-w-[90%] max-h-[80vh] p-4" onClick={(e) => e.stopPropagation()}>
+            <motion.div
+              initial={{ scale: 0.98 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.98 }}
+              className="flex max-w-[90%] max-h-[80vh] p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-xl overflow-hidden">
                 <div className="p-3 flex items-center justify-between border-b border-stone-100 dark:border-stone-800">
-                  <div className="text-sm font-medium text-stone-700 dark:text-stone-200 truncate">{previewName}</div>
-                  <button onClick={() => { setPreviewSrc(null); setPreviewName(null); }} className="p-2 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200">
+                  <div className="text-sm font-medium text-stone-700 dark:text-stone-200 truncate">
+                    {previewName}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setPreviewSrc(null);
+                      setPreviewName(null);
+                    }}
+                    className="p-2 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200"
+                  >
                     <X size={16} />
                   </button>
                 </div>
                 <div className="p-4 flex items-center justify-center">
-                  <img src={previewSrc} alt={previewName || 'preview'} className="max-w-full max-h-[60vh] object-contain" />
+                  <img
+                    src={previewSrc}
+                    alt={previewName || "preview"}
+                    className="max-w-full max-h-[60vh] object-contain"
+                  />
                 </div>
               </div>
             </motion.div>
@@ -266,8 +348,14 @@ export const MessageList = () => {
       </AnimatePresence>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingId} onOpenChange={(open) => !open && cancelEditing()}>
-        <DialogContent hideClose={true} className="max-w-[90%] w-full p-4 gap-2 rounded-3xl md:rounded-2xl sm:rounded-2xl">
+      <Dialog
+        open={!!editingId}
+        onOpenChange={(open) => !open && cancelEditing()}
+      >
+        <DialogContent
+          hideClose={true}
+          className="max-w-[90%] w-full p-4 gap-2 rounded-3xl md:rounded-2xl sm:rounded-2xl"
+        >
           <DialogHeader className="text-left space-y-0">
             <DialogTitle className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase">
               Edit Message
@@ -278,7 +366,12 @@ export const MessageList = () => {
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               autoFocus
-              onFocus={(e) => e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length)}
+              onFocus={(e) =>
+                e.currentTarget.setSelectionRange(
+                  e.currentTarget.value.length,
+                  e.currentTarget.value.length,
+                )
+              }
               className="min-h-[150px] resize-none bg-stone-50 dark:bg-stone-900/50 border-stone-200 dark:border-stone-800 focus-visible:ring-stone-400 dark:focus-visible:ring-stone-600 rounded-2xl pb-9"
             />
             <button
@@ -288,7 +381,7 @@ export const MessageList = () => {
                 "absolute bottom-2 right-2 w-8 h-8 rounded-full p-0 flex items-center justify-center transition-all duration-300 shadow-none",
                 !editContent.trim()
                   ? "bg-stone-100 text-stone-300 cursor-not-allowed dark:bg-stone-800 dark:text-stone-600"
-                  : "bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-stone-900 text-white"
+                  : "bg-stone-900 hover:bg-stone-800 dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-stone-900 text-white",
               )}
             >
               <ArrowUp size={16} strokeWidth={2.5} />
