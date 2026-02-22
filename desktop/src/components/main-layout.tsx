@@ -118,6 +118,25 @@ export const MainLayout = () => {
     };
   }, []);
 
+  // Periodic update checks + check on focus
+  useEffect(() => {
+    const appWindow = getCurrentWindow();
+    const { checkForUpdates } = useUpdateStore.getState();
+
+    const interval = setInterval(() => {
+      checkForUpdates().catch(console.error);
+    }, 6 * 60 * 60 * 1000);
+
+    const unlistenFocus = appWindow.listen("tauri://focus", () => {
+      checkForUpdates().catch(console.error);
+    });
+
+    return () => {
+      clearInterval(interval);
+      unlistenFocus.then((f) => f());
+    };
+  }, []);
+
   const bottomNavItems = [
     { id: "chat", label: "Journal", icon: MessageCircle },
     { id: "tasks", label: "Tasks", icon: ListTodo },
