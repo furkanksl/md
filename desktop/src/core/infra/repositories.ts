@@ -232,7 +232,7 @@ export class ChecklistRepository {
     const result: Checklist[] = [];
     for (const list of lists) {
       const items = await db.select<any[]>(
-        "SELECT * FROM checklist_items WHERE checklist_id = $1 ORDER BY completed ASC, created_at DESC", 
+        "SELECT * FROM checklist_items WHERE checklist_id = $1 ORDER BY completed ASC, order_index DESC, created_at DESC", 
         [list.id]
       );
       
@@ -244,7 +244,8 @@ export class ChecklistRepository {
           id: item.id,
           text: item.text,
           completed: Number(item.completed) === 1,
-          createdAt: new Date(item.created_at).getTime()
+          createdAt: new Date(item.created_at).getTime(),
+          orderIndex: item.order_index ?? 0
         }))
       });
     }
@@ -288,10 +289,15 @@ export class ChecklistItemRepository {
     const db = await dbClient.getDb();
     const id = uuidv4();
     const now = new Date().toISOString();
+    const orderRows = await db.select<any[]>(
+      "SELECT COALESCE(MAX(order_index), 0) + 1 as next_order FROM checklist_items WHERE checklist_id = $1",
+      [checklistId]
+    );
+    const orderIndex = orderRows[0]?.next_order ?? 1;
     
     await db.execute(
-      "INSERT INTO checklist_items (id, checklist_id, text, completed, created_at) VALUES ($1, $2, $3, $4, $5)",
-      [id, checklistId, text, 0, now]
+      "INSERT INTO checklist_items (id, checklist_id, text, completed, order_index, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+      [id, checklistId, text, 0, orderIndex, now]
     );
 
     // Touch parent checklist
@@ -301,7 +307,8 @@ export class ChecklistItemRepository {
       id,
       text,
       completed: false,
-      createdAt: new Date(now).getTime()
+      createdAt: new Date(now).getTime(),
+      orderIndex
     };
   }
 
@@ -318,6 +325,21 @@ export class ChecklistItemRepository {
   async updateText(id: string, text: string): Promise<void> {
     const db = await dbClient.getDb();
     await db.execute("UPDATE checklist_items SET text = $1 WHERE id = $2", [text, id]);
+  }
+
+  async setOrderIndex(id: string, orderIndex: number): Promise<void> {
+    const db = await dbClient.getDb();
+    await db.execute("UPDATE checklist_items SET order_index = $1 WHERE id = $2", [orderIndex, id]);
+  }
+
+  async reorder(items: Array<{ id: string; orderIndex: number }>): Promise<void> {
+    const db = await dbClient.getDb();
+    for (const item of items) {
+      await db.execute("UPDATE checklist_items SET order_index = $1 WHERE id = $2", [
+        item.orderIndex,
+        item.id,
+      ]);
+    }
   }
 }
 

@@ -157,6 +157,14 @@ class DatabaseClient {
              await this.db.execute("ALTER TABLE messages ADD COLUMN metadata TEXT");
         }
 
+        // Check for missing columns in checklist_items
+        const checklistItemColumns = await this.db.select<any[]>("PRAGMA table_info(checklist_items)");
+        const checklistItemHasOrderIndex = checklistItemColumns.some(c => c.name === 'order_index');
+        if (!checklistItemHasOrderIndex) {
+             console.log("Migrating checklist_items table (order_index)...");
+             await this.db.execute("ALTER TABLE checklist_items ADD COLUMN order_index INTEGER DEFAULT 0");
+        }
+
     } catch (e) {
         console.error("Migration failed:", e);
     }

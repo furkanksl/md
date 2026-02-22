@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useTodoStore, type TodoItem } from "@/stores/todo-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +24,25 @@ import { isImeComposing } from "@/lib/ime";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  type DragEndEvent,
+  type DragStartEvent,
+  type DraggableSyntheticListeners,
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
@@ -44,11 +64,22 @@ const TodoItemRow = ({
   onToggle,
   onDelete,
   onUpdateText,
+  dragHandleProps,
+  dragStyle,
+  isDragging,
+  isOverlay,
 }: {
   item: TodoItem;
   onToggle: () => void;
   onDelete: () => void;
   onUpdateText: (text: string) => void;
+  dragHandleProps?: {
+    listeners?: DraggableSyntheticListeners;
+    attributes?: Record<string, any>;
+  };
+  dragStyle?: React.CSSProperties;
+  isDragging?: boolean;
+  isOverlay?: boolean;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
@@ -95,66 +126,107 @@ const TodoItemRow = ({
     }
   };
 
+  const innerContent = (
+    <>
+      <button
+        onClick={(e) => {
+          if (isDragging || isOverlay) return;
+          // Prevent drag start when clicking the button
+          e.stopPropagation();
+          onToggle();
+        }}
+        onPointerDown={(e) => {
+          // Don't let checkbox initiate drag
+          e.stopPropagation();
+        }}
+        className={cn(
+          "mt-0.5 flex-shrink-0 transition-colors touch-none",
+          item.completed
+            ? "text-stone-400"
+            : "text-stone-300 hover:text-stone-500 dark:hover:text-stone-400"
+        )}
+      >
+        {item.completed ? (
+          <CheckCircle2 className="h-5 w-5" />
+        ) : (
+          <Circle className="h-5 w-5" />
+        )}
+      </button>
+
+      {isEditing && !isOverlay ? (
+        <Input
+          ref={inputRef}
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          className="flex-1 h-auto p-0 border-none shadow-none focus-visible:ring-0 bg-transparent text-sm min-h-[1.5rem] pt-0.5 selection:bg-stone-200 dark:selection:bg-stone-700"
+        />
+      ) : (
+        <span
+          className={cn(
+            "flex-1 text-sm pt-0.5 transition-all break-words leading-relaxed",
+            item.completed && "line-through text-stone-500"
+          )}
+        >
+          {item.text}
+        </span>
+      )}
+
+      {!isOverlay && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onDelete}
+          className="opacity-0 group-hover:opacity-100 h-6 w-6 -mt-0.5 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      )}
+    </>
+  );
+
+  const containerClassName = cn(
+    "group flex items-start gap-3 p-2 rounded-md transition-colors",
+    !isOverlay && "hover:bg-stone-100 dark:hover:bg-stone-800/50",
+    item.completed && "opacity-50",
+    isDragging && !isOverlay && "invisible pointer-events-none",
+    dragHandleProps && !isEditing && "cursor-grab active:cursor-grabbing touch-none",
+    isOverlay && "bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 ring-1 ring-stone-200/50 dark:ring-stone-800/50"
+  );
+
+  if (isOverlay) {
+    return (
+      <div
+        style={dragStyle}
+        {...(!isEditing ? dragHandleProps?.attributes : {})}
+        className={containerClassName}
+      >
+        {innerContent}
+      </div>
+    );
+  }
+
+  const content = (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.15 }}
+      style={dragStyle}
+      {...(!isEditing ? dragHandleProps?.attributes : {})}
+      {...(!isEditing ? dragHandleProps?.listeners : {})}
+      className={containerClassName}
+      onDoubleClick={!isOverlay ? startEditing : undefined}
+    >
+      {innerContent}
+    </motion.div>
+  );
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <motion.div
-          layout
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.15 }}
-          className={cn(
-            "group flex items-start gap-3 p-2 rounded-md hover:bg-stone-100 dark:hover:bg-stone-800/50 transition-colors",
-            item.completed && "opacity-50"
-          )}
-          onDoubleClick={startEditing}
-        >
-          <button
-            onClick={onToggle}
-            className={cn(
-              "mt-0.5 flex-shrink-0 transition-colors",
-              item.completed
-                ? "text-stone-400"
-                : "text-stone-300 hover:text-stone-500 dark:hover:text-stone-400"
-            )}
-          >
-            {item.completed ? (
-              <CheckCircle2 className="h-5 w-5" />
-            ) : (
-              <Circle className="h-5 w-5" />
-            )}
-          </button>
-
-          {isEditing ? (
-            <Input
-              ref={inputRef}
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              onBlur={handleSave}
-              onKeyDown={handleKeyDown}
-              className="flex-1 h-auto p-0 border-none shadow-none focus-visible:ring-0 bg-transparent text-sm min-h-[1.5rem] pt-0.5 selection:bg-stone-200 dark:selection:bg-stone-700"
-            />
-          ) : (
-            <span
-              className={cn(
-                "flex-1 text-sm pt-0.5 transition-all break-words leading-relaxed",
-                item.completed && "line-through text-stone-500"
-              )}
-            >
-              {item.text}
-            </span>
-          )}
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onDelete}
-            className="opacity-0 group-hover:opacity-100 h-6 w-6 -mt-0.5 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </motion.div>
+        {content}
       </ContextMenuTrigger>
       <ContextMenuContent
         className="w-min min-w-9 bg-stone-50 dark:bg-stone-900"
@@ -179,6 +251,46 @@ const TodoItemRow = ({
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
+  );
+};
+
+const SortableTodoItemRow = ({
+  item,
+  onToggle,
+  onDelete,
+  onUpdateText,
+}: {
+  item: TodoItem;
+  onToggle: () => void;
+  onDelete: () => void;
+  onUpdateText: (text: string) => void;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    ...(isDragging ? { zIndex: 50, position: "relative" as const } : {}),
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="w-full">
+      <TodoItemRow
+        item={item}
+        onToggle={onToggle}
+        onDelete={onDelete}
+        onUpdateText={onUpdateText}
+        dragHandleProps={{ attributes, listeners }}
+        isDragging={isDragging}
+      />
+    </div>
   );
 };
 
@@ -277,9 +389,11 @@ const ChecklistView = () => {
     toggleItem,
     deleteItem,
     updateItemText,
+    reorderItems,
   } = store;
 
   const [shouldFocusTitle, setShouldFocusTitle] = useState(false);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const newTaskInputRef = useRef<HTMLInputElement>(null);
 
@@ -323,10 +437,41 @@ const ChecklistView = () => {
 
   const sortedItems = activeList
     ? [...activeList.items].sort((a, b) => {
-      if (a.completed === b.completed) return b.createdAt - a.createdAt;
+      if (a.completed === b.completed) {
+        const aOrder = a.orderIndex ?? 0;
+        const bOrder = b.orderIndex ?? 0;
+        if (aOrder !== bOrder) return bOrder - aOrder;
+        return b.createdAt - a.createdAt;
+      }
       return a.completed ? 1 : -1;
     })
     : [];
+
+  const incompleteItems = sortedItems.filter((i) => !i.completed);
+  const completedItems = sortedItems.filter((i) => i.completed);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const activeItem = sortedItems.find((i) => i.id === active.id);
+    const overItem = sortedItems.find((i) => i.id === over.id);
+    if (!activeItem || !overItem) return;
+    if (activeItem.completed !== overItem.completed) return;
+
+    const list = activeItem.completed ? completedItems : incompleteItems;
+    const oldIndex = list.findIndex((i) => i.id === active.id);
+    const newIndex = list.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(list, oldIndex, newIndex);
+    reorderItems(activeItem.completed, reordered.map((i) => i.id));
+  };
 
   // Wait for auto-create
   if (checklists.length === 0) return null;
@@ -437,29 +582,89 @@ const ChecklistView = () => {
       </form>
 
       <ScrollArea className="flex-1 -mr-3 pr-3">
-        <div className="space-y-1 pb-4">
-          <AnimatePresence initial={false} mode="popLayout">
-            {sortedItems.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center text-stone-400 py-8 text-sm"
-              >
-                No tasks yet.
-              </motion.div>
-            ) : (
-              sortedItems.map((item) => (
-                <TodoItemRow
-                  key={item.id}
-                  item={item}
-                  onToggle={() => toggleItem(item.id)}
-                  onDelete={() => deleteItem(item.id)}
-                  onUpdateText={(text) => updateItemText(item.id, text)}
-                />
-              ))
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragStart={(event: DragStartEvent) => {
+            setActiveDragId(event.active.id as string);
+            document.body.style.cursor = "grabbing";
+          }}
+          onDragCancel={() => {
+            setActiveDragId(null);
+            document.body.style.cursor = "";
+          }}
+          onDragEnd={(event: DragEndEvent) => {
+            setActiveDragId(null);
+            document.body.style.cursor = "";
+            handleDragEnd(event);
+          }}
+        >
+          <div className="space-y-1 pb-4">
+            <AnimatePresence initial={false} mode="popLayout">
+              {sortedItems.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center text-stone-400 py-8 text-sm"
+                >
+                  No tasks yet.
+                </motion.div>
+              ) : (
+                <>
+                  <SortableContext
+                    items={incompleteItems.map((i) => i.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {incompleteItems.map((item) => (
+                      <SortableTodoItemRow
+                        key={item.id}
+                        item={item}
+                        onToggle={() => toggleItem(item.id)}
+                        onDelete={() => deleteItem(item.id)}
+                        onUpdateText={(text) => updateItemText(item.id, text)}
+                      />
+                    ))}
+                  </SortableContext>
+
+                  {completedItems.length > 0 && (
+                    <div className="pt-3 pb-1 text-[11px] uppercase tracking-wider text-stone-400">
+                      Completed
+                    </div>
+                  )}
+
+                  {completedItems.map((item) => (
+                    <TodoItemRow
+                      key={item.id}
+                      item={item}
+                      onToggle={() => toggleItem(item.id)}
+                      onDelete={() => deleteItem(item.id)}
+                      onUpdateText={(text) => updateItemText(item.id, text)}
+                    />
+                  ))}
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+          {typeof document !== "undefined" &&
+            createPortal(
+              <DragOverlay adjustScale={false}>
+                {activeDragId ? (
+                  <div className="w-full">
+                    <TodoItemRow
+                      item={sortedItems.find((i) => i.id === activeDragId)!}
+                      onToggle={() => {}}
+                      onDelete={() => {}}
+                      onUpdateText={() => {}}
+                      isDragging={true}
+                      isOverlay={true}
+                    />
+                  </div>
+                ) : null}
+              </DragOverlay>,
+              document.body
             )}
-          </AnimatePresence>
-        </div>
+        </DndContext>
       </ScrollArea>
     </div>
   );
