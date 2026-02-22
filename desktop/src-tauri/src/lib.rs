@@ -15,10 +15,12 @@ use tauri::tray::TrayIconBuilder;
 use tauri_plugin_sql::{Migration, MigrationKind};
 use arboard::Clipboard;
 use sqlx::sqlite::SqlitePoolOptions;
-use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
-use image::ImageEncoder;
+use image::{ImageEncoder, imageops::FilterType};
 use serde_json::json;
+use std::fs;
+use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
@@ -254,47 +256,87 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+fn hash_path_to_hex(path: &str) -> String {
+    let mut hasher = DefaultHasher::new();
+    path.hash(&mut hasher);
+    format!("{:016x}", hasher.finish())
+}
+
+fn icon_cache_path(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let cache_dir = app_data_dir.join("icon-cache");
+    fs::create_dir_all(&cache_dir).map_err(|e| e.to_string())?;
+    Ok(cache_dir.join(format!("{}.png", hash_path_to_hex(path))))
+}
+
+fn resize_png_to_64(png_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    let img = image::load_from_memory(png_bytes).map_err(|e| e.to_string())?;
+    let resized = img.resize_exact(64, 64, FilterType::Lanczos3);
+    let rgba = resized.to_rgba8();
+    let mut out = Vec::new();
+    let encoder = image::codecs::png::PngEncoder::new(&mut out);
+    encoder
+        .write_image(rgba.as_raw(), 64, 64, image::ColorType::Rgba8)
+        .map_err(|e| e.to_string())?;
+    Ok(out)
+}
+
+fn png_bytes_to_data_url(bytes: &[u8]) -> String {
+    format!("data:image/png;base64,{}", BASE64_STANDARD.encode(bytes))
+}
+
 #[tauri::command]
-async fn get_app_icon(path: String) -> Result<String, String> {
+async fn get_app_icon(app: AppHandle, path: String) -> Result<String, String> {
+    let cache_path = icon_cache_path(&app, &path)?;
+    if let Ok(bytes) = fs::read(&cache_path) {
+        return Ok(png_bytes_to_data_url(&bytes));
+    }
+
     #[cfg(target_os = "macos")]
-    unsafe {
+    {
+        use objc::rc::autoreleasepool;
         use cocoa::base::{id, nil};
         use cocoa::foundation::NSString;
         use objc::{class, msg_send, sel, sel_impl};
 
-        // Perform icon extraction and conversion
-        // Note: While Cocoa UI usually needs main thread, icon extraction often works on background.
-        // If this causes issues, we might need to dispatch to main thread for specific calls.
-        
-        let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
-        let path_ns = NSString::alloc(nil).init_str(&path);
-        let icon: id = msg_send![workspace, iconForFile: path_ns];
-        let _: () = msg_send![path_ns, release];
+        let png_bytes = autoreleasepool(|| -> Result<Vec<u8>, String> {
+            // Perform icon extraction and conversion
+            // Note: While Cocoa UI usually needs main thread, icon extraction often works on background.
+            // If this causes issues, we might need to dispatch to main thread for specific calls.
+            unsafe {
+                let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
+                let path_ns = NSString::alloc(nil).init_str(&path);
+                let icon: id = msg_send![workspace, iconForFile: path_ns];
+                let _: () = msg_send![path_ns, release];
 
-        if icon == nil {
-            return Err("Failed to load icon".to_string());
-        }
+                if icon == nil {
+                    return Err("Failed to load icon".to_string());
+                }
 
-        // Convert to TIFF
-        let tiff_data: id = msg_send![icon, TIFFRepresentation];
+                // Convert to TIFF
+                let tiff_data: id = msg_send![icon, TIFFRepresentation];
 
-        // Convert to BitmapRep
-        let bitmap_rep: id = msg_send![class!(NSBitmapImageRep), imageRepWithData: tiff_data];
+                // Convert to BitmapRep
+                let bitmap_rep: id = msg_send![class!(NSBitmapImageRep), imageRepWithData: tiff_data];
 
-        // Convert to PNG
-        // NSPNGFileType = 4
-        let png_data: id = msg_send![bitmap_rep, representationUsingType: 4 properties: nil];
+                // Convert to PNG
+                // NSPNGFileType = 4
+                let png_data: id = msg_send![bitmap_rep, representationUsingType: 4 properties: nil];
 
-        if png_data == nil {
-            return Err("Failed to convert to PNG".to_string());
-        }
+                if png_data == nil {
+                    return Err("Failed to convert to PNG".to_string());
+                }
 
-        let length: usize = msg_send![png_data, length];
-        let bytes: *const u8 = msg_send![png_data, bytes];
-        let slice = std::slice::from_raw_parts(bytes, length);
+                let length: usize = msg_send![png_data, length];
+                let bytes: *const u8 = msg_send![png_data, bytes];
+                let slice = std::slice::from_raw_parts(bytes, length);
+                Ok(slice.to_vec())
+            }
+        })?;
 
-        let base64 = BASE64_STANDARD.encode(slice);
-        Ok(format!("data:image/png;base64,{}", base64))
+        let resized_bytes = resize_png_to_64(&png_bytes).unwrap_or(png_bytes);
+        let _ = fs::write(&cache_path, &resized_bytes);
+        return Ok(png_bytes_to_data_url(&resized_bytes));
     }
 
     #[cfg(not(target_os = "macos"))]
