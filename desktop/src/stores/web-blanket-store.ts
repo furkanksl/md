@@ -24,6 +24,7 @@ export type WebBlanketTab = {
   pinned?: boolean;
   createdAt: number;
   lastActiveAt: number;
+  suspended?: boolean;
   loading?: boolean;
   canGoBack?: boolean;
   canGoForward?: boolean;
@@ -75,6 +76,7 @@ interface WebBlanketState {
   zoomOut: () => Promise<void>;
   toggleUserAgent: (tabId: string) => Promise<void>;
   setTabMuted: (tabId: string, muted: boolean) => Promise<void>;
+  suspendTab: (tabId: string) => Promise<void>;
 
   // Favorites
   addFavorite: (title: string, url: string) => Promise<void>;
@@ -102,6 +104,10 @@ const createDefaultFavorites = (): WebBlanketFavorite[] => [
 let isInitialized = false;
 let initPromise: Promise<void> | null = null;
 let unlistenFns: Array<() => void> = [];
+let idleSweepInterval: ReturnType<typeof setInterval> | null = null;
+
+const TAB_SUSPEND_IDLE_MS = 30 * 60 * 1000;
+const TAB_SUSPEND_SWEEP_MS = 60 * 1000;
 
 export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   mode: "browse",
@@ -125,6 +131,10 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
       }
     });
     unlistenFns = [];
+    if (idleSweepInterval) {
+      clearInterval(idleSweepInterval);
+      idleSweepInterval = null;
+    }
     isInitialized = false;
     initPromise = null;
   },
@@ -231,12 +241,13 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
         // Restore native session if enabled
         if (resolvedEnabled && tabs && tabs.length > 0) {
           try {
-            await Promise.all(tabs.map(t =>
+            const activeTabs = tabs.filter(t => !t.suspended);
+            await Promise.all(activeTabs.map(t =>
               invoke("web_blanket_tab_create", { tabId: t.id, url: t.url })
                 .catch(e => console.error("Failed to restore tab:", t.id, e))
             ));
 
-            await Promise.all(tabs.map(t => {
+            await Promise.all(activeTabs.map(t => {
               if (t.userAgent === "desktop") {
                 return invoke("web_blanket_set_user_agent", { tabId: t.id, mode: "desktop" })
                   .catch(e => console.error("Failed to restore user agent:", t.id, e));
@@ -245,8 +256,11 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
             }));
 
             if (activeTabId) {
-              await invoke("web_blanket_tab_activate", { tabId: activeTabId })
-                .catch(e => console.error("Failed to activate tab:", activeTabId, e));
+              const activeTab = tabs.find(t => t.id === activeTabId);
+              if (activeTab && !activeTab.suspended) {
+                await invoke("web_blanket_tab_activate", { tabId: activeTabId })
+                  .catch(e => console.error("Failed to activate tab:", activeTabId, e));
+              }
             }
           } catch (e) {
             console.error("Failed to restore native session:", e);
@@ -254,6 +268,18 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
         }
 
         isInitialized = true;
+        if (!idleSweepInterval) {
+          idleSweepInterval = setInterval(() => {
+            const { tabs, activeTabId, suspendTab } = get();
+            const now = Date.now();
+            tabs.forEach(tab => {
+              if (tab.suspended) return;
+              if (tab.id === activeTabId) return;
+              if (now - tab.lastActiveAt < TAB_SUSPEND_IDLE_MS) return;
+              void suspendTab(tab.id);
+            });
+          }, TAB_SUSPEND_SWEEP_MS);
+        }
       } catch (e) {
         console.error("Failed to load Web Blanket settings:", e);
         unlistenFns.forEach((unlisten) => {
@@ -283,12 +309,13 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
       const { tabs } = get();
       if (tabs.length > 0) {
         try {
-          await Promise.all(tabs.map(t =>
+          const activeTabs = tabs.filter(t => !t.suspended);
+          await Promise.all(activeTabs.map(t =>
             invoke("web_blanket_tab_create", { tabId: t.id, url: t.url || null })
               .catch(e => console.error("Failed to create tab:", t.id, e))
           ));
 
-          await Promise.all(tabs.map(t => {
+          await Promise.all(activeTabs.map(t => {
             if (t.userAgent === "desktop") {
               return invoke("web_blanket_set_user_agent", { tabId: t.id, mode: "desktop" })
                 .catch(e => console.error("Failed to restore user agent:", t.id, e));
@@ -296,10 +323,13 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
             return Promise.resolve();
           }));
 
-          const { activeTabId } = get();
+          const { activeTabId, tabs: currentTabs } = get();
           if (activeTabId) {
-            await invoke("web_blanket_tab_activate", { tabId: activeTabId })
-              .catch(e => console.error("Failed to activate tab:", activeTabId, e));
+            const activeTab = currentTabs.find(t => t.id === activeTabId);
+            if (activeTab && !activeTab.suspended) {
+              await invoke("web_blanket_tab_activate", { tabId: activeTabId })
+                .catch(e => console.error("Failed to activate tab:", activeTabId, e));
+            }
           }
         } catch (e) {
           console.error("Failed to restore tabs on mode switch:", e);
@@ -379,8 +409,19 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
     const tab = tabs.find(t => t.id === tabId);
     if (!tab) return;
     
+    if (tab.suspended) {
+      try {
+        await invoke("web_blanket_tab_create", { tabId: tab.id, url: tab.url || null });
+        if (tab.userAgent === "desktop") {
+          await invoke("web_blanket_set_user_agent", { tabId: tab.id, mode: "desktop" });
+        }
+      } catch (e) {
+        console.warn("Failed to restore suspended tab:", tab.id, e);
+      }
+    }
+
     const updatedTabs = tabs.map(t => 
-        t.id === tabId ? { ...t, lastActiveAt: Date.now() } : t
+        t.id === tabId ? { ...t, lastActiveAt: Date.now(), suspended: false } : t
     );
     
     set({ activeTabId: tabId, tabs: updatedTabs });
@@ -398,6 +439,7 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
     const { tabs } = get();
     const activeTabId = get().activeTabId;
     const newTabs = tabs.filter(t => t.id !== tabId);
+    const closingTab = tabs.find(t => t.id === tabId);
     
     let newActiveId = activeTabId;
     if (activeTabId === tabId) {
@@ -415,7 +457,9 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
     await settingsRepo.set("web_blanket_active_tab_id", newActiveId);
 
     try {
-      await invoke("web_blanket_tab_close", { tabId });
+      if (!closingTab?.suspended) {
+        await invoke("web_blanket_tab_close", { tabId });
+      }
       if (newActiveId) {
           await invoke("web_blanket_tab_activate", { tabId: newActiveId });
       }
@@ -430,7 +474,7 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
     set({ tabs: newTabs });
     // We don't necessarily persist on every minor update (like loading state), 
     // but we should for URL/Title changes.
-    if (updates.url || updates.title) {
+    if (updates.url || updates.title || updates.suspended) {
          settingsRepo.set("web_blanket_tabs", newTabs);
     }
   },
@@ -438,6 +482,19 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   navigate: async (tabId, urlInput) => {
     const { ok, url } = normalizeUrl(urlInput);
     if (!ok) return;
+
+    const tab = get().tabs.find(t => t.id === tabId);
+    if (tab?.suspended) {
+      try {
+        await invoke("web_blanket_tab_create", { tabId, url: tab.url || null });
+        if (tab.userAgent === "desktop") {
+          await invoke("web_blanket_set_user_agent", { tabId, mode: "desktop" });
+        }
+      } catch (e) {
+        console.warn("Failed to restore suspended tab before navigate:", tabId, e);
+      }
+      get().updateTab(tabId, { suspended: false, lastActiveAt: Date.now() });
+    }
 
     if (url.includes("web.whatsapp.com")) {
         get().updateTab(tabId, { userAgent: "desktop" });
@@ -459,6 +516,9 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
 
   syncTabState: async (tabId) => {
       try {
+          const currentTab = get().tabs.find(t => t.id === tabId);
+          if (currentTab?.suspended) return;
+
           const state = await invoke<any>("web_blanket_get_tab_state", { tabId });
           
           const updates: Partial<WebBlanketTab> = {
@@ -477,12 +537,12 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
           updateTab(tabId, updates);
 
           // History Logic
-          const currentTab = tabs.find(t => t.id === tabId);
+          const currentTabHistory = tabs.find(t => t.id === tabId);
           // Only add to history if:
           // 1. Not loading
           // 2. URL is valid and not about:blank
           // 3. URL is different from last added history URL
-          if (!state.loading && state.url && state.url !== "about:blank" && currentTab && currentTab.lastHistoryUrl !== state.url) {
+          if (!state.loading && state.url && state.url !== "about:blank" && currentTabHistory && currentTabHistory.lastHistoryUrl !== state.url) {
               updateTab(tabId, { lastHistoryUrl: state.url });
               historyService.addEntry(state.url, state.title || state.url);
           }
@@ -584,6 +644,24 @@ export const useWebBlanketStore = create<WebBlanketState>((set, get) => ({
   setTabMuted: async (tabId, muted) => {
       get().updateTab(tabId, { muted });
       try { await invoke("web_blanket_set_muted", { tabId, muted }); } catch (e) {}
+  },
+
+  suspendTab: async (tabId) => {
+      const { tabs, activeTabId } = get();
+      const tab = tabs.find(t => t.id === tabId);
+      if (!tab) return;
+      if (tab.suspended) return;
+      if (activeTabId === tabId) return;
+
+      try {
+        await invoke("web_blanket_tab_close", { tabId });
+      } catch (e) {
+        // If native tab doesn't exist, still mark as suspended to avoid re-tries.
+      }
+
+      const newTabs = tabs.map(t => t.id === tabId ? { ...t, suspended: true } : t);
+      set({ tabs: newTabs });
+      await settingsRepo.set("web_blanket_tabs", newTabs);
   },
 
   getHistory: async (filter) => {

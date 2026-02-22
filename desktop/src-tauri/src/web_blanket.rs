@@ -199,6 +199,21 @@ impl From<BoundsPayload> for Bounds {
 #[cfg(target_os = "macos")]
 static DELEGATE_CLASS: Once = Once::new();
 
+// Shared WKProcessPool to reduce redundant web content processes
+#[cfg(target_os = "macos")]
+static PROCESS_POOL_INIT: Once = Once::new();
+#[cfg(target_os = "macos")]
+static mut SHARED_PROCESS_POOL: *mut Object = std::ptr::null_mut();
+
+#[cfg(target_os = "macos")]
+fn get_shared_process_pool() -> id {
+    PROCESS_POOL_INIT.call_once(|| unsafe {
+        let pool: id = msg_send![class!(WKProcessPool), new];
+        SHARED_PROCESS_POOL = pool;
+    });
+    unsafe { SHARED_PROCESS_POOL as id }
+}
+
 #[cfg(target_os = "macos")]
 fn get_delegate_class() -> &'static objc::runtime::Class {
     DELEGATE_CLASS.call_once(|| {
@@ -392,6 +407,12 @@ pub fn web_blanket_tab_create(
         // Create WKWebView
         unsafe {
             let config: id = msg_send![class!(WKWebViewConfiguration), new];
+
+            // Share process pool across all WKWebViews to reduce redundant instances
+            let process_pool = get_shared_process_pool();
+            if process_pool != nil {
+                let _: () = msg_send![config, setProcessPool: process_pool];
+            }
 
             // Inject WhatsApp Script
             let script_source = NSString::alloc(nil).init_str(WHATSAPP_SCRIPT);
