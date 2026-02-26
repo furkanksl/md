@@ -62,44 +62,9 @@ fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
             let mut last_image_hash: u64 = 0;
 
             loop {
-                // 1. Check Text
-                if let Ok(current_text) = clipboard.get_text() {
-                    if !current_text.trim().is_empty() && current_text != last_text_content {
-                        last_text_content = current_text.clone();
-                        last_image_hash = 0;
-                        
-                        let id = uuid::Uuid::new_v4().to_string();
-                        let now = chrono::Utc::now().to_rfc3339();
-                        
-                        let _ = sqlx::query("INSERT INTO clipboard (id, content, source_app, timestamp, character_count, pinned) VALUES (?, ?, ?, ?, ?, ?)")
-                            .bind(id)
-                            .bind(&current_text)
-                            .bind("System")
-                            .bind(now)
-                            .bind(current_text.len() as i32)
-                            .bind(false)
-                            .execute(&pool)
-                            .await;
+                let mut processed = false;
 
-                        // Enforce Limit
-                        let limit_row: Option<(String,)> = sqlx::query_as("SELECT value FROM settings WHERE key = 'clipboard_history_limit'")
-                            .fetch_optional(&pool)
-                            .await
-                            .unwrap_or(None);
-                        let limit = limit_row.and_then(|r| r.0.parse::<i32>().ok()).unwrap_or(50);
-
-                        if limit > 0 {
-                             let _ = sqlx::query("DELETE FROM clipboard WHERE id NOT IN (SELECT id FROM clipboard ORDER BY timestamp DESC LIMIT ?) AND pinned = 0")
-                                .bind(limit)
-                                .execute(&pool)
-                                .await;
-                        }
-                            
-                        let _ = app_handle.emit("clipboard-changed", ());
-                    }
-                }
-
-                // 2. Check Image
+                // 1. Check Image (Priority)
                 if let Ok(img) = clipboard.get_image() {
                     let mut hasher = DefaultHasher::new();
                     img.bytes.hash(&mut hasher);
@@ -148,6 +113,49 @@ fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
                              }
 
                              let _ = app_handle.emit("clipboard-changed", ());
+                        }
+                    }
+                    
+                    if current_hash != 0 {
+                        processed = true;
+                    }
+                }
+
+                // 2. Check Text (only if no image was processed/present)
+                if !processed {
+                    if let Ok(current_text) = clipboard.get_text() {
+                        if !current_text.trim().is_empty() && current_text != last_text_content {
+                            last_text_content = current_text.clone();
+                            last_image_hash = 0;
+                            
+                            let id = uuid::Uuid::new_v4().to_string();
+                            let now = chrono::Utc::now().to_rfc3339();
+                            
+                            let _ = sqlx::query("INSERT INTO clipboard (id, content, source_app, timestamp, character_count, pinned) VALUES (?, ?, ?, ?, ?, ?)")
+                                .bind(id)
+                                .bind(&current_text)
+                                .bind("System")
+                                .bind(now)
+                                .bind(current_text.len() as i32)
+                                .bind(false)
+                                .execute(&pool)
+                                .await;
+
+                            // Enforce Limit
+                            let limit_row: Option<(String,)> = sqlx::query_as("SELECT value FROM settings WHERE key = 'clipboard_history_limit'")
+                                .fetch_optional(&pool)
+                                .await
+                                .unwrap_or(None);
+                            let limit = limit_row.and_then(|r| r.0.parse::<i32>().ok()).unwrap_or(50);
+
+                            if limit > 0 {
+                                 let _ = sqlx::query("DELETE FROM clipboard WHERE id NOT IN (SELECT id FROM clipboard ORDER BY timestamp DESC LIMIT ?) AND pinned = 0")
+                                    .bind(limit)
+                                    .execute(&pool)
+                                    .await;
+                            }
+                                
+                            let _ = app_handle.emit("clipboard-changed", ());
                         }
                     }
                 }
