@@ -98,6 +98,8 @@ export const MainLayout = () => {
 
   // Ref to track latest autoHide preference without re-binding listeners constantly
   const autoHideRef = useRef(useSettingsStore.getState().autoHide);
+  const isHoveredRef = useRef(false);
+
   useEffect(() => {
     const unsubscribe = useSettingsStore.subscribe((state) => {
       autoHideRef.current = state.autoHide;
@@ -109,7 +111,7 @@ export const MainLayout = () => {
   useEffect(() => {
     const appWindow = getCurrentWindow();
     const unlistenBlur = appWindow.listen("tauri://blur", () => {
-      if (autoHideRef.current) {
+      if (autoHideRef.current && !isHoveredRef.current) {
         invoke("hide_drawer");
       }
     });
@@ -151,7 +153,11 @@ export const MainLayout = () => {
   ] as const;
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background overflow-hidden font-sans selection:bg-accent selection:text-accent-foreground backdrop-blur-sm rounded-[2rem] border border-border">
+    <div 
+      className="flex flex-col h-screen w-screen bg-background overflow-hidden font-sans selection:bg-accent selection:text-accent-foreground backdrop-blur-sm rounded-[2rem] border border-border"
+      onMouseEnter={() => { isHoveredRef.current = true; }}
+      onMouseLeave={() => { isHoveredRef.current = false; }}
+    >
       {/* Drag Region */}
       <div
         className="fixed top-0 left-0 w-full h-8 z-40"
