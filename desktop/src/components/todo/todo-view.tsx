@@ -160,12 +160,12 @@ const TodoItemRow = ({
           onChange={(e) => setEditText(e.target.value)}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
-          className="flex-1 h-auto p-0 border-none shadow-none focus-visible:ring-0 bg-transparent text-sm min-h-[1.5rem] pt-0.5 selection:bg-stone-200 dark:selection:bg-stone-700"
+          className="flex-1 min-w-0 h-auto p-0 border-none shadow-none focus-visible:ring-0 bg-transparent text-sm min-h-[1.5rem] pt-0.5 selection:bg-stone-200 dark:selection:bg-stone-700"
         />
       ) : (
         <span
           className={cn(
-            "flex-1 text-sm pt-0.5 transition-all break-words leading-relaxed",
+            "flex-1 min-w-0 text-sm pt-0.5 transition-all break-words leading-relaxed",
             item.completed && "line-through text-stone-500"
           )}
         >
@@ -248,6 +248,13 @@ const TodoItemRow = ({
         </ContextMenuItem>
         <ContextMenuItem onSelect={handleCopy} className="flex items-center gap-2 px-3 pr-4">
           <Copy className="h-4 w-4" /> Copy
+        </ContextMenuItem>
+        <div className="h-px bg-stone-200 dark:bg-stone-800 my-1" />
+        <ContextMenuItem
+          onSelect={onDelete}
+          className="flex items-center gap-2 px-3 pr-4 text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30"
+        >
+          <Trash2 className="h-4 w-4" /> Delete
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
