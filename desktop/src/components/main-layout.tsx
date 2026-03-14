@@ -309,7 +309,7 @@ export const MainLayout = () => {
                 "h-16": isNavVisible,
               })}
             >
-              <nav className="flex items-center gap-x-1.5 bg-card p-1.5 rounded-full shadow-lg border border-border">
+              <nav className="flex items-center gap-x-4 bg-card p-1.5 rounded-full shadow-lg border border-border">
                 {bottomNavItems.map((item) => {
                   const isActive = activeView === item.id;
                   const Icon = item.icon;
