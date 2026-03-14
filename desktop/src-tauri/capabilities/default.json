@@ -15,6 +15,7 @@
     "sql:allow-execute",
     "sql:allow-select",
     "clipboard-manager:default",
+    "autostart:default",
     "global-shortcut:default",
     "process:allow-restart",
     "updater:allow-check",
