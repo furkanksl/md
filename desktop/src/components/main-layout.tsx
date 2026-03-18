@@ -32,8 +32,10 @@ import {
   Minimize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 export const MainLayout = () => {
+  const { t } = useTranslation();
   const { activeView, setActiveView, theme, setTheme, themeName } = useUIStore();
   const { hasCompletedOnboarding } = useSettingsStore();
   const { startMonitoring } = useClipboardStore();
@@ -140,16 +142,16 @@ export const MainLayout = () => {
   }, []);
 
   const bottomNavItems = [
-    { id: "chat", label: "Journal", icon: MessageCircle },
-    { id: "tasks", label: "Tasks", icon: ListTodo },
-    { id: "clipboard", label: "Collect", icon: Archive },
-    { id: "shortcuts", label: "Apps", icon: Layers },
-    { id: "layouts", label: "Flow", icon: Maximize },
-    { id: "web", label: "Web", icon: Globe },
+    { id: "chat", label: t("nav.journal"), icon: MessageCircle },
+    { id: "tasks", label: t("nav.tasks"), icon: ListTodo },
+    { id: "clipboard", label: t("nav.collect"), icon: Archive },
+    { id: "shortcuts", label: t("nav.apps"), icon: Layers },
+    { id: "layouts", label: t("nav.flow"), icon: Maximize },
+    { id: "web", label: t("nav.web"), icon: Globe },
   ] as const;
 
   const headerNavItems = [
-    { id: "settings", label: "Setup", icon: Settings },
+    { id: "settings", label: t("nav.setup"), icon: Settings },
   ] as const;
 
   return (
@@ -198,7 +200,7 @@ export const MainLayout = () => {
               <button
                 onClick={() => setFullScreen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full transition-colors text-muted-foreground hover:text-foreground hover:bg-accent relative z-50"
-                title="Exit Full Screen"
+                title={t("actions.exitFullScreen")}
               >
                 <Minimize2 size={16} strokeWidth={1.5} />
               </button>
@@ -231,7 +233,7 @@ export const MainLayout = () => {
             <button
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
               aria-label={
-                theme === "light" ? "Switch to dark mode" : "Switch to light mode"
+                theme === "light" ? t("actions.switchToDark") : t("actions.switchToLight")
               }
               className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-accent p-0"
             >

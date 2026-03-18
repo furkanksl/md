@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { AIConfiguration } from "@/types/ai";
 import { SettingsRepository } from "@/core/infra/repositories";
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
+import { AppLanguage, getSystemLanguage, isAppLanguage } from "@/i18n/languages";
 
 const settingsRepo = new SettingsRepository();
 
@@ -14,6 +15,7 @@ interface SettingsState {
   hasCompletedOnboarding: boolean;
   autoHide: boolean;
   startAtLogin: boolean;
+  language: AppLanguage;
   drawerPosition: 'left' | 'right' | 'hot-corners' | 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right';
   todoDeleteOnComplete: boolean;
   enabledModels: string[];
@@ -26,6 +28,7 @@ interface SettingsState {
   setHasCompletedOnboarding: (completed: boolean) => Promise<void>;
   setAutoHide: (autoHide: boolean) => Promise<void>;
   setStartAtLogin: (enabled: boolean) => Promise<void>;
+  setLanguage: (language: AppLanguage) => Promise<void>;
   setDrawerPosition: (position: SettingsState['drawerPosition']) => Promise<void>;
   setTodoDeleteOnComplete: (enabled: boolean) => Promise<void>;
   toggleModel: (modelId: string) => Promise<void>;
@@ -53,6 +56,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   hasCompletedOnboarding: false,
   autoHide: true,
   startAtLogin: true,
+  language: getSystemLanguage(),
   drawerPosition: 'left',
   todoDeleteOnComplete: false,
   enabledModels: DEFAULT_ENABLED_MODELS,
@@ -74,6 +78,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         hasCompletedOnboarding,
         autoHide,
         startAtLogin,
+        language,
         drawerPosition,
         todoDeleteOnComplete,
         enabledModels
@@ -85,12 +90,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         settingsRepo.get<boolean>('has_completed_onboarding'),
         settingsRepo.get<boolean>('auto_hide'),
         settingsRepo.get<boolean>('start_at_login'),
+        settingsRepo.get<string>('app_language'),
         settingsRepo.get<SettingsState['drawerPosition']>('drawer_position'),
         settingsRepo.get<boolean>('todo_delete_on_complete'),
         settingsRepo.get<string[]>('enabled_models'),
       ]);
 
       const resolvedStartAtLogin = startAtLogin ?? autostartEnabled ?? true;
+      const resolvedLanguage = isAppLanguage(language) ? language : getSystemLanguage();
 
       set({
         aiConfigurations: aiConfigurations || {},
@@ -100,6 +107,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         hasCompletedOnboarding: hasCompletedOnboarding ?? false,
         autoHide: autoHide ?? true,
         startAtLogin: resolvedStartAtLogin,
+        language: resolvedLanguage,
         drawerPosition: drawerPosition || 'left',
         todoDeleteOnComplete: todoDeleteOnComplete ?? false,
         enabledModels: enabledModels || DEFAULT_ENABLED_MODELS,
@@ -159,6 +167,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     } catch (e) {
       console.warn("Failed to update autostart setting:", e);
     }
+  },
+
+  setLanguage: async (language) => {
+    set({ language });
+    await settingsRepo.set('app_language', language);
   },
 
   setDrawerPosition: async (position) => {

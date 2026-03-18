@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useWebBlanketStore, WebBlanketFavorite } from "@/stores/web-blanket-store";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -34,6 +35,7 @@ interface SortableItemProps {
 }
 
 function SortableItem({ fav, onNavigate, onEdit, onDelete }: SortableItemProps) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -76,12 +78,12 @@ function SortableItem({ fav, onNavigate, onEdit, onDelete }: SortableItemProps) 
       <ContextMenuContent className="w-48">
         <ContextMenuItem onClick={() => onEdit(fav)}>
           <Edit className="mr-2 h-4 w-4" />
-          Edit Shortcut
+          {t("web.editShortcut")}
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(fav.id)}>
           <Trash2 className="mr-2 h-4 w-4" />
-          Delete
+          {t("chatMisc.delete")}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -89,6 +91,7 @@ function SortableItem({ fav, onNavigate, onEdit, onDelete }: SortableItemProps) 
 }
 
 export function SpeedDial() {
+  const { t } = useTranslation();
   const { favorites, addFavorite, updateFavorite, removeFavorite, createTab, activeTabId, navigate, reorderFavorites } = useWebBlanketStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -192,7 +195,7 @@ export function SpeedDial() {
                   <div className="w-12 h-12 rounded-full bg-accent/50 flex items-center justify-center mb-1">
                     <Plus size={20} strokeWidth={1.5} />
                   </div>
-                  <span className="text-xs font-medium">Add Shortcut</span>
+                  <span className="text-xs font-medium">{t("web.addShortcut")}</span>
                 </button>
               </div>
             </SortableContext>
@@ -204,18 +207,18 @@ export function SpeedDial() {
       {isModalOpen && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-sm p-6">
           <form onSubmit={handleSave} className="w-full max-w-xs space-y-4 bg-card p-6 rounded-2xl border border-border shadow-xl">
-            <h3 className="text-lg font-semibold">{editingId ? "Edit Shortcut" : "Add Shortcut"}</h3>
+            <h3 className="text-lg font-semibold">{editingId ? t("web.editShortcut") : t("web.addShortcut")}</h3>
             <div className="space-y-2">
               <input
                 className="w-full p-2 text-sm bg-accent/50 rounded-lg border border-transparent focus:border-primary/50 outline-none"
-                placeholder="Title (e.g. YouTube)"
+                placeholder={t("web.shortcutTitlePlaceholder")}
                 value={titleInput}
                 onChange={e => setTitleInput(e.target.value)}
                 autoFocus
               />
               <input
                 className="w-full p-2 text-sm bg-accent/50 rounded-lg border border-transparent focus:border-primary/50 outline-none"
-                placeholder="URL (e.g. youtube.com)"
+                placeholder={t("web.shortcutUrlPlaceholder")}
                 value={urlInput}
                 onChange={e => setUrlInput(e.target.value)}
               />
@@ -226,14 +229,14 @@ export function SpeedDial() {
                 onClick={() => setIsModalOpen(false)}
                 className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={!titleInput || !urlInput}
                 className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-full hover:opacity-90 disabled:opacity-50"
               >
-                Save
+                {t("settingsSection.saveChanges")}
               </button>
             </div>
           </form>

@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import { useChatStore } from "@/stores/chat-store";
 import {
   Paperclip,
@@ -27,6 +28,7 @@ export const MessageInput = ({
   attachments,
   setAttachments,
 }: MessageInputProps) => {
+  const { t } = useTranslation();
   const {
     input,
     setInput,
@@ -508,7 +510,7 @@ export const MessageInput = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
                     <Activity size={14} className="text-primary" />
-                    Context Usage
+                    {t("chatMisc.contextUsage")}
                   </div>
                   <button
                     onClick={() => setShowStats(false)}
@@ -520,7 +522,7 @@ export const MessageInput = ({
 
                 <div className="flex flex-col gap-1 mt-1">
                   <div className="flex justify-between text-xs font-medium">
-                    <span className="text-muted-foreground">Tokens</span>
+                    <span className="text-muted-foreground">{t("chatMisc.tokens")}</span>
                     <span
                       className={clsx(
                         tokenPercentage < 75
@@ -550,8 +552,8 @@ export const MessageInput = ({
                     />
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
-                    <span>{Math.round(rawPercentage)}% used</span>
-                    <span>Max Capacity</span>
+                    <span>{Math.round(rawPercentage)}% {t("chatMisc.used")}</span>
+                    <span>{t("chatMisc.maxCapacity")}</span>
                   </div>
                 </div>
               </div>
@@ -569,7 +571,7 @@ export const MessageInput = ({
               className="absolute -top-7 left-2 flex items-center gap-1.5 text-[10px] font-medium z-10 text-muted-foreground animate-pulse"
             >
               <Sparkles size={12} className="text-primary" />
-              <span>Compacting...</span>
+              <span>{t("chatMisc.compacting")}</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -606,7 +608,7 @@ export const MessageInput = ({
             ref={textareaRef}
             className="flex-1 bg-transparent border-none focus:outline-none text-foreground placeholder:text-muted-foreground text-sm resize-none py-2.5 max-h-[120px] scrollbar-none"
             placeholder={
-              attachments.length > 0 ? "Add a caption..." : "Type a message..."
+              attachments.length > 0 ? t("chatMisc.addCaption") : t("chatMisc.typeMessage")
             }
             value={input}
             onChange={(e) => setInput(e.target.value)}

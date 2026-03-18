@@ -3,11 +3,14 @@ import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
 import { BehaviorSection } from './sections/behavior-section';
+import { LanguageSection } from './sections/language-section';
 import { PermissionsSection } from './sections/permissions-section';
 import { IntelligenceSection } from './sections/intelligence-section';
 import { ThemeSection } from './sections/theme-section';
+import { useTranslation } from 'react-i18next';
 
 export const SettingsView = () => {
+    const { t } = useTranslation();
     const { drawerPosition } = useSettingsStore();
     const { setActiveView } = useUIStore();
 
@@ -23,6 +26,7 @@ export const SettingsView = () => {
 
     return (
         <div className="h-full px-4 py-3 overflow-y-auto scrollbar-none space-y-6">
+            <LanguageSection />
             <ThemeSection />
             <BehaviorSection />
             <IntelligenceSection />
@@ -34,7 +38,7 @@ export const SettingsView = () => {
                     onClick={() => setActiveView("about")}
                     className="text-[10px] text-muted-foreground hover:text-foreground transition-colors hover:underline"
                 >
-                    About My Drawer
+                    {t('settings.aboutMyDrawer')}
                 </button>
             </div>
         </div>

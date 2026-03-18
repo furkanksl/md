@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from "react";
 import { open } from "@tauri-apps/plugin-shell";
 import { getVersion } from "@tauri-apps/api/app";
@@ -7,6 +8,7 @@ import { toast } from "sonner";
 import { clsx } from "clsx";
 
 export const AboutView = () => {
+  const { t } = useTranslation();
   const [appVersion, setAppVersion] = useState("");
   const { checkForUpdates, updateAvailable, version: newVersion } = useUpdateStore();
   const [isChecking, setIsChecking] = useState(false);
@@ -22,8 +24,8 @@ export const AboutView = () => {
 
     const store = useUpdateStore.getState();
     if (!store.updateAvailable) {
-      toast.success("You are up to date", {
-        description: `Version ${appVersion} is the latest available.`,
+      toast.success(t("about.upToDate"), {
+        description: `v${appVersion}`,
         className: "group toast group-[.toaster]:bg-white dark:group-[.toaster]:bg-stone-900 group-[.toaster]:text-stone-950 dark:group-[.toaster]:text-stone-50 group-[.toaster]:border-stone-200 dark:group-[.toaster]:border-stone-800 group-[.toaster]:shadow-lg",
         descriptionClassName: "group-[.toast]:text-stone-500 dark:group-[.toast]:text-stone-400",
       });
@@ -37,9 +39,9 @@ export const AboutView = () => {
           My Drawer
         </h1>
         <p className="text-sm text-stone-500 dark:text-stone-400 max-w-xs mx-auto leading-relaxed">
-          We hope you find it useful!
+          {t("about.hopeUseful")}
           <br />
-          It would be great if you could give it a star on GitHub!
+          {t("about.starOnGithub")}
         </p>
       </div>
 
@@ -50,7 +52,7 @@ export const AboutView = () => {
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-stone-600 dark:text-stone-300 text-xs font-medium"
           >
             <Globe size={14} />
-            Website
+            {t("about.website")}
           </button>
           <button
             onClick={() => open("https://github.com/furkanksl/md")}
@@ -72,7 +74,7 @@ export const AboutView = () => {
           )}
         >
           <RefreshCw size={14} className={clsx(isChecking && "animate-spin")} />
-          {isChecking ? "Checking..." : updateAvailable ? `Update Available (v${newVersion})` : "Check for Updates"}
+          {isChecking ? t("common.checking") : updateAvailable ? `${t("about.updateAvailable")} (v${newVersion})` : t("about.checkForUpdates")}
         </button>
       </div>
 

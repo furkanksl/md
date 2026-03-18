@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useScrapingStore } from "@/stores/scraping-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -51,6 +52,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 export const WebView = () => {
+  const { t } = useTranslation();
   const {
     history,
     loadHistory,
@@ -233,7 +235,7 @@ export const WebView = () => {
               )}
             >
               <LayoutGrid size={14} />
-              Browse
+              {t("web.browse")}
             </button>
             <button
               onClick={() => setMode("research")}
@@ -245,7 +247,7 @@ export const WebView = () => {
               )}
             >
               <Microscope size={14} />
-              Research
+              {t("web.research")}
             </button>
           </div>
 
@@ -285,7 +287,7 @@ export const WebView = () => {
                 <PopoverTrigger asChild>
                   <button
                     className="p-1.5 hover:bg-muted rounded-md transition-colors"
-                    title="Zoom"
+                    title={t("web.zoom")}
                   >
                     <ZoomIn size={14} />
                   </button>
@@ -300,7 +302,7 @@ export const WebView = () => {
                     <button
                       onClick={zoomOut}
                       className="w-7 h-7 flex items-center justify-center hover:bg-accent hover:text-accent-foreground rounded-full transition-colors"
-                      title="Zoom Out"
+                      title={t("web.zoomOut")}
                     >
                       <Minus size={14} />
                     </button>
@@ -310,7 +312,7 @@ export const WebView = () => {
                     <button
                       onClick={zoomIn}
                       className="w-7 h-7 flex items-center justify-center hover:bg-accent hover:text-accent-foreground rounded-full transition-colors"
-                      title="Zoom In"
+                      title={t("web.zoomIn")}
                     >
                       <Plus size={14} />
                     </button>
@@ -415,7 +417,7 @@ export const WebView = () => {
               <Globe size={16} className="text-muted-foreground mr-2" />
               <input
                 className="flex-1 h-8 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none font-mono text-xs"
-                placeholder="https://example.com"
+                placeholder={t("web.urlPlaceholder")}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 disabled={isLoading}
@@ -428,7 +430,7 @@ export const WebView = () => {
               <Bot size={16} className="text-muted-foreground mr-2" />
               <input
                 className="flex-1 h-8 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none text-xs"
-                placeholder="What do you want to find?"
+                placeholder={t("web.promptPlaceholder")}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 disabled={isLoading}
@@ -471,7 +473,7 @@ export const WebView = () => {
               {history.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground flex flex-col items-center gap-3 opacity-50">
                   <FileText size={40} strokeWidth={1} />
-                  <p className="text-sm">No research tasks yet.</p>
+                  <p className="text-sm">{t("web.noResearchTasksYet")}</p>
                 </div>
               )}
 
@@ -511,7 +513,7 @@ export const WebView = () => {
                       </span>
                     </div>
                     <p className="font-medium text-xs line-clamp-2 mb-1">
-                      {item.prompt || "No prompt provided"}
+                      {item.prompt || t("web.noPromptProvided")}
                     </p>
                   </div>
 
@@ -577,12 +579,12 @@ export const WebView = () => {
                       {isLoadingMore ? (
                         <>
                           <Loader2 size={12} className="animate-spin" />
-                          Loading
+                          {t("web.loading")}
                         </>
                       ) : (
                         <>
                           <ChevronDown size={12} />
-                          Load More
+                          {t("web.loadMore")}
                         </>
                       )}
                     </button>
@@ -598,7 +600,7 @@ export const WebView = () => {
                     className="text-muted-foreground hover:text-destructive text-[10px] uppercase tracking-wider font-medium transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-muted"
                   >
                     <Trash2 size={12} />
-                    Clear All History
+                    {t("web.clearAllHistory")}
                   </button>
                 </div>
               )}
@@ -616,7 +618,7 @@ export const WebView = () => {
                 >
                   <div className="p-3 border-b border-border flex justify-between items-center bg-muted/30 shrink-0">
                     <h3 className="font-bold text-foreground text-xs uppercase tracking-wide">
-                      Analysis Result
+                      {t("web.analysisResult")}
                     </h3>
                     <button
                       onClick={() => {
@@ -636,7 +638,7 @@ export const WebView = () => {
                       <div className="flex items-center justify-center h-full text-muted-foreground gap-2">
                         <Loader2 size={16} className="animate-spin" />
                         <span className="text-xs uppercase tracking-wide">
-                          Loading
+                          {t("web.loading")}
                         </span>
                       </div>
                     ) : (

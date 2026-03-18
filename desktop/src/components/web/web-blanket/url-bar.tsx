@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useRef, useEffect } from "react";
 import { useWebBlanketStore } from "@/stores/web-blanket-store";
 import { cn } from "@/lib/utils";
@@ -7,6 +8,7 @@ import { WebHistoryEntry } from "@/core/application/services/history-service";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 
 export function UrlBar() {
+  const { t } = useTranslation();
   const { activeTabId, tabs, navigate, createTab, shouldFocusUrlBar, setShouldFocusUrlBar, toggleUserAgent, setFullScreen, searchHistory, setIsSuggestionsOpen } = useWebBlanketStore();
   const activeTab = tabs.find(t => t.id === activeTabId);
   const isDesktop = activeTab?.userAgent === "desktop";
@@ -145,7 +147,7 @@ export function UrlBar() {
               onFocus={() => setHasFocus(true)}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
-              placeholder="Search or enter website name"
+              placeholder={t("web.searchOrEnterWebsite")}
               className="w-full h-full text-sm bg-accent/50 hover:bg-accent focus:bg-background border border-transparent focus:border-primary/20 outline-none transition-all placeholder:text-muted-foreground/50 px-3"
               autoComplete="off"
               autoCorrect="off"
@@ -202,7 +204,7 @@ export function UrlBar() {
           <button
             onClick={() => setFullScreen(true)}
             className="p-1.5 ml-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-            title="Enter Full Screen"
+            title={t("web.enterFullScreen")}
           >
             <Maximize2 size={14} />
           </button>
@@ -219,7 +221,7 @@ export function UrlBar() {
           <button
             onClick={() => toggleUserAgent(activeTabId || "")}
             className="p-1.5 ml-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-            title={isDesktop ? "Switch to Mobile View" : "Switch to Desktop View"}
+            title={isDesktop ? t("web.switchToMobile") : t("web.switchToDesktop")}
           >
             {isDesktop ? <Monitor size={14} /> : <Smartphone size={14} />}
           </button>

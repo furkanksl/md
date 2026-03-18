@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { useSettingsStore } from '@/stores/settings-store';
 import { clsx } from 'clsx';
@@ -20,6 +21,7 @@ const PROVIDERS = [
 ];
 
 export const IntelligenceSection = () => {
+  const { t } = useTranslation();
     const { activeProvider, setActiveProvider, setAIConfiguration, aiConfigurations, enabledModels: storeEnabledModels, setEnabledModels } = useSettingsStore();
     const [apiKey, setApiKey] = useState('');
     const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -70,8 +72,8 @@ export const IntelligenceSection = () => {
 
         await setEnabledModels(localEnabledModels);
 
-        toast.success("Settings saved", {
-            description: `${PROVIDERS.find(p => p.id === activeProvider)?.name} configuration updated successfully.`,
+        toast.success(t("settingsSection.settingsSaved"), {
+            description: t("settingsSection.saved"),
             duration: 2000,
         });
         setSaveState('saved');
@@ -94,7 +96,7 @@ export const IntelligenceSection = () => {
         if (activeProvider === 'custom') return;
 
         if (!apiKey) {
-            toast.error("API Key missing", { description: "Please enter an API key to test." });
+            toast.error(t("settingsSection.apiKeyMissing"), { description: t("settingsSection.enterApiKeyToTest") });
             return;
         }
 
@@ -112,7 +114,7 @@ export const IntelligenceSection = () => {
 
             if (result.text) {
                 setTestStatus('success');
-                toast.success("Connection Successful", { description: "Provider is working." });
+                toast.success(t("settingsSection.connectionSuccessful"), { description: t("settingsSection.providerWorking") });
                 setTimeout(() => setTestStatus('idle'), 2000);
             } else {
                 throw new Error("No response received.");
@@ -121,14 +123,14 @@ export const IntelligenceSection = () => {
             console.error("Test failed:", error);
             setTestStatus('error');
             const errorMessage = error instanceof Error ? error.message : "Could not connect to the provider.";
-            toast.error("Connection Failed", { description: errorMessage });
+            toast.error(t("settingsSection.connectionFailed"), { description: errorMessage });
             setTimeout(() => setTestStatus('idle'), 2000);
         }
     };
 
     return (
         <div>
-            <h2 className="text-xl font-light text-foreground mb-4">Intelligence</h2>
+            <h2 className="text-xl font-light text-foreground mb-4">{t("settingsSection.intelligence")}</h2>
 
             <div className="grid grid-cols-2 gap-3 mb-6">
                 {PROVIDERS.map((p) => {
@@ -256,7 +258,7 @@ export const IntelligenceSection = () => {
                                         className="flex items-center gap-2"
                                     >
                                         <Loader2 size={12} className="animate-spin" />
-                                        <span>Testing</span>
+                                        <span>{t("settingsSection.testing")}</span>
                                     </motion.div>
                                 ) : testStatus === 'success' ? (
                                     <motion.div
@@ -267,7 +269,7 @@ export const IntelligenceSection = () => {
                                         className="flex items-center gap-2"
                                     >
                                         <Check size={12} strokeWidth={2.5} />
-                                        <span>Working</span>
+                                        <span>{t("settingsSection.working")}</span>
                                     </motion.div>
                                 ) : testStatus === 'error' ? (
                                     <motion.div
@@ -278,7 +280,7 @@ export const IntelligenceSection = () => {
                                         className="flex items-center gap-2"
                                     >
                                         <XCircle size={12} />
-                                        <span>Failed</span>
+                                        <span>{t("settingsSection.failed")}</span>
                                     </motion.div>
                                 ) : (
                                     <motion.span
@@ -287,7 +289,7 @@ export const IntelligenceSection = () => {
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -5 }}
                                     >
-                                        Test Key
+                                        {t("settingsSection.testKey")}
                                     </motion.span>
                                 )}
                             </AnimatePresence>
@@ -315,7 +317,7 @@ export const IntelligenceSection = () => {
                                     className="flex items-center gap-2"
                                 >
                                     <Check size={14} strokeWidth={2.5} />
-                                    <span>Saved</span>
+                                    <span>{t("settingsSection.saved")}</span>
                                 </motion.div>
                             ) : (
                                 <motion.span
@@ -324,7 +326,7 @@ export const IntelligenceSection = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -5 }}
                                 >
-                                    Save Changes
+                                    {t("settingsSection.saveChanges")}
                                 </motion.span>
                             )}
                         </AnimatePresence>

@@ -1,6 +1,7 @@
 import { useWebBlanketStore } from "@/stores/web-blanket-store";
 import { X, Plus, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -9,6 +10,7 @@ import {
 } from "@/components/ui/context-menu";
 
 export function TabsStrip() {
+  const { t } = useTranslation();
   const {
     tabs,
     activeTabId,
@@ -50,7 +52,7 @@ export function TabsStrip() {
                 )}
 
                 <span className="truncate flex-1 w-full">
-                  {tab.title || "New Tab"}
+                  {tab.title || t("web.newTab")}
                 </span>
 
                 <button
@@ -66,7 +68,7 @@ export function TabsStrip() {
             </ContextMenuTrigger>
             <ContextMenuContent className="w-48">
               <ContextMenuItem onClick={() => setTabMuted(tab.id, !tab.muted)}>
-                {tab.muted ? "Unmute Tab" : "Mute Tab"}
+                {tab.muted ? t("web.unmuteTab") : t("web.muteTab")}
               </ContextMenuItem>
               <ContextMenuItem
                 disabled={!tab.url}
@@ -75,7 +77,7 @@ export function TabsStrip() {
                   addFavorite(tab.title || tab.url, tab.url);
                 }}
               >
-                Save to Speed Dial
+                {t("web.saveToSpeedDial")}
               </ContextMenuItem>
             </ContextMenuContent>
           </ContextMenu>
@@ -85,7 +87,7 @@ export function TabsStrip() {
       <button
         onClick={() => createTab()}
         className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors shrink-0"
-        title="New Tab"
+        title={t("web.newTab")}
       >
         <Plus size={14} />
       </button>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from "react";
 import { useWebBlanketStore } from "@/stores/web-blanket-store";
 import { WebHistoryEntry, HistoryFilter } from "@/core/application/services/history-service";
@@ -14,6 +15,7 @@ const FILTERS: { id: HistoryFilter; label: string }[] = [
 ];
 
 export function HistoryPopover() {
+  const { t } = useTranslation();
   const { getHistory, clearHistory, navigate, activeTabId, createTab, isHistoryOpen, setIsHistoryOpen } = useWebBlanketStore();
   const [history, setHistory] = useState<WebHistoryEntry[]>([]);
   const [activeFilter, setActiveFilter] = useState<HistoryFilter>("today");
@@ -48,7 +50,7 @@ export function HistoryPopover() {
       <PopoverTrigger asChild>
         <button
           className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-          title="History"
+          title={t("web.history")}
         >
           <History size={14} />
         </button>
@@ -67,7 +69,7 @@ export function HistoryPopover() {
                   : "hover:bg-accent text-muted-foreground hover:text-foreground"
               )}
             >
-              {f.label}
+              {t(`web.historyFilters.${f.id === 'last_week' ? 'lastWeek' : f.id === 'last_month' ? 'lastMonth' : f.id}`)}
             </button>
           ))}
           <button
@@ -83,7 +85,7 @@ export function HistoryPopover() {
           {history.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
               <History size={24} className="opacity-20" />
-              <span className="text-xs">No history found</span>
+              <span className="text-xs">{t("web.noHistoryFound")}</span>
             </div>
           ) : (
             <div className="flex flex-col gap-0.5">

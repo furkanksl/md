@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { clsx } from 'clsx';
 import { Shield, Check } from 'lucide-react';
 
 export const PermissionsSection = () => {
+  const { t } = useTranslation();
     const [hasPermission, setHasPermission] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
 
@@ -46,7 +48,7 @@ export const PermissionsSection = () => {
 
     return (
         <div>
-            <h2 className="text-xl font-light text-foreground mb-4">Permissions</h2>
+            <h2 className="text-xl font-light text-foreground mb-4">{t("settingsSection.permissions")}</h2>
             <div className="bg-card rounded-[1.5rem] p-4 border border-border shadow-sm">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -57,9 +59,9 @@ export const PermissionsSection = () => {
                             <Shield size={20} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-medium text-foreground">Accessibility</span>
+                            <span className="text-sm font-medium text-foreground">{t("settingsSection.accessibility")}</span>
                             <span className="text-xs text-muted-foreground">
-                                {hasPermission ? "Granted" : "Required for context"}
+                                {hasPermission ? t("settingsSection.granted") : t("settingsSection.requiredForContext")}
                             </span>
                         </div>
                     </div>
@@ -74,7 +76,7 @@ export const PermissionsSection = () => {
                             disabled={isChecking}
                             className="px-4 py-2 bg-primary text-primary-foreground text-xs font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
-                            {isChecking ? "Checking..." : "Request"}
+                            {isChecking ? t("common.checking") : t("settingsSection.request")}
                         </button>
                     )}
                 </div>

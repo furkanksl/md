@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import { useTodoStore, type TodoItem } from "@/stores/todo-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -81,6 +82,7 @@ const TodoItemRow = ({
   isDragging?: boolean;
   isOverlay?: boolean;
 }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -244,17 +246,17 @@ const TodoItemRow = ({
           }}
           className="flex items-center gap-2 px-3 pr-4"
         >
-          <Pencil className="h-4 w-4" /> Edit
+          <Pencil className="h-4 w-4" /> {t("common.edit")}
         </ContextMenuItem>
         <ContextMenuItem onSelect={handleCopy} className="flex items-center gap-2 px-3 pr-4">
-          <Copy className="h-4 w-4" /> Copy
+          <Copy className="h-4 w-4" /> {t("common.copy")}
         </ContextMenuItem>
         <div className="h-px bg-stone-200 dark:bg-stone-800 my-1" />
         <ContextMenuItem
           onSelect={onDelete}
           className="flex items-center gap-2 px-3 pr-4 text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30"
         >
-          <Trash2 className="h-4 w-4" /> Delete
+          <Trash2 className="h-4 w-4" /> {t("common.delete")}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -316,6 +318,7 @@ const SidebarItem = ({
   onDelete: () => void;
   onRename: () => void;
 }) => {
+  const { t } = useTranslation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   return (
@@ -338,7 +341,7 @@ const SidebarItem = ({
                   isActive ? "text-stone-900 dark:text-stone-100" : ""
                 )}
               >
-                {title || "Untitled"}
+                {title || t("todo.untitled")}
               </h4>
               <span className="text-xs text-stone-400">
                 {formatDistanceToNow(updatedAt, { addSuffix: true })}
@@ -348,13 +351,13 @@ const SidebarItem = ({
         </ContextMenuTrigger>
         <ContextMenuContent className="w-24 bg-stone-50 dark:bg-stone-900">
           <ContextMenuItem onClick={onRename}>
-            <Pencil className="mr-2 h-4 w-4" /> Rename
+            <Pencil className="mr-2 h-4 w-4" /> {t("common.rename")}
           </ContextMenuItem>
           <ContextMenuItem
             onSelect={() => setShowDeleteDialog(true)}
             className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20"
           >
-            <Trash2 className="mr-2 h-4 w-4" /> Delete
+            <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
@@ -362,8 +365,8 @@ const SidebarItem = ({
       <ConfirmDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        description={`Permanently delete "${title || "Untitled"}"?`}
-        confirmText="Delete"
+        description={t("todo.confirmDeleteList", { title: title || t("todo.untitled") })}
+        confirmText={t("common.delete")}
         onConfirm={onDelete}
         variant="destructive"
       />
@@ -383,6 +386,9 @@ const BackButton = ({ onClick }: { onClick: () => void }) => (
 );
 
 const ChecklistView = () => {
+  const { t } = useTranslation();
+
+
   const store = useTodoStore();
   const { todoDeleteOnComplete, setTodoDeleteOnComplete } = useSettingsStore();
   const {
@@ -489,7 +495,7 @@ const ChecklistView = () => {
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
         <div className="flex items-center justify-end p-1 mb-2">
           <Button onClick={createChecklist} size="sm" variant="ghost" className="gap-1">
-            <Plus className="h-4 w-4" />New
+            <Plus className="h-4 w-4" />{t("common.new")}
           </Button>
         </div>
         <ScrollArea className="flex-1 -mx-2 px-2">
@@ -528,7 +534,7 @@ const ChecklistView = () => {
             }
           }}
           className="font-semibold text-lg border-none shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
-          placeholder="List Title"
+          placeholder={t("todo.listTitlePlaceholder")}
         />
 
         <DropdownMenu>
@@ -547,7 +553,7 @@ const ChecklistView = () => {
             >
               <div className="flex items-center">
                 <Eraser className="mr-2 h-4 w-4" />
-                <span>Auto-delete</span>
+                <span>{t("todo.autoDelete")}</span>
               </div>
               <Switch
                 checked={todoDeleteOnComplete}
@@ -559,7 +565,7 @@ const ChecklistView = () => {
               className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20 cursor-pointer"
               onSelect={() => setShowDeleteDialog(true)}
             >
-              <Trash2 className="mr-1 h-4 w-4" /> Delete List
+              <Trash2 className="mr-1 h-4 w-4" /> {t("todo.deleteList")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -567,8 +573,8 @@ const ChecklistView = () => {
         <ConfirmDialog
           open={showDeleteDialog}
           onOpenChange={setShowDeleteDialog}
-          description="Permanently delete this list?"
-          confirmText="Delete"
+          description={t("todo.confirmDeleteListFallback")}
+          confirmText={t("common.delete")}
           onConfirm={() => deleteChecklist(activeList.id)}
           variant="destructive"
         />
@@ -580,7 +586,7 @@ const ChecklistView = () => {
         </div>
         <Input
           ref={newTaskInputRef}
-          placeholder="Add a new task..."
+          placeholder={t("todo.placeholder")}
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
           className="pl-9 border-stone-200 dark:border-stone-800 bg-transparent shadow-sm focus-visible:ring-1 focus-visible:ring-stone-400 dark:focus-visible:ring-stone-600 transition-all"
@@ -615,7 +621,7 @@ const ChecklistView = () => {
                   animate={{ opacity: 1 }}
                   className="text-center text-stone-400 py-8 text-sm"
                 >
-                  No tasks yet.
+                  {t("todo.noTasks")}
                 </motion.div>
               ) : (
                 <>
@@ -636,7 +642,7 @@ const ChecklistView = () => {
 
                   {completedItems.length > 0 && (
                     <div className="pt-3 pb-1 text-[11px] uppercase tracking-wider text-stone-400">
-                      Completed
+                      {t("todo.completed")}
                     </div>
                   )}
 
@@ -678,6 +684,9 @@ const ChecklistView = () => {
 };
 
 const NotesView = () => {
+  const { t } = useTranslation();
+
+
   const store = useTodoStore();
   const {
     notes,
@@ -732,7 +741,7 @@ const NotesView = () => {
       <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
         <div className="flex items-center justify-end p-1 mb-2">
           <Button onClick={createNote} size="sm" variant="ghost" className="gap-1">
-            <Plus className="h-4 w-4" /> New
+            <Plus className="h-4 w-4" /> {t("common.new")}
           </Button>
         </div>
         <ScrollArea className="flex-1 -mx-2 px-2">
@@ -787,7 +796,7 @@ const NotesView = () => {
             }
           }}
           className="font-semibold text-lg border-none shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
-          placeholder="Note Title"
+          placeholder={t("todo.noteTitlePlaceholder")}
         />
         <Button
           variant="ghost"
@@ -801,8 +810,8 @@ const NotesView = () => {
         <ConfirmDialog
           open={showDeleteDialog}
           onOpenChange={setShowDeleteDialog}
-          description="Permanently delete this note?"
-          confirmText="Delete"
+          description={t("todo.confirmDeleteNoteFallback")}
+          confirmText={t("common.delete")}
           onConfirm={() => deleteNote(activeNote.id)}
           variant="destructive"
         />
@@ -810,7 +819,7 @@ const NotesView = () => {
 
       <Textarea
         ref={noteBodyRef}
-        placeholder="Type anything here..."
+        placeholder={t("todo.noteContentPlaceholder")}
         value={activeNote.content}
         onChange={(e) => updateNote(activeNote.id, { content: e.target.value })}
         className="flex-1 resize-none p-4 text-base leading-relaxed border-stone-200 dark:border-stone-800 focus-visible:ring-0 bg-transparent rounded-lg"
@@ -824,6 +833,11 @@ const NotesView = () => {
 // --- Main Component ---
 
 export const TodoView = () => {
+  const { t } = useTranslation();
+
+
+
+
   const [activeTab, setActiveTab] = useState("checklist");
   const { init } = useTodoStore();
 
@@ -839,10 +853,10 @@ export const TodoView = () => {
         className="flex-1 flex flex-col min-h-0"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold tracking-tight">Tasks</h2>
+          <h2 className="text-xl font-semibold tracking-tight">{t("todo.tasks")}</h2>
           <TabsList className="grid w-[200px] grid-cols-2">
-            <TabsTrigger value="checklist">Lists</TabsTrigger>
-            <TabsTrigger value="scratchpad">Notes</TabsTrigger>
+            <TabsTrigger value="checklist">{t("todo.lists")}</TabsTrigger>
+            <TabsTrigger value="scratchpad">{t("todo.notes")}</TabsTrigger>
           </TabsList>
         </div>
 
