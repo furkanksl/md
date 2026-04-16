@@ -7,6 +7,7 @@ export interface TodoItem {
   text: string;
   completed: boolean;
   createdAt: number;
+  orderIndex?: number;
 }
 
 export interface Checklist {
@@ -39,6 +40,7 @@ interface TodoState {
   toggleItem: (itemId: string) => Promise<void>;
   deleteItem: (itemId: string) => Promise<void>;
   updateItemText: (itemId: string, text: string) => Promise<void>;
+  reorderItems: (completed: boolean, orderedIds: string[]) => Promise<void>;
 
   // Notes
   notes: Note[];
@@ -172,6 +174,10 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     const item = activeList.items.find((i) => i.id === itemId);
     if (!item) return;
     const newCompleted = !item.completed;
+    const maxOrderIndex = activeList.items
+      .filter((i) => i.completed === newCompleted)
+      .reduce((acc, i) => Math.max(acc, i.orderIndex ?? 0), 0);
+    const newOrderIndex = maxOrderIndex + 1;
 
     // 1. Optimistic Toggle (Update UI immediately)
     set((state) => ({
@@ -180,7 +186,7 @@ export const useTodoStore = create<TodoState>((set, get) => ({
           ? {
               ...list,
               items: list.items.map((i) =>
-                i.id === itemId ? { ...i, completed: newCompleted } : i
+                i.id === itemId ? { ...i, completed: newCompleted, orderIndex: newOrderIndex } : i
               ),
               updatedAt: Date.now(),
             }
@@ -191,6 +197,7 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     // 2. Persist Toggle
     try {
       await checklistItemRepo.toggle(itemId, newCompleted);
+      await checklistItemRepo.setOrderIndex(itemId, newOrderIndex);
     } catch (e) {
       console.error("Failed to toggle item:", e);
     }
@@ -274,6 +281,41 @@ export const useTodoStore = create<TodoState>((set, get) => ({
       await checklistItemRepo.updateText(itemId, text);
     } catch (e) {
       console.error("Failed to update item text:", e);
+    }
+  },
+
+  reorderItems: async (completed, orderedIds) => {
+    const activeId = get().activeChecklistId;
+    if (!activeId) return;
+    if (orderedIds.length === 0) return;
+
+    const count = orderedIds.length;
+    const orderMap = new Map<string, number>();
+    orderedIds.forEach((id, index) => {
+      orderMap.set(id, count - index);
+    });
+
+    set((state) => ({
+      checklists: state.checklists.map((list) => {
+        if (list.id !== activeId) return list;
+        return {
+          ...list,
+          items: list.items.map((i) =>
+            orderMap.has(i.id) && i.completed === completed
+              ? { ...i, orderIndex: orderMap.get(i.id)! }
+              : i
+          ),
+          updatedAt: Date.now(),
+        };
+      }),
+    }));
+
+    try {
+      await checklistItemRepo.reorder(
+        orderedIds.map((id) => ({ id, orderIndex: orderMap.get(id)! }))
+      );
+    } catch (e) {
+      console.error("Failed to reorder items:", e);
     }
   },
 

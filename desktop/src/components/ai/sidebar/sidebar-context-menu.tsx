@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useRef, useState, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -29,6 +30,7 @@ export const SidebarContextMenu = ({
   folders,
   onClose,
 }: SidebarContextMenuProps) => {
+  const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<React.CSSProperties>({
     top: y,
@@ -74,7 +76,7 @@ export const SidebarContextMenu = ({
         }}
         className="w-full text-left px-4 py-2 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 flex items-center gap-2"
       >
-        <Edit2 size={14} /> Rename
+        <Edit2 size={14} /> {t("chatMisc.rename")}
       </button>
 
       {type === "chat" && onMoveToRoot && (
@@ -85,14 +87,14 @@ export const SidebarContextMenu = ({
           }}
           className="w-full text-left px-4 py-2 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 flex items-center gap-2"
         >
-          <Folder size={14} /> Remove from Folder
+          <Folder size={14} /> {t("chatMisc.removeFromFolder")}
         </button>
       )}
 
       {type === "chat" && folders.length > 0 && (
         <div className="border-t border-stone-100 dark:border-stone-800 my-1 pt-1">
           <div className="px-4 py-1 text-[10px] text-stone-400 uppercase tracking-wider">
-            Move to
+            {t("chatMisc.moveTo")}
           </div>
           <div className="max-h-24 overflow-y-auto scrollbar-none">
             {folders.map((f) => (
@@ -120,7 +122,7 @@ export const SidebarContextMenu = ({
         }}
         className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 flex items-center gap-2"
       >
-        <Trash2 size={14} /> Delete
+        <Trash2 size={14} /> {t("chatMisc.delete")}
       </button>
     </div>,
     document.body

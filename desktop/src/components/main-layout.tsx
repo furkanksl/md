@@ -32,8 +32,10 @@ import {
   Minimize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 export const MainLayout = () => {
+  const { t } = useTranslation();
   const { activeView, setActiveView, theme, setTheme, themeName } = useUIStore();
   const { hasCompletedOnboarding } = useSettingsStore();
   const { startMonitoring } = useClipboardStore();
@@ -98,6 +100,8 @@ export const MainLayout = () => {
 
   // Ref to track latest autoHide preference without re-binding listeners constantly
   const autoHideRef = useRef(useSettingsStore.getState().autoHide);
+  const isHoveredRef = useRef(false);
+
   useEffect(() => {
     const unsubscribe = useSettingsStore.subscribe((state) => {
       autoHideRef.current = state.autoHide;
@@ -109,7 +113,7 @@ export const MainLayout = () => {
   useEffect(() => {
     const appWindow = getCurrentWindow();
     const unlistenBlur = appWindow.listen("tauri://blur", () => {
-      if (autoHideRef.current) {
+      if (autoHideRef.current && !isHoveredRef.current) {
         invoke("hide_drawer");
       }
     });
@@ -118,21 +122,44 @@ export const MainLayout = () => {
     };
   }, []);
 
+  // Periodic update checks + check on focus
+  useEffect(() => {
+    const appWindow = getCurrentWindow();
+    const { checkForUpdates } = useUpdateStore.getState();
+
+    const interval = setInterval(() => {
+      checkForUpdates().catch(console.error);
+    }, 6 * 60 * 60 * 1000);
+
+    const unlistenFocus = appWindow.listen("tauri://focus", () => {
+      checkForUpdates().catch(console.error);
+    });
+
+    return () => {
+      clearInterval(interval);
+      unlistenFocus.then((f) => f());
+    };
+  }, []);
+
   const bottomNavItems = [
-    { id: "chat", label: "Journal", icon: MessageCircle },
-    { id: "tasks", label: "Tasks", icon: ListTodo },
-    { id: "clipboard", label: "Collect", icon: Archive },
-    { id: "shortcuts", label: "Apps", icon: Layers },
-    { id: "layouts", label: "Flow", icon: Maximize },
-    { id: "web", label: "Web", icon: Globe },
+    { id: "chat", label: t("nav.journal"), icon: MessageCircle },
+    { id: "tasks", label: t("nav.tasks"), icon: ListTodo },
+    { id: "clipboard", label: t("nav.collect"), icon: Archive },
+    { id: "shortcuts", label: t("nav.apps"), icon: Layers },
+    { id: "layouts", label: t("nav.flow"), icon: Maximize },
+    { id: "web", label: t("nav.web"), icon: Globe },
   ] as const;
 
   const headerNavItems = [
-    { id: "settings", label: "Setup", icon: Settings },
+    { id: "settings", label: t("nav.setup"), icon: Settings },
   ] as const;
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background overflow-hidden font-sans selection:bg-accent selection:text-accent-foreground backdrop-blur-sm rounded-[2rem] border border-border">
+    <div 
+      className="flex flex-col h-screen w-screen bg-background overflow-hidden font-sans selection:bg-accent selection:text-accent-foreground backdrop-blur-sm rounded-[2rem] border border-border"
+      onMouseEnter={() => { isHoveredRef.current = true; }}
+      onMouseLeave={() => { isHoveredRef.current = false; }}
+    >
       {/* Drag Region */}
       <div
         className="fixed top-0 left-0 w-full h-8 z-40"
@@ -173,7 +200,7 @@ export const MainLayout = () => {
               <button
                 onClick={() => setFullScreen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full transition-colors text-muted-foreground hover:text-foreground hover:bg-accent relative z-50"
-                title="Exit Full Screen"
+                title={t("actions.exitFullScreen")}
               >
                 <Minimize2 size={16} strokeWidth={1.5} />
               </button>
@@ -206,7 +233,7 @@ export const MainLayout = () => {
             <button
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
               aria-label={
-                theme === "light" ? "Switch to dark mode" : "Switch to light mode"
+                theme === "light" ? t("actions.switchToDark") : t("actions.switchToLight")
               }
               className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-accent p-0"
             >
@@ -284,7 +311,7 @@ export const MainLayout = () => {
                 "h-16": isNavVisible,
               })}
             >
-              <nav className="flex items-center gap-x-1.5 bg-card p-1.5 rounded-full shadow-lg border border-border">
+              <nav className="flex items-center gap-x-4 bg-card p-1.5 rounded-full shadow-lg border border-border">
                 {bottomNavItems.map((item) => {
                   const isActive = activeView === item.id;
                   const Icon = item.icon;

@@ -1,7 +1,7 @@
 [package]
 name = "my-drawer"
 version = "0.1.0"
-description = "A Tauri App"
+description = "An intelligent sidebar for Macos"
 authors = ["you"]
 edition = "2021"
 
@@ -30,6 +30,7 @@ tauri-plugin-sql = { version = "2.3.1", features = ["sqlite"] }
 window-vibrancy = "0.7.1"
 cocoa = "0.26.1"
 objc = "0.2.7"
+block = "0.1"
 base64 = "0.22.1"
 core-graphics = "0.25.0"
 core-foundation = "0.10.1"
@@ -45,3 +46,4 @@ chrono = { version = "0.4.42", features = ["serde"] }
 image = "0.24"
 tauri-plugin-updater = "2.10.0"
 tauri-plugin-process = "2.3.0"
+tauri-plugin-autostart = "2"

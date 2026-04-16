@@ -57,6 +57,7 @@ class DatabaseClient {
         role TEXT NOT NULL CHECK(role IN ('system', 'user', 'assistant')),
         content TEXT NOT NULL,
         attachments TEXT,
+        metadata TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
       );
@@ -144,10 +145,24 @@ class DatabaseClient {
         // Check for missing columns in messages
         const msgColumns = await this.db.select<any[]>("PRAGMA table_info(messages)");
         const hasAttachments = msgColumns.some(c => c.name === 'attachments');
+        const hasMetadata = msgColumns.some(c => c.name === 'metadata');
         
         if (!hasAttachments) {
-             console.log("Migrating messages table...");
+             console.log("Migrating messages table (attachments)...");
              await this.db.execute("ALTER TABLE messages ADD COLUMN attachments TEXT");
+        }
+
+        if (!hasMetadata) {
+             console.log("Migrating messages table (metadata)...");
+             await this.db.execute("ALTER TABLE messages ADD COLUMN metadata TEXT");
+        }
+
+        // Check for missing columns in checklist_items
+        const checklistItemColumns = await this.db.select<any[]>("PRAGMA table_info(checklist_items)");
+        const checklistItemHasOrderIndex = checklistItemColumns.some(c => c.name === 'order_index');
+        if (!checklistItemHasOrderIndex) {
+             console.log("Migrating checklist_items table (order_index)...");
+             await this.db.execute("ALTER TABLE checklist_items ADD COLUMN order_index INTEGER DEFAULT 0");
         }
 
     } catch (e) {

@@ -7,10 +7,15 @@ const repo = new ClipboardRepository();
 export class ClipboardService {
   private lastContent: string = "";
   private intervalId: NodeJS.Timeout | null = null;
+  private static readonly DEFAULT_PAGE_SIZE = 50;
 
-  async getHistory() {
-    const limit = useSettingsStore.getState().clipboardHistoryLimit;
-    return await repo.getAll(limit);
+  async getHistory(options?: { limit?: number; offset?: number }) {
+    const settingsLimit = useSettingsStore.getState().clipboardHistoryLimit;
+    const limit = options?.limit ?? settingsLimit;
+    const offset = options?.offset ?? 0;
+    const effectiveLimit = limit === 0 ? ClipboardService.DEFAULT_PAGE_SIZE : limit;
+
+    return await repo.getPage(effectiveLimit, offset);
   }
 
   async startMonitoring(callback: () => void) {

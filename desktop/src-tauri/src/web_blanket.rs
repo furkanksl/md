@@ -8,6 +8,8 @@ use objc::declare::ClassDecl;
 #[cfg(target_os = "macos")]
 use cocoa::base::{id, nil};
 #[cfg(target_os = "macos")]
+use block::Block;
+#[cfg(target_os = "macos")]
 use cocoa::foundation::{NSRect, NSPoint, NSSize, NSString};
 #[cfg(target_os = "macos")]
 use objc::{class, msg_send, sel, sel_impl};
@@ -67,15 +69,15 @@ const WHATSAPP_SCRIPT: &str = r#"
          document.head.appendChild(style);
     }
 
-    setInterval(() => {
-        if (document.getElementById(BTN_ID)) return;
+    const tryInject = () => {
+        if (document.getElementById(BTN_ID)) return true;
         
         const firstNavItem = document.querySelector('[data-navbar-item]');
-        if (!firstNavItem) return;
+        if (!firstNavItem) return false;
         
         // Target: parent -> parent -> parent
         const targetContainer = firstNavItem.parentElement?.parentElement?.parentElement;
-        if (!targetContainer) return;
+        if (!targetContainer) return false;
 
         const btn = document.createElement('div');
         btn.id = BTN_ID;
@@ -99,8 +101,16 @@ const WHATSAPP_SCRIPT: &str = r#"
         };
         
         targetContainer.insertBefore(btn, targetContainer.firstChild);
+        return true;
+    };
 
-    }, 1000);
+    if (!tryInject()) {
+        const observer = new MutationObserver(() => {
+            if (tryInject()) observer.disconnect();
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 30000);
+    }
 })();
 "#;
 
@@ -189,6 +199,21 @@ impl From<BoundsPayload> for Bounds {
 #[cfg(target_os = "macos")]
 static DELEGATE_CLASS: Once = Once::new();
 
+// Shared WKProcessPool to reduce redundant web content processes
+#[cfg(target_os = "macos")]
+static PROCESS_POOL_INIT: Once = Once::new();
+#[cfg(target_os = "macos")]
+static mut SHARED_PROCESS_POOL: *mut Object = std::ptr::null_mut();
+
+#[cfg(target_os = "macos")]
+fn get_shared_process_pool() -> id {
+    PROCESS_POOL_INIT.call_once(|| unsafe {
+        let pool: id = msg_send![class!(WKProcessPool), new];
+        SHARED_PROCESS_POOL = pool;
+    });
+    unsafe { SHARED_PROCESS_POOL as id }
+}
+
 #[cfg(target_os = "macos")]
 fn get_delegate_class() -> &'static objc::runtime::Class {
     DELEGATE_CLASS.call_once(|| {
@@ -232,12 +257,45 @@ fn get_delegate_class() -> &'static objc::runtime::Class {
             }
             nil
         }
+
+        extern "C" fn run_open_panel(
+            _this: &Object,
+            _sel: Sel,
+            _webview: id,
+            parameters: id,
+            _frame: id,
+            completion_handler: id,
+        ) {
+            unsafe {
+                let panel: id = msg_send![class!(NSOpenPanel), openPanel];
+                let allows_multiple: bool = msg_send![parameters, allowsMultipleSelection];
+                let allows_directories: bool = msg_send![parameters, allowsDirectories];
+
+                let _: () = msg_send![panel, setAllowsMultipleSelection: allows_multiple];
+                let _: () = msg_send![panel, setCanChooseDirectories: allows_directories];
+                let _: () = msg_send![panel, setCanChooseFiles: true];
+
+                let response: i32 = msg_send![panel, runModal];
+                let urls: id = if response == 1 {
+                    msg_send![panel, URLs]
+                } else {
+                    nil
+                };
+
+                let completion = &*(completion_handler as *const Block<(id,), ()>);
+                completion.call((urls,));
+            }
+        }
         
         unsafe {
             decl.add_method(sel!(dealloc), dealloc as extern "C" fn(&Object, Sel));
             decl.add_method(
                 sel!(webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:),
                 create_webview as extern "C" fn(&Object, Sel, id, id, id, id) -> id
+            );
+            decl.add_method(
+                sel!(webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:),
+                run_open_panel as extern "C" fn(&Object, Sel, id, id, id, id)
             );
         }
 
@@ -350,6 +408,12 @@ pub fn web_blanket_tab_create(
         unsafe {
             let config: id = msg_send![class!(WKWebViewConfiguration), new];
 
+            // Share process pool across all WKWebViews to reduce redundant instances
+            let process_pool = get_shared_process_pool();
+            if process_pool != nil {
+                let _: () = msg_send![config, setProcessPool: process_pool];
+            }
+
             // Inject WhatsApp Script
             let script_source = NSString::alloc(nil).init_str(WHATSAPP_SCRIPT);
             let user_content_controller: id = msg_send![config, userContentController];
@@ -372,6 +436,7 @@ pub fn web_blanket_tab_create(
 
             let webview: id = msg_send![class!(WKWebView), alloc];
             let webview: id = msg_send![webview, initWithFrame: NSRect::new(NSPoint::new(0., 0.), NSSize::new(0., 0.)) configuration: config];
+            let _: () = msg_send![config, release];
             
             // Set autoresizing mask to resize with container
             // NSViewWidthSizable | NSViewHeightSizable = 18
@@ -588,6 +653,26 @@ pub fn web_blanket_reload(
 }
 
 #[tauri::command]
+pub fn web_blanket_reload_tab(
+    _window: WebviewWindow,
+    state: tauri::State<WebBlanketState>,
+    tab_id: String,
+) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let inner = state.inner.lock().map_err(|e| e.to_string())?;
+        if let Some(webview) = inner.tabs.get(&tab_id) {
+            unsafe {
+                let _: () = msg_send![webview.as_id(), reload];
+            }
+        }
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    Err("Not supported on this OS".into())
+}
+
+#[tauri::command]
 pub fn web_blanket_stop_loading(
     _window: WebviewWindow,
     state: tauri::State<WebBlanketState>,
@@ -600,6 +685,34 @@ pub fn web_blanket_stop_loading(
                 unsafe {
                     let _: () = msg_send![webview.as_id(), stopLoading];
                 }
+            }
+        }
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    Err("Not supported on this OS".into())
+}
+
+#[tauri::command]
+pub fn web_blanket_set_muted(
+    _window: WebviewWindow,
+    state: tauri::State<WebBlanketState>,
+    tab_id: String,
+    muted: bool,
+) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let inner = state.inner.lock().map_err(|e| e.to_string())?;
+        if let Some(webview) = inner.tabs.get(&tab_id) {
+            unsafe {
+                let script_source = if muted {
+                    "document.querySelectorAll('video, audio').forEach(el => { el.muted = true; });"
+                } else {
+                    "document.querySelectorAll('video, audio').forEach(el => { el.muted = false; });"
+                };
+                let script = NSString::alloc(nil).init_str(script_source);
+                let _: () = msg_send![webview.as_id(), evaluateJavaScript:script completionHandler:nil];
+                let _: () = msg_send![script, release];
             }
         }
         Ok(())

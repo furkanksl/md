@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { AIConfiguration } from "@/types/ai";
 import { SettingsRepository } from "@/core/infra/repositories";
+import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
+import { AppLanguage, getSystemLanguage, isAppLanguage } from "@/i18n/languages";
 
 const settingsRepo = new SettingsRepository();
 
@@ -12,6 +14,8 @@ interface SettingsState {
   clipboardRetentionDays: number;
   hasCompletedOnboarding: boolean;
   autoHide: boolean;
+  startAtLogin: boolean;
+  language: AppLanguage;
   drawerPosition: 'left' | 'right' | 'hot-corners' | 'top-left' | 'bottom-left' | 'top-right' | 'bottom-right';
   todoDeleteOnComplete: boolean;
   enabledModels: string[];
@@ -23,6 +27,8 @@ interface SettingsState {
   setClipboardHistoryLimit: (limit: number) => Promise<void>;
   setHasCompletedOnboarding: (completed: boolean) => Promise<void>;
   setAutoHide: (autoHide: boolean) => Promise<void>;
+  setStartAtLogin: (enabled: boolean) => Promise<void>;
+  setLanguage: (language: AppLanguage) => Promise<void>;
   setDrawerPosition: (position: SettingsState['drawerPosition']) => Promise<void>;
   setTodoDeleteOnComplete: (enabled: boolean) => Promise<void>;
   toggleModel: (modelId: string) => Promise<void>;
@@ -49,12 +55,21 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   clipboardRetentionDays: 30,
   hasCompletedOnboarding: false,
   autoHide: true,
+  startAtLogin: true,
+  language: getSystemLanguage(),
   drawerPosition: 'left',
   todoDeleteOnComplete: false,
   enabledModels: DEFAULT_ENABLED_MODELS,
 
   init: async () => {
     try {
+      let autostartEnabled: boolean | null = null;
+      try {
+        autostartEnabled = await isEnabled();
+      } catch (e) {
+        console.warn("Failed to read autostart status:", e);
+      }
+
       const [
         aiConfigurations,
         activeProvider,
@@ -62,6 +77,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         clipboardRetentionDays,
         hasCompletedOnboarding,
         autoHide,
+        startAtLogin,
+        language,
         drawerPosition,
         todoDeleteOnComplete,
         enabledModels
@@ -72,10 +89,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         settingsRepo.get<number>('clipboard_retention_days'),
         settingsRepo.get<boolean>('has_completed_onboarding'),
         settingsRepo.get<boolean>('auto_hide'),
+        settingsRepo.get<boolean>('start_at_login'),
+        settingsRepo.get<string>('app_language'),
         settingsRepo.get<SettingsState['drawerPosition']>('drawer_position'),
         settingsRepo.get<boolean>('todo_delete_on_complete'),
         settingsRepo.get<string[]>('enabled_models'),
       ]);
+
+      const resolvedStartAtLogin = startAtLogin ?? autostartEnabled ?? true;
+      const resolvedLanguage = isAppLanguage(language) ? language : getSystemLanguage();
 
       set({
         aiConfigurations: aiConfigurations || {},
@@ -84,10 +106,24 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         clipboardRetentionDays: clipboardRetentionDays ?? 30,
         hasCompletedOnboarding: hasCompletedOnboarding ?? false,
         autoHide: autoHide ?? true,
+        startAtLogin: resolvedStartAtLogin,
+        language: resolvedLanguage,
         drawerPosition: drawerPosition || 'left',
         todoDeleteOnComplete: todoDeleteOnComplete ?? false,
         enabledModels: enabledModels || DEFAULT_ENABLED_MODELS,
       });
+
+      if (autostartEnabled !== null && autostartEnabled !== resolvedStartAtLogin) {
+        try {
+          if (resolvedStartAtLogin) {
+            await enable();
+          } else {
+            await disable();
+          }
+        } catch (e) {
+          console.warn("Failed to sync autostart setting:", e);
+        }
+      }
     } catch (e) {
       console.error("Failed to load settings:", e);
     }
@@ -117,6 +153,25 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAutoHide: async (autoHide) => {
     set({ autoHide });
     await settingsRepo.set('auto_hide', autoHide);
+  },
+
+  setStartAtLogin: async (enabled) => {
+    set({ startAtLogin: enabled });
+    await settingsRepo.set('start_at_login', enabled);
+    try {
+      if (enabled) {
+        await enable();
+      } else {
+        await disable();
+      }
+    } catch (e) {
+      console.warn("Failed to update autostart setting:", e);
+    }
+  },
+
+  setLanguage: async (language) => {
+    set({ language });
+    await settingsRepo.set('app_language', language);
   },
 
   setDrawerPosition: async (position) => {

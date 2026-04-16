@@ -20,8 +20,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTranslation } from "react-i18next";
 
 export const ChatView = () => {
+  const { t } = useTranslation();
   const {
     messages,
     selectedModelId,
@@ -162,10 +164,10 @@ export const ChatView = () => {
               />
             </div>
             <h3 className="text-xl font-medium text-stone-600 dark:text-stone-300">
-              Drop files here
+              {t("chat.dropFilesHere")}
             </h3>
             <p className="text-stone-400 dark:text-stone-500 mt-1">
-              Add up to 3 attachments
+              {t("chat.addUpToAttachments", { count: 3 })}
             </p>
           </motion.div>
         )}
@@ -196,7 +198,7 @@ export const ChatView = () => {
                   className="text-muted-foreground flex-shrink-0"
                 />
                 <span className="truncate">
-                  {currentModel?.name || "Select Model"}
+                  {currentModel?.name || t("chat.selectModel")}
                 </span>
                 <ChevronDown size={10} className="opacity-50 flex-shrink-0" />
               </button>
@@ -207,7 +209,7 @@ export const ChatView = () => {
             >
               {availableModels.length === 0 ? (
                 <div className="px-4 py-2 text-xs text-muted-foreground italic text-center">
-                  No providers configured
+                  {t("chat.noProvidersConfigured")}
                 </div>
               ) : (
                 Object.entries(
@@ -240,7 +242,7 @@ export const ChatView = () => {
                         <span>{m.name}</span>
                         {m.capabilities.image && (
                           <span className="text-[10px] opacity-40 uppercase">
-                            Vision
+                            {t("chat.vision")}
                           </span>
                         )}
                       </DropdownMenuItem>
@@ -256,7 +258,7 @@ export const ChatView = () => {
           <button
             onClick={() => createConversation()}
             className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-full transition-all"
-            title="New Chat"
+            title={t("chat.newChat")}
           >
             <SquarePen size={16} strokeWidth={2} />
           </button>
@@ -272,7 +274,7 @@ export const ChatView = () => {
             <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
               <Sparkles size={20} className="opacity-50" />
             </div>
-            <p className="text-xs font-medium">How can I help you today?</p>
+            <p className="text-xs font-medium">{t("chat.howCanIHelp")}</p>
           </div>
         )}
       </div>

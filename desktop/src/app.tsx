@@ -6,11 +6,12 @@ import { useUpdateStore } from "@/stores/update-store";
 import { UpdatePoster } from "@/components/shared/update-poster";
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import i18n from "@/i18n";
 import "./app.css";
 
 function App() {
   const { theme } = useUIStore();
-  const { drawerPosition } = useSettingsStore();
+  const { drawerPosition, language } = useSettingsStore();
   const { checkForUpdates } = useUpdateStore();
 
   useEffect(() => {
@@ -20,6 +21,12 @@ function App() {
     // Check for updates
     checkForUpdates();
   }, [drawerPosition]);
+
+  useEffect(() => {
+    if (i18n.language !== language) {
+      void i18n.changeLanguage(language);
+    }
+  }, [language]);
   
   return (
     <>

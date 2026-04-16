@@ -1,14 +1,48 @@
 import { useSettingsStore } from '@/stores/settings-store';
 import { clsx } from 'clsx';
-import { EyeOff, PanelLeft, PanelRight, MousePointer2 } from 'lucide-react';
+import { EyeOff, PanelLeft, PanelRight, MousePointer2, KeyRound } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const BehaviorSection = () => {
-    const { autoHide, setAutoHide, drawerPosition, setDrawerPosition } = useSettingsStore();
+    const { t } = useTranslation();
+    const { autoHide, setAutoHide, drawerPosition, setDrawerPosition, startAtLogin, setStartAtLogin } = useSettingsStore();
 
     return (
         <div>
-            <h2 className="text-xl font-light text-foreground mb-4">Behavior</h2>
+            <h2 className="text-xl font-light text-foreground mb-4">{t('settings.behavior.title')}</h2>
             <div className="space-y-3">
+                <div className="bg-card rounded-md p-4 border border-border shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className={clsx(
+                                "w-10 h-10 rounded-md flex items-center justify-center",
+                                startAtLogin ? "bg-secondary text-secondary-foreground" : "bg-muted/50 text-muted-foreground"
+                            )}>
+                                <KeyRound size={20} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-foreground">{t('settings.behavior.startAtLogin.title')}</span>
+                                <span className="text-xs text-muted-foreground">
+                                    {t('settings.behavior.startAtLogin.description')}
+                                </span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setStartAtLogin(!startAtLogin)}
+                            className={clsx(
+                                "w-12 h-7 rounded-full p-1 transition-colors duration-300 ease-in-out relative",
+                                startAtLogin ? "bg-primary" : "bg-input"
+                            )}
+                        >
+                            <div className={clsx(
+                                "w-5 h-5 rounded-full bg-background shadow-sm transition-transform duration-300 ease-in-out",
+                                startAtLogin ? "translate-x-5" : "translate-x-0"
+                            )} />
+                        </button>
+                    </div>
+                </div>
+
                 <div className="bg-card rounded-md p-4 border border-border shadow-sm">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -19,9 +53,9 @@ export const BehaviorSection = () => {
                                 <EyeOff size={20} />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-sm font-medium text-foreground">Auto-Hide</span>
+                                <span className="text-sm font-medium text-foreground">{t('settings.behavior.autoHide.title')}</span>
                                 <span className="text-xs text-muted-foreground">
-                                    Hide drawer when clicking outside
+                                    {t('settings.behavior.autoHide.description')}
                                 </span>
                             </div>
                         </div>
@@ -48,9 +82,9 @@ export const BehaviorSection = () => {
                                 {drawerPosition === 'left' ? <PanelLeft size={20} /> : drawerPosition === 'right' ? <PanelRight size={20} /> : <MousePointer2 size={20} />}
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-sm font-medium text-foreground">Drawer Position</span>
+                                <span className="text-sm font-medium text-foreground">{t('settings.behavior.drawerPosition.title')}</span>
                                 <span className="text-xs text-muted-foreground">
-                                    Choose where the drawer appears
+                                    {t('settings.behavior.drawerPosition.description')}
                                 </span>
                             </div>
                         </div>
@@ -66,7 +100,7 @@ export const BehaviorSection = () => {
                                 )}
                             >
                                 <PanelLeft size={16} />
-                                <span className="text-[10px] font-medium uppercase tracking-wide">Left Edge</span>
+                                <span className="text-[10px] font-medium uppercase tracking-wide">{t('settings.behavior.drawerPosition.leftEdge')}</span>
                             </button>
                             <button
                                 onClick={() => setDrawerPosition('right')}
@@ -78,7 +112,7 @@ export const BehaviorSection = () => {
                                 )}
                             >
                                 <PanelRight size={16} />
-                                <span className="text-[10px] font-medium uppercase tracking-wide">Right Edge</span>
+                                <span className="text-[10px] font-medium uppercase tracking-wide">{t('settings.behavior.drawerPosition.rightEdge')}</span>
                             </button>
                         </div>
 
@@ -94,7 +128,7 @@ export const BehaviorSection = () => {
                                     )}
                                 >
                                     <div className="w-6 h-6 border-l-2 border-t-2 border-current rounded-tl-md" />
-                                    <span className="text-[9px] font-medium uppercase tracking-wide">Top Left</span>
+                                    <span className="text-[9px] font-medium uppercase tracking-wide">{t('settings.behavior.drawerPosition.topLeft')}</span>
                                 </button>
                                 <button
                                     onClick={() => setDrawerPosition('bottom-left')}
@@ -106,7 +140,7 @@ export const BehaviorSection = () => {
                                     )}
                                 >
                                     <div className="w-6 h-6 border-l-2 border-b-2 border-current rounded-bl-md" />
-                                    <span className="text-[9px] font-medium uppercase tracking-wide">Btm Left</span>
+                                    <span className="text-[9px] font-medium uppercase tracking-wide">{t('settings.behavior.drawerPosition.bottomLeft')}</span>
                                 </button>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
@@ -120,7 +154,7 @@ export const BehaviorSection = () => {
                                     )}
                                 >
                                     <div className="w-6 h-6 border-r-2 border-t-2 border-current rounded-tr-md" />
-                                    <span className="text-[9px] font-medium uppercase tracking-wide">Top Right</span>
+                                    <span className="text-[9px] font-medium uppercase tracking-wide">{t('settings.behavior.drawerPosition.topRight')}</span>
                                 </button>
                                 <button
                                     onClick={() => setDrawerPosition('bottom-right')}
@@ -132,7 +166,7 @@ export const BehaviorSection = () => {
                                     )}
                                 >
                                     <div className="w-6 h-6 border-r-2 border-b-2 border-current rounded-br-md" />
-                                    <span className="text-[9px] font-medium uppercase tracking-wide">Btm Right</span>
+                                    <span className="text-[9px] font-medium uppercase tracking-wide">{t('settings.behavior.drawerPosition.bottomRight')}</span>
                                 </button>
                             </div>
                         </div>
@@ -147,7 +181,7 @@ export const BehaviorSection = () => {
                             )}
                         >
                             <MousePointer2 size={16} />
-                            <span className="text-[10px] font-medium uppercase tracking-wide">All Hot Corners</span>
+                            <span className="text-[10px] font-medium uppercase tracking-wide">{t('settings.behavior.drawerPosition.allHotCorners')}</span>
                         </button>
                     </div>
                 </div>

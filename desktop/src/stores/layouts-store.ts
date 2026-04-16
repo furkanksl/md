@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import Database from '@tauri-apps/plugin-sql';
 import { v4 as uuidv4 } from 'uuid';
+import { dbClient } from '@/core/infra/database-client';
 
 export interface WindowRect {
   x: number;
@@ -40,7 +40,7 @@ export const useLayoutsStore = create<LayoutsState>((set, get) => ({
   loadLayouts: async () => {
     set({ isLoading: true });
     try {
-      const db = await Database.load('sqlite:mydrawer.db');
+      const db = await dbClient.getDb();
       const result = await db.select<any[]>('SELECT * FROM window_layouts ORDER BY created_at DESC');
       
       const layouts: SavedLayout[] = result.map(row => ({
@@ -61,7 +61,7 @@ export const useLayoutsStore = create<LayoutsState>((set, get) => ({
 
   saveLayout: async (name: string, windows: WindowInfo[]) => {
     try {
-      const db = await Database.load('sqlite:mydrawer.db');
+      const db = await dbClient.getDb();
       const id = uuidv4();
       const now = new Date().toISOString();
       const layoutDataStr = JSON.stringify(windows);
@@ -80,7 +80,7 @@ export const useLayoutsStore = create<LayoutsState>((set, get) => ({
 
   deleteLayout: async (id: string) => {
     try {
-      const db = await Database.load('sqlite:mydrawer.db');
+      const db = await dbClient.getDb();
       await db.execute('DELETE FROM window_layouts WHERE id = $1', [id]);
       
       set(state => ({

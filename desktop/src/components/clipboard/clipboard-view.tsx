@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useClipboardStore } from '@/stores/clipboard-store';
 import { useSettingsStore } from '@/stores/settings-store';
@@ -7,6 +8,7 @@ import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ClipboardItem = memo(({ item, onCopy, onDelete, onClick, copiedId }: { item: any, onCopy: (id: string, content: string) => void, onDelete: (id: string) => void, onClick: (item: any) => void, copiedId: string | null }) => {
+    const { t } = useTranslation();
     const isImage = item.content.startsWith('data:image');
 
     return (
@@ -23,7 +25,7 @@ const ClipboardItem = memo(({ item, onCopy, onDelete, onClick, copiedId }: { ite
             <div className="flex-1 overflow-hidden min-h-0">
                 {isImage ? (
                     <div className="w-full h-full rounded-md overflow-hidden bg-muted flex items-center justify-center relative">
-                        <img src={item.content} alt="Clipboard Content" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                        <img src={item.content} alt={t("clipboardSection.contentTitle")} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
                             <ImageIcon size={16} className="text-white drop-shadow-md" />
                         </div>
@@ -64,15 +66,18 @@ const ClipboardItem = memo(({ item, onCopy, onDelete, onClick, copiedId }: { ite
 });
 
 export const ClipboardView = () => {
-    const { items, loadHistory, startMonitoring, deleteItem, isMonitoring } = useClipboardStore();
+  const { t } = useTranslation();
+    const { items, loadHistory, startMonitoring, deleteItem, isMonitoring, hasMore, offset } = useClipboardStore();
     const { clipboardHistoryLimit, setClipboardHistoryLimit } = useSettingsStore();
     const [search, setSearch] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const pageSize = 50;
 
     useEffect(() => {
         if (items.length === 0) {
-            loadHistory();
+            loadHistory({ limit: pageSize, offset: 0, append: false });
         }
         if (!isMonitoring) {
             startMonitoring();
@@ -80,7 +85,7 @@ export const ClipboardView = () => {
     }, []);
 
     useEffect(() => {
-        loadHistory();
+        loadHistory({ limit: pageSize, offset: 0, append: false });
     }, [clipboardHistoryLimit]);
 
     const filtered = items.filter(item =>
@@ -122,7 +127,7 @@ export const ClipboardView = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 dark:text-stone-600" size={16} />
                     <input
                         className="w-full bg-white dark:bg-stone-900 h-10 rounded-xl pl-10 pr-4 text-sm text-stone-600 dark:text-stone-300 placeholder:text-stone-300 dark:placeholder:text-stone-600 focus:outline-none shadow-sm border border-stone-50 dark:border-stone-800 focus:shadow-md transition-shadow"
-                        placeholder="Search your collection..."
+                        placeholder={t("clipboardSection.searchPlaceholder")}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -133,7 +138,7 @@ export const ClipboardView = () => {
                         <button className="transition-all h-10 px-3 bg-white dark:bg-stone-900 rounded-xl border border-stone-50 dark:border-stone-800 text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors flex items-center gap-2 shadow-sm">
                             <History size={16} />
                             <span className="text-xs font-medium">
-                                {clipboardHistoryLimit === 0 ? 'All' : `Last ${clipboardHistoryLimit}`}
+                                {clipboardHistoryLimit === 0 ? t("clipboardSection.keepAll") : `${t("clipboardSection.last")} ${clipboardHistoryLimit}`}
                             </span>
                             <ChevronDown size={14} className="opacity-50" />
                         </button>
@@ -141,7 +146,7 @@ export const ClipboardView = () => {
                     <Popover.Portal>
                         <Popover.Content className="z-50 min-w-[120px] bg-white dark:bg-stone-900 rounded-xl border border-stone-100 dark:border-stone-800 shadow-xl p-1 animate-in fade-in zoom-in-95 duration-200" sideOffset={5} align="end">
                             <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                                History Limit
+                                {t("clipboardSection.historyLimit")}
                             </div>
                             {LIMIT_OPTIONS.map(limit => (
                                 <button
@@ -154,7 +159,7 @@ export const ClipboardView = () => {
                                             : "text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800"
                                     )}
                                 >
-                                    {limit === 0 ? `Keep All (${items.length})` : `Last ${limit}`}
+                                    {limit === 0 ? t("clipboardSection.keepAll") : `${t("clipboardSection.last")} ${limit}`}
                                     {clipboardHistoryLimit === limit && <div className="w-1.5 h-1.5 rounded-full bg-stone-800 dark:bg-stone-200" />}
                                 </button>
                             ))}
@@ -174,6 +179,35 @@ export const ClipboardView = () => {
                         copiedId={copiedId}
                     />
                 ))}
+                {filtered.length > 0 && hasMore && (
+                    <div className="col-span-2 flex justify-center pb-3">
+                        <button
+                            onClick={async () => {
+                                if (isLoadingMore) return;
+                                setIsLoadingMore(true);
+                                try {
+                                    await loadHistory({ limit: pageSize, offset, append: true });
+                                } finally {
+                                    setIsLoadingMore(false);
+                                }
+                            }}
+                            className="text-muted-foreground hover:text-foreground text-[10px] uppercase tracking-wider font-medium transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-muted"
+                            disabled={isLoadingMore}
+                        >
+                            {isLoadingMore ? (
+                                <>
+                                    <ChevronDown size={12} className="animate-pulse" />
+                                    {t("web.loading")}
+                                </>
+                            ) : (
+                                <>
+                                    <ChevronDown size={12} />
+                                    {t("clipboardSection.loadMore")}
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Detail Modal */}
@@ -196,9 +230,9 @@ export const ClipboardView = () => {
                                     <X size={20} />
                                 </button>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-semibold text-stone-800 dark:text-stone-200">Details</span>
+                                    <span className="text-sm font-semibold text-stone-800 dark:text-stone-200">{t("clipboardSection.details")}</span>
                                     <span className="text-[10px] text-stone-400 dark:text-stone-500 font-mono">
-                                        {selectedItem.content.startsWith('data:image') ? 'Image' : `${selectedItem.character_count || selectedItem.content.length} chars`}
+                                        {selectedItem.content.startsWith('data:image') ? t("clipboardSection.image") : `${selectedItem.character_count || selectedItem.content.length} ${t("clipboardSection.chars")}`}
                                     </span>
                                 </div>
                             </div>
@@ -221,13 +255,15 @@ export const ClipboardView = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-4 pb-2 flex items-center justify-center">
+                        <div className="flex-1 overflow-y-auto p-4 pb-2">
                             {selectedItem.content.startsWith('data:image') ? (
-                                <div className="max-w-full max-h-full rounded-2xl shadow-sm border border-stone-50 dark:border-stone-800 overflow-hidden">
-                                    <img src={selectedItem.content} alt="Full Content" className="max-w-full max-h-full object-contain" />
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <div className="max-w-full max-h-full rounded-2xl shadow-sm border border-stone-50 dark:border-stone-800 overflow-hidden">
+                                        <img src={selectedItem.content} alt={t("clipboardSection.fullContent")} className="max-w-full max-h-full object-contain" />
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-sm border border-stone-50 dark:border-stone-800 w-full min-h-full whitespace-pre-wrap font-mono text-sm text-stone-700 dark:text-stone-300 leading-relaxed selection:bg-stone-200 dark:selection:bg-stone-700">
+                                <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-sm border border-stone-50 dark:border-stone-800 w-full whitespace-pre-wrap break-words font-mono text-sm text-stone-700 dark:text-stone-300 leading-relaxed selection:bg-stone-200 dark:selection:bg-stone-700">
                                     {selectedItem.content}
                                 </div>
                             )}

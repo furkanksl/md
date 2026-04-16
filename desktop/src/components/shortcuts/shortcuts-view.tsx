@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef } from 'react';
 import { readDir } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
@@ -9,6 +10,9 @@ import { clsx } from 'clsx';
 
 // Icon Component to fetch and display app icon
 const AppIcon = ({ path, className }: { path: string, className?: string }) => {
+  const { t } = useTranslation();
+
+
   const [iconSrc, setIconSrc] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,7 +30,7 @@ const AppIcon = ({ path, className }: { path: string, className?: string }) => {
   }, [path]);
 
   if (iconSrc) {
-    return <img src={iconSrc} alt="App Icon" className={className} />;
+    return <img src={iconSrc} alt={t("apps.appIcon")} className={className} />;
   }
 
   return (
@@ -37,6 +41,11 @@ const AppIcon = ({ path, className }: { path: string, className?: string }) => {
 };
 
 export const ShortcutsView = () => {
+  const { t } = useTranslation();
+
+
+
+
   const { apps, addApp, removeApp } = useShortcutsStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detectedApps, setDetectedApps] = useState<AppShortcut[]>([]);
@@ -125,7 +134,7 @@ export const ShortcutsView = () => {
     <div className="h-full px-4 pt-1 flex flex-col relative overflow-hidden">
       <div className="flex justify-between items-center mb-4 shrink-0">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-light text-foreground">My Apps</h2>
+          <h2 className="text-xl font-light text-foreground">{t("apps.title")}</h2>
           <div className="flex bg-muted rounded-md p-0.5">
             <button
               onClick={() => setViewMode('grid')}
@@ -156,7 +165,7 @@ export const ShortcutsView = () => {
           className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-medium hover:opacity-90 transition-colors shadow-lg shadow-primary/20"
         >
           <Plus size={14} />
-          <span>Add App</span>
+          <span>{t("apps.addApp")}</span>
         </button>
       </div>
 
@@ -164,7 +173,7 @@ export const ShortcutsView = () => {
         {apps.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground flex flex-col items-center gap-4 opacity-50">
             <Layers size={40} strokeWidth={1} />
-            <p className="text-sm">No apps pinned yet.</p>
+            <p className="text-sm">{t("apps.noApps")}</p>
           </div>
         ) : (
           <div className={clsx(
@@ -253,7 +262,7 @@ export const ShortcutsView = () => {
                 <input
                   autoFocus
                   className="w-full bg-input h-9 rounded-lg pl-9 pr-3 text-sm focus:outline-none border border-border text-foreground placeholder:text-muted-foreground"
-                  placeholder="Search /Applications..."
+                  placeholder={t("apps.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -265,7 +274,7 @@ export const ShortcutsView = () => {
                 {isLoadingApps ? (
                   <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
                     <Loader2 size={20} className="animate-spin" />
-                    <span className="text-xs">Scanning Applications...</span>
+                    <span className="text-xs">{t("apps.scanning")}</span>
                   </div>
                 ) : (
                   <>

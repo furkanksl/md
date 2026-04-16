@@ -15,10 +15,12 @@ use tauri::tray::TrayIconBuilder;
 use tauri_plugin_sql::{Migration, MigrationKind};
 use arboard::Clipboard;
 use sqlx::sqlite::SqlitePoolOptions;
-use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
-use image::ImageEncoder;
+use image::{ImageEncoder, imageops::FilterType};
 use serde_json::json;
+use std::fs;
+use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
@@ -60,44 +62,9 @@ fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
             let mut last_image_hash: u64 = 0;
 
             loop {
-                // 1. Check Text
-                if let Ok(current_text) = clipboard.get_text() {
-                    if !current_text.trim().is_empty() && current_text != last_text_content {
-                        last_text_content = current_text.clone();
-                        last_image_hash = 0;
-                        
-                        let id = uuid::Uuid::new_v4().to_string();
-                        let now = chrono::Utc::now().to_rfc3339();
-                        
-                        let _ = sqlx::query("INSERT INTO clipboard (id, content, source_app, timestamp, character_count, pinned) VALUES (?, ?, ?, ?, ?, ?)")
-                            .bind(id)
-                            .bind(&current_text)
-                            .bind("System")
-                            .bind(now)
-                            .bind(current_text.len() as i32)
-                            .bind(false)
-                            .execute(&pool)
-                            .await;
+                let mut processed = false;
 
-                        // Enforce Limit
-                        let limit_row: Option<(String,)> = sqlx::query_as("SELECT value FROM settings WHERE key = 'clipboard_history_limit'")
-                            .fetch_optional(&pool)
-                            .await
-                            .unwrap_or(None);
-                        let limit = limit_row.and_then(|r| r.0.parse::<i32>().ok()).unwrap_or(50);
-
-                        if limit > 0 {
-                             let _ = sqlx::query("DELETE FROM clipboard WHERE id NOT IN (SELECT id FROM clipboard ORDER BY timestamp DESC LIMIT ?) AND pinned = 0")
-                                .bind(limit)
-                                .execute(&pool)
-                                .await;
-                        }
-                            
-                        let _ = app_handle.emit("clipboard-changed", ());
-                    }
-                }
-
-                // 2. Check Image
+                // 1. Check Image (Priority)
                 if let Ok(img) = clipboard.get_image() {
                     let mut hasher = DefaultHasher::new();
                     img.bytes.hash(&mut hasher);
@@ -146,6 +113,49 @@ fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
                              }
 
                              let _ = app_handle.emit("clipboard-changed", ());
+                        }
+                    }
+                    
+                    if current_hash != 0 {
+                        processed = true;
+                    }
+                }
+
+                // 2. Check Text (only if no image was processed/present)
+                if !processed {
+                    if let Ok(current_text) = clipboard.get_text() {
+                        if !current_text.trim().is_empty() && current_text != last_text_content {
+                            last_text_content = current_text.clone();
+                            last_image_hash = 0;
+                            
+                            let id = uuid::Uuid::new_v4().to_string();
+                            let now = chrono::Utc::now().to_rfc3339();
+                            
+                            let _ = sqlx::query("INSERT INTO clipboard (id, content, source_app, timestamp, character_count, pinned) VALUES (?, ?, ?, ?, ?, ?)")
+                                .bind(id)
+                                .bind(&current_text)
+                                .bind("System")
+                                .bind(now)
+                                .bind(current_text.len() as i32)
+                                .bind(false)
+                                .execute(&pool)
+                                .await;
+
+                            // Enforce Limit
+                            let limit_row: Option<(String,)> = sqlx::query_as("SELECT value FROM settings WHERE key = 'clipboard_history_limit'")
+                                .fetch_optional(&pool)
+                                .await
+                                .unwrap_or(None);
+                            let limit = limit_row.and_then(|r| r.0.parse::<i32>().ok()).unwrap_or(50);
+
+                            if limit > 0 {
+                                 let _ = sqlx::query("DELETE FROM clipboard WHERE id NOT IN (SELECT id FROM clipboard ORDER BY timestamp DESC LIMIT ?) AND pinned = 0")
+                                    .bind(limit)
+                                    .execute(&pool)
+                                    .await;
+                            }
+                                
+                            let _ = app_handle.emit("clipboard-changed", ());
                         }
                     }
                 }
@@ -254,47 +264,87 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+fn hash_path_to_hex(path: &str) -> String {
+    let mut hasher = DefaultHasher::new();
+    path.hash(&mut hasher);
+    format!("{:016x}", hasher.finish())
+}
+
+fn icon_cache_path(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let cache_dir = app_data_dir.join("icon-cache");
+    fs::create_dir_all(&cache_dir).map_err(|e| e.to_string())?;
+    Ok(cache_dir.join(format!("{}.png", hash_path_to_hex(path))))
+}
+
+fn resize_png_to_64(png_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    let img = image::load_from_memory(png_bytes).map_err(|e| e.to_string())?;
+    let resized = img.resize_exact(64, 64, FilterType::Lanczos3);
+    let rgba = resized.to_rgba8();
+    let mut out = Vec::new();
+    let encoder = image::codecs::png::PngEncoder::new(&mut out);
+    encoder
+        .write_image(rgba.as_raw(), 64, 64, image::ColorType::Rgba8)
+        .map_err(|e| e.to_string())?;
+    Ok(out)
+}
+
+fn png_bytes_to_data_url(bytes: &[u8]) -> String {
+    format!("data:image/png;base64,{}", BASE64_STANDARD.encode(bytes))
+}
+
 #[tauri::command]
-async fn get_app_icon(path: String) -> Result<String, String> {
+async fn get_app_icon(app: AppHandle, path: String) -> Result<String, String> {
+    let cache_path = icon_cache_path(&app, &path)?;
+    if let Ok(bytes) = fs::read(&cache_path) {
+        return Ok(png_bytes_to_data_url(&bytes));
+    }
+
     #[cfg(target_os = "macos")]
-    unsafe {
+    {
+        use objc::rc::autoreleasepool;
         use cocoa::base::{id, nil};
         use cocoa::foundation::NSString;
         use objc::{class, msg_send, sel, sel_impl};
 
-        // Perform icon extraction and conversion
-        // Note: While Cocoa UI usually needs main thread, icon extraction often works on background.
-        // If this causes issues, we might need to dispatch to main thread for specific calls.
-        
-        let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
-        let path_ns = NSString::alloc(nil).init_str(&path);
-        let icon: id = msg_send![workspace, iconForFile: path_ns];
-        let _: () = msg_send![path_ns, release];
+        let png_bytes = autoreleasepool(|| -> Result<Vec<u8>, String> {
+            // Perform icon extraction and conversion
+            // Note: While Cocoa UI usually needs main thread, icon extraction often works on background.
+            // If this causes issues, we might need to dispatch to main thread for specific calls.
+            unsafe {
+                let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
+                let path_ns = NSString::alloc(nil).init_str(&path);
+                let icon: id = msg_send![workspace, iconForFile: path_ns];
+                let _: () = msg_send![path_ns, release];
 
-        if icon == nil {
-            return Err("Failed to load icon".to_string());
-        }
+                if icon == nil {
+                    return Err("Failed to load icon".to_string());
+                }
 
-        // Convert to TIFF
-        let tiff_data: id = msg_send![icon, TIFFRepresentation];
+                // Convert to TIFF
+                let tiff_data: id = msg_send![icon, TIFFRepresentation];
 
-        // Convert to BitmapRep
-        let bitmap_rep: id = msg_send![class!(NSBitmapImageRep), imageRepWithData: tiff_data];
+                // Convert to BitmapRep
+                let bitmap_rep: id = msg_send![class!(NSBitmapImageRep), imageRepWithData: tiff_data];
 
-        // Convert to PNG
-        // NSPNGFileType = 4
-        let png_data: id = msg_send![bitmap_rep, representationUsingType: 4 properties: nil];
+                // Convert to PNG
+                // NSPNGFileType = 4
+                let png_data: id = msg_send![bitmap_rep, representationUsingType: 4 properties: nil];
 
-        if png_data == nil {
-            return Err("Failed to convert to PNG".to_string());
-        }
+                if png_data == nil {
+                    return Err("Failed to convert to PNG".to_string());
+                }
 
-        let length: usize = msg_send![png_data, length];
-        let bytes: *const u8 = msg_send![png_data, bytes];
-        let slice = std::slice::from_raw_parts(bytes, length);
+                let length: usize = msg_send![png_data, length];
+                let bytes: *const u8 = msg_send![png_data, bytes];
+                let slice = std::slice::from_raw_parts(bytes, length);
+                Ok(slice.to_vec())
+            }
+        })?;
 
-        let base64 = BASE64_STANDARD.encode(slice);
-        Ok(format!("data:image/png;base64,{}", base64))
+        let resized_bytes = resize_png_to_64(&png_bytes).unwrap_or(png_bytes);
+        let _ = fs::write(&cache_path, &resized_bytes);
+        return Ok(png_bytes_to_data_url(&resized_bytes));
     }
 
     #[cfg(not(target_os = "macos"))]
@@ -387,6 +437,51 @@ async fn fetch_webpage(url: String) -> Result<String, String> {
     let text = html2text::from_read(html.as_bytes(), 80).map_err(|e| e.to_string())?;
 
     Ok(text)
+}
+
+#[tauri::command]
+async fn export_markdown_dialog(title: String, date_str: String, content: String) -> Result<(), String> {
+    let file_name = format!("{}-{}.md", title.replace(|c: char| !c.is_ascii_alphanumeric(), "_").to_lowercase(), date_str);
+    
+    #[cfg(target_os = "macos")]
+    {
+        // Use AppleScript to force an independent, OS-level save dialog 
+        // that is completely detached from the Tauri frameless window.
+        let script = format!(
+            r#"POSIX path of (choose file name with prompt "Export Chat History" default name "{}")"#,
+            file_name
+        );
+        
+        let output = std::process::Command::new("osascript")
+            .arg("-e")
+            .arg(&script)
+            .output()
+            .map_err(|e| e.to_string())?;
+            
+        if output.status.success() {
+            let path_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !path_str.is_empty() {
+                std::fs::write(&path_str, content).map_err(|e| e.to_string())?;
+            }
+        }
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Fallback for non-macOS (though app is currently mac-focused)
+        let path = rfd::AsyncFileDialog::new()
+            .set_title("Export Chat History")
+            .set_file_name(&file_name)
+            .add_filter("Markdown", &["md"])
+            .save_file()
+            .await;
+            
+        if let Some(file) = path {
+            std::fs::write(file.path(), content).map_err(|e| e.to_string())?;
+        }
+    }
+    
+    Ok(())
 }
 
 #[tauri::command]
@@ -669,11 +764,16 @@ pub fn run() {
             // Start Mouse Polling Thread
             let handle = app.handle().clone();
             std::thread::spawn(move || {
+                let source = match CGEventSource::new(CGEventSourceStateID::HIDSystemState) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        eprintln!("Failed to create CGEventSource: {:?}", e);
+                        return;
+                    }
+                };
                 loop {
                     // Check mouse position using CoreGraphics
-                    if let Ok(event) = CGEvent::new(
-                        CGEventSource::new(CGEventSourceStateID::HIDSystemState).unwrap(),
-                    ) {
+                    if let Ok(event) = CGEvent::new(source.clone()) {
                         let point = event.location();
                         
                         // Get screen dimensions locally to be responsive
@@ -828,6 +928,10 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -840,6 +944,7 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![
             greet,
+            export_markdown_dialog,
             get_app_icon,
             launch_app,
             get_windows,
@@ -862,12 +967,14 @@ pub fn run() {
             web_blanket::web_blanket_go_back,
             web_blanket::web_blanket_go_forward,
             web_blanket::web_blanket_reload,
+            web_blanket::web_blanket_reload_tab,
             web_blanket::web_blanket_stop_loading,
             web_blanket::web_blanket_get_tab_state,
             web_blanket::web_blanket_zoom_in,
             web_blanket::web_blanket_zoom_out,
             web_blanket::web_blanket_set_theme,
-            web_blanket::web_blanket_set_user_agent
+            web_blanket::web_blanket_set_user_agent,
+            web_blanket::web_blanket_set_muted
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
